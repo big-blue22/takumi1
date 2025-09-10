@@ -38,7 +38,12 @@ class App {
             this.geminiService = new GeminiService();
         }
         
-        // プレイヤー統計マネージャー\n        if (typeof PlayerStatsManager !== 'undefined') {\n            this.playerStatsManager = new PlayerStatsManager();\n        }\n        \n        // メディア解析用のファイル配列
+        // プレイヤー統計マネージャー
+        if (typeof PlayerStatsManager !== 'undefined') {
+            this.playerStatsManager = new PlayerStatsManager();
+        }
+        
+        // メディア解析用のファイル配列
         this.uploadedFiles = [];
         this.chatMessages = [];
     }
@@ -939,9 +944,17 @@ class App {
     
     // 各ページのロード処理
     loadDashboard() {
-        // 新しい統計システムを使用\n        if (this.playerStatsManager) {\n            this.playerStatsManager.loadRecentMatches();\n        } else {\n            this.loadRecentMatches();\n        }
+        // 新しい統計システムを使用
+        if (this.playerStatsManager) {
+            this.playerStatsManager.loadRecentMatches();
+        } else {
+            this.loadRecentMatches();
+        }
         this.loadAiRecommendations();
-        // 新しい統計システムを使用\n        if (this.playerStatsManager) {\n            this.playerStatsManager.loadStatsToUI();\n        }
+        // 新しい統計システムを使用
+        if (this.playerStatsManager) {
+            this.playerStatsManager.loadStatsToUI();
+        }
     }
     
     loadAnalysis() {
