@@ -246,6 +246,7 @@ body {
   margin-bottom: var(--spacing-sm);
   background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -345,6 +346,7 @@ body {
   margin-bottom: var(--spacing-sm);
   background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -546,6 +548,7 @@ body {
   margin: 0;
   background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -3132,6 +3135,7 @@ input, select, textarea {
   font-size: var(--font-size-2xl);
   background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0 0 var(--spacing-xs) 0;
 }
