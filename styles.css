@@ -2332,15 +2332,36 @@ input, select, textarea {
 .game-selection-guidance {
   margin-top: var(--spacing-xl);
   padding: var(--spacing-xl);
-  background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(15, 52, 96, 0.05));
-  border: 2px dashed var(--color-accent);
+  background: linear-gradient(135deg, 
+    rgba(233, 69, 96, 0.2), 
+    rgba(15, 52, 96, 0.1),
+    rgba(233, 69, 96, 0.15)
+  );
+  border: 3px dashed rgba(233, 69, 96, 0.8);
   border-radius: var(--border-radius-large);
   text-align: center;
   animation: pulseGlow 2s infinite;
+  box-shadow: 
+    0 0 20px rgba(233, 69, 96, 0.3),
+    inset 0 0 20px rgba(233, 69, 96, 0.1);
+  position: relative;
+  backdrop-filter: blur(5px);
 }
 
 .game-selection-guidance.hidden {
   display: none;
+}
+
+[data-theme="light"] .game-selection-guidance {
+  background: linear-gradient(135deg, 
+    rgba(49, 130, 206, 0.2), 
+    rgba(59, 130, 246, 0.1),
+    rgba(49, 130, 206, 0.15)
+  );
+  border: 3px dashed rgba(49, 130, 206, 0.8);
+  box-shadow: 
+    0 0 20px rgba(49, 130, 206, 0.3),
+    inset 0 0 20px rgba(49, 130, 206, 0.1);
 }
 
 .guidance-content h4 {
@@ -2375,12 +2396,39 @@ input, select, textarea {
 
 @keyframes pulseGlow {
   0%, 100% {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.1);
+    border-color: rgba(233, 69, 96, 0.8);
+    box-shadow: 
+      0 0 20px rgba(233, 69, 96, 0.3),
+      inset 0 0 20px rgba(233, 69, 96, 0.1),
+      0 0 0 0 rgba(233, 69, 96, 0.1);
   }
   50% {
-    border-color: rgba(233, 69, 96, 0.8);
-    box-shadow: 0 0 0 10px rgba(233, 69, 96, 0.05);
+    border-color: rgba(233, 69, 96, 1);
+    box-shadow: 
+      0 0 30px rgba(233, 69, 96, 0.5),
+      inset 0 0 30px rgba(233, 69, 96, 0.2),
+      0 0 0 15px rgba(233, 69, 96, 0.1);
+  }
+}
+
+[data-theme="light"] .game-selection-guidance {
+  animation: pulseGlowLight 2s infinite;
+}
+
+@keyframes pulseGlowLight {
+  0%, 100% {
+    border-color: rgba(49, 130, 206, 0.8);
+    box-shadow: 
+      0 0 20px rgba(49, 130, 206, 0.3),
+      inset 0 0 20px rgba(49, 130, 206, 0.1),
+      0 0 0 0 rgba(49, 130, 206, 0.1);
+  }
+  50% {
+    border-color: rgba(49, 130, 206, 1);
+    box-shadow: 
+      0 0 30px rgba(49, 130, 206, 0.5),
+      inset 0 0 30px rgba(49, 130, 206, 0.2),
+      0 0 0 15px rgba(49, 130, 206, 0.1);
   }
 }
 
