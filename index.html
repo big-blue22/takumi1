@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-Bridge - eSports Performance Bridge</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="player-stats.js"></script>\n</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>e-Bridge</h1>
+                </div>
+                <nav class="nav">
+                    <button class="nav-btn active" data-page="dashboard">
+                        <span class="nav-icon">📊</span>
+                        ダッシュボード
+                    </button>
+                    <button class="nav-btn" data-page="analysis">
+                        <span class="nav-icon">📈</span>
+                        分析
+                    </button>
+                    <button class="nav-btn" data-page="ai-chat">
+                        <span class="nav-icon">🤖</span>
+                        AIチャット
+                    </button>
+                    <button class="nav-btn" data-page="goals">
+                        <span class="nav-icon">🎯</span>
+                        目標
+                    </button>
+                    <button class="nav-btn" data-page="media-analysis">
+                        <span class="nav-icon">📸</span>
+                        メディア分析
+                    </button>
+                    <button class="nav-btn" data-page="settings">
+                        <span class="nav-icon">⚙️</span>
+                        設定
+                    </button>
+                </nav>
+                <div class="user-actions">
+                    <div class="user-status" id="user-status">
+                        <span class="user-name" id="header-user-name">ゲストユーザー</span>
+                        <span class="user-type" id="user-type-indicator">ゲスト</span>
+                    </div>
+                    <div class="theme-toggle">
+                        <button id="theme-toggle-btn" class="theme-btn">🌙</button>
+                    </div>
+                    <div class="user-menu">
+                        <button id="logout-btn" class="logout-btn" title="ログアウト">👤</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <div class="page-header">
+                    <h2>ダッシュボード</h2>
+                    <p>プレイヤーパフォーマンス概要</p>
+                </div>
+
+                <!-- Player Profile Card -->
+                <div class="card profile-card">
+                    <div class="profile-info">
+                        <div class="player-avatar">
+                            <div class="avatar-placeholder">👤</div>
+                        </div>
+                        <div class="player-details">
+                            <h3 id="player-name">プレイヤー</h3>
+                            <p id="player-rank" class="rank-badge">ランク未設定</p>
+                            <p id="player-game">ゲーム未選択</p>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">勝率</span>
+                            <span class="stat-value" id="win-rate">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">平均KDA</span>
+                            <span class="stat-value" id="avg-kda">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">CS/分</span>
+                            <span class="stat-value" id="cs-per-min">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">試合数</span>
+                            <span class="stat-value" id="games-played">-</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Game Selection Guidance -->
+                    <div class="game-selection-guidance" id="game-selection-guidance">
+                        <div class="guidance-content">
+                            <h4>🎮 ゲームを選択してください</h4>
+                            <p>パフォーマンス分析を開始するために、プレイしているゲームを設定しましょう</p>
+                            <button class="btn-primary guidance-btn" id="goto-game-selection">
+                                ゲームを選択する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Charts -->
+                <div class="charts-grid">
+                    <div class="card chart-card">
+                        <h3>パフォーマンストレンド</h3>
+                        <canvas id="performance-chart"></canvas>
+                    </div>
+                    <div class="card chart-card">
+                        <h3>KDA分布</h3>
+                        <canvas id="kda-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Matches -->
+                <div class="card">
+                    <h3>最近の試合結果</h3>
+                    <div id="recent-matches" class="matches-list">
+                        <div class="no-matches-message">
+                            <p class="message-text">まだ試合データがありません</p>
+                            <p class="message-sub">分析タブから試合結果を入力してください</p>
+                            <button class="btn-secondary" id="goto-analysis">
+                                試合データを入力する →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Goals -->
+                <div class="card dashboard-goals" id="dashboard-goals">
+                    <div class="goals-header">
+                        <h3>🎯 現在の目標</h3>
+                        <button class="view-all-goals" id="view-all-goals">すべて見る</button>
+                    </div>
+                    <div class="dashboard-goals-list" id="dashboard-goals-list">
+                        <div class="no-goals-message">
+                            <h4>目標が設定されていません</h4>
+                            <p>パフォーマンス向上のための目標を設定しましょう</p>
+                            <button class="add-goal-btn" id="add-first-goal">最初の目標を追加</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Recommendations -->
+                <div class="card ai-recommendations">
+                    <div class="ai-header">
+                        <h3>🤖 今日のコーチングアドバイス</h3>
+                        <button id="refresh-coaching" class="refresh-btn">🔄</button>
+                    </div>
+                    <div id="ai-recommendations-content" class="recommendations-content">
+                        <div class="no-recommendations-message">
+                            <p class="message-text">目標を設定してパーソナライズされたアドバイスを受け取りましょう</p>
+                            <button class="btn-secondary" id="goto-goals-for-ai">
+                                目標を設定する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Page -->
+            <div id="analysis" class="page">
+                <div class="page-header">
+                    <h2>パフォーマンス分析</h2>
+                    <p>試合データの入力と詳細分析</p>
+                </div>
+
+                <!-- Match Data Input Form -->
+                <div class="card">
+                    <h3>試合データ入力</h3>
+                    <form id="match-form" class="match-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="match-result">試合結果</label>
+                                <select id="match-result" required>
+                                    <option value="">選択してください</option>
+                                    <option value="WIN">勝利</option>
+                                    <option value="LOSS">敗北</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="kills">キル数</label>
+                                <input type="number" id="kills" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="deaths">デス数</label>
+                                <input type="number" id="deaths" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="assists">アシスト数</label>
+                                <input type="number" id="assists" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cs">CS数</label>
+                                <input type="number" id="cs" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="match-duration">試合時間（分）</label>
+                                <input type="number" id="match-duration" min="1" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">分析を実行</button>
+                    </form>
+                </div>
+
+                <!-- Analysis Results -->
+                <div id="analysis-results" class="analysis-results hidden">
+                    <!-- Analysis results will be populated here -->
+                </div>
+            </div>
+
+            <!-- AI Chat Page -->
+            <div id="ai-chat" class="page">
+                <div class="page-header">
+                    <h2>🤖 AIチャット</h2>
+                    <p>Gemini AI とリアルタイムチャットしてゲームのアドバイスを受けよう</p>
+                </div>
+
+                <!-- Chat Interface -->
+                <div class="card chat-container">
+                    <div class="chat-header">
+                        <h3>💬 チャット</h3>
+                        <button id="clear-chat" class="btn-secondary">履歴クリア</button>
+                    </div>
+                    
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="chat-message ai-message">
+                            <div class="message-avatar">🤖</div>
+                            <div class="message-content">
+                                <div class="message-text">
+                                    こんにちは！ゲーミングのパフォーマンス向上をお手伝いします。何でも聞いてください！
+                                </div>
+                                <div class="message-time">今</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <textarea id="chat-input" placeholder="メッセージを入力..." rows="1"></textarea>
+                            <button id="send-message" class="send-btn" disabled>
+                                <span>📤</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Page -->
+            <div id="goals" class="page">
+                <div class="page-header">
+                    <h2>目標管理</h2>
+                    <p>短期・長期目標の設定と進捗管理</p>
+                </div>
+
+                <!-- Add Goal Form -->
+                <div class="card">
+                    <h3>新しい目標を追加</h3>
+                    <form id="goal-form" class="goal-form">
+                        <div class="form-group">
+                            <label for="goal-title">目標タイトル</label>
+                            <input type="text" id="goal-title" placeholder="例：Master到達" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="goal-deadline">期限</label>
+                            <input type="date" id="goal-deadline" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="goal-description">詳細</label>
+                            <textarea id="goal-description" placeholder="目標の詳細説明"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">目標を追加</button>
+                    </form>
+                </div>
+
+                <!-- Goals List -->
+                <div class="card">
+                    <h3>現在の目標</h3>
+                    <div id="goals-list" class="goals-list">
+                        <!-- Goals will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Analysis Page -->
+            <div id="media-analysis" class="page">
+                <div class="page-header">
+                    <h2>📸 メディア解析</h2>
+                    <p>Gemini 2.5 Proでゲーム画面・動画を分析してパフォーマンスを向上させよう</p>
+                </div>
+
+                <!-- Upload Area -->
+                <div class="card">
+                    <h3>📁 ファイルアップロード</h3>
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">🎮</div>
+                        <p><strong>ゲーム画面・動画をドラッグ＆ドロップ</strong></p>
+                        <p class="upload-hint">または下のボタンでファイル選択</p>
+                        <button class="btn-secondary" id="file-select-btn">ファイルを選択</button>
+                        <input type="file" id="file-input" accept="image/*,video/*" hidden multiple>
+                        <p class="upload-formats">対応形式: JPG, PNG, GIF, MP4, WebM (最大20MB)</p>
+                    </div>
+                    
+                    <div id="file-preview" class="file-preview hidden">
+                        <h4>📋 アップロードファイル</h4>
+                        <div id="file-list" class="file-grid">
+                            <!-- プレビューファイル -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Results -->
+                <div id="media-analysis-results" class="analysis-results hidden">
+                    <h3>🔍 解析結果</h3>
+                    <div id="analysis-cards-container">
+                        <!-- 解析結果カード -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings" class="page">
+                <div class="page-header">
+                    <h2>⚙️ 設定</h2>
+                    <p>ゲーム選択とアプリケーション設定</p>
+                </div>
+
+                <!-- Game Selection -->
+                <div class="card">
+                    <h3>ゲーム選択</h3>
+                    <div class="game-selection">
+                        <div class="current-game" id="current-game-display">
+                            <div class="game-info">
+                                <span class="game-icon" id="current-game-icon">⚔️</span>
+                                <div class="game-details">
+                                    <span class="game-name" id="current-game-name">League of Legends</span>
+                                    <span class="game-category" id="current-game-category">MOBA</span>
+                                </div>
+                            </div>
+                            <button id="change-game-btn" class="btn-secondary">ゲームを変更</button>
+                        </div>
+                        
+                        <div id="game-selector" class="game-selector hidden">
+                            <div class="game-categories" id="game-categories">
+                                <!-- Game categories will be populated here -->
+                            </div>
+                            <div class="game-selector-actions">
+                                <button id="confirm-game-btn" class="btn-primary">選択を確定</button>
+                                <button id="cancel-game-btn" class="btn-secondary">キャンセル</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application Settings -->
+                <div class="card">
+                    <h3>アプリケーション設定</h3>
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <label for="notifications">通知を有効にする</label>
+                            <input type="checkbox" id="notifications" checked>
+                        </div>
+                        <div class="setting-item">
+                            <label for="auto-analysis">自動分析を有効にする</label>
+                            <input type="checkbox" id="auto-analysis">
+                        </div>
+                        <div class="setting-item">
+                            <label for="data-retention">データ保持期間（日）</label>
+                            <input type="number" id="data-retention" value="30" min="1" max="365">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loading" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>分析中...</p>
+            </div>
+        </div>
+
+        <!-- Toast Messages -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- Login Modal -->
+        <div id="login-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>e-Bridge</h2>
+                    <p>ログインまたは新規登録</p>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="login">ログイン</button>
+                    <button class="tab-btn" data-tab="register">新規登録</button>
+                </div>
+                
+                <div id="login-tab" class="tab-content active">
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="login-username">ユーザー名</label>
+                            <input type="text" id="login-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">パスワード</label>
+                            <input type="password" id="login-password" required>
+                        </div>
+                        <button type="submit" class="btn-primary">ログイン</button>
+                    </form>
+                </div>
+                
+                <div id="register-tab" class="tab-content">
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label for="register-username">ユーザー名</label>
+                            <input type="text" id="register-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">メールアドレス</label>
+                            <input type="email" id="register-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">パスワード</label>
+                            <input type="password" id="register-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password-confirm">パスワード（確認）</label>
+                            <input type="password" id="register-password-confirm" required>
+                        </div>
+                        <button type="submit" class="btn-primary">登録</button>
+                    </form>
+                </div>
+                
+                <div class="modal-divider">
+                    <span>または</span>
+                </div>
+                
+                <div class="guest-access">
+                    <button id="guest-btn" class="btn-guest">ゲストとして使用する</button>
+                    <p class="guest-note">※ データは保存されません</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>処理中...</p>
+        </div>
+    </div>
+
+    <!-- API Initial Setup Modal -->
+    <div id="api-initial-setup-modal" class="modal api-setup-priority">
+        <div class="modal-overlay"></div>
+        <div class="modal-content api-setup-content">
+            
+            <!-- Header -->
+            <div class="setup-header">
+                <div class="logo-section">
+                    <h1>🌉 e-Bridge</h1>
+                    <p class="tagline">AI-Powered eSports Performance Bridge</p>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="setup-body">
+                <div class="setup-title">
+                    <h2>🔑 APIキー初期設定</h2>
+                    <p>e-BridgeのAI機能を使用するには、Gemini APIキーが必要です</p>
+                </div>
+                
+                <!-- API Key Input Area -->
+                <div class="api-input-section">
+                    <label for="initial-api-key">Gemini APIキー</label>
+                    <div class="input-wrapper">
+                        <input type="password" 
+                               id="initial-api-key" 
+                               placeholder="APIキーを入力"
+                               autocomplete="off">
+                        <button id="toggle-initial-key" class="eye-btn">👁️</button>
+                    </div>
+                    <div class="input-helper">
+                        <p>APIキーは一度設定すれば、すべてのAI機能で共通使用されます</p>
+                    </div>
+                </div>
+                
+                <!-- Feature Information -->
+                <div class="features-info">
+                    <h3>利用可能になる機能：</h3>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <span class="feature-icon">💬</span>
+                            <div>
+                                <strong>AIチャット</strong>
+                                <p>パーソナライズされたコーチング</p>
+                                <small class="model-info">Gemini 2.5 Flash</small>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">📸</span>
+                            <div>
+                                <strong>メディア解析</strong>
+                                <p>スクリーンショット・動画分析</p>
+                                <small class="model-info">Gemini 2.5 Pro</small>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🎯</span>
+                            <div>
+                                <strong>目標別アドバイス</strong>
+                                <p>目標に応じた具体的な提案</p>
+                                <small class="model-info">Gemini 2.5 Flash</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="setup-actions">
+                    <button id="test-initial-api" class="btn-secondary">
+                        接続テスト
+                    </button>
+                    <button id="save-initial-api" class="btn-primary" disabled>
+                        設定を保存して開始
+                    </button>
+                </div>
+                
+                <!-- API Key Help -->
+                <div class="api-help">
+                    <p>APIキーをお持ちでない方は</p>
+                    <a href="https://makersuite.google.com/app/apikey" 
+                       target="_blank" 
+                       class="api-link">
+                        Google AI Studioで無料取得 →
+                    </a>
+                </div>
+                
+                <!-- Skip Option -->
+                <div class="skip-option">
+                    <button id="skip-api-setup" class="btn-text">
+                        後で設定する（一部機能制限）
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="mock-data.js"></script>
+    <script src="api-service.js"></script>
+    <script src="auth-service.js"></script>
+    <script src="game-categories.js"></script>
+    <script src="media-analyzer.js"></script>
+    <script src="theme-manager.js"></script>
+    <script src="unified-api-manager.js"></script>
+    <script src="gemini-service.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
