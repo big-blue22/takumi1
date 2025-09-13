@@ -83,35 +83,35 @@ class ThemeManager {
   }
 
   setLightThemeVariables(root) {
-    // ライトモードのカラーパレット
+    // ライトモードのカラーパレット - 改善されたコントラスト
     const lightColors = {
       // 背景色
       '--bg-primary': '#ffffff',
-      '--bg-secondary': '#f8fafc',
+      '--bg-secondary': '#f1f5f9',
       '--bg-card': '#ffffff',
       
-      // テキスト色
-      '--text-primary': '#1a1a1a',
-      '--text-secondary': '#4a5568',
-      '--text-muted': '#718096',
+      // テキスト色 - より高いコントラスト
+      '--text-primary': '#0f172a',
+      '--text-secondary': '#334155',
+      '--text-muted': '#64748b',
       
       // アクセントカラー
-      '--color-primary': '#3182ce',
-      '--color-accent': '#e53e3e',
-      '--color-success': '#38a169',
-      '--color-warning': '#d69e2e',
-      '--color-danger': '#e53e3e',
+      '--color-primary': '#2563eb',
+      '--color-accent': '#dc2626',
+      '--color-success': '#16a34a',
+      '--color-warning': '#ca8a04',
+      '--color-danger': '#dc2626',
       
-      // ボーダーとエフェクト
-      '--glass-bg': 'rgba(255, 255, 255, 0.9)',
-      '--glass-border': 'rgba(0, 0, 0, 0.1)',
+      // ボーダーとエフェクト - より強い境界線
+      '--glass-bg': 'rgba(248, 250, 252, 0.95)',
+      '--glass-border': 'rgba(15, 23, 42, 0.15)',
       '--backdrop-blur': 'blur(10px)',
       
-      // シャドウ
-      '--shadow-small': '0 1px 3px rgba(0, 0, 0, 0.1)',
-      '--shadow-medium': '0 4px 16px rgba(0, 0, 0, 0.15)',
-      '--shadow-large': '0 8px 32px rgba(0, 0, 0, 0.2)',
-      '--shadow-neon': '0 0 20px rgba(49, 130, 206, 0.3)'
+      // シャドウ - より強いシャドウ
+      '--shadow-small': '0 2px 4px rgba(0, 0, 0, 0.15)',
+      '--shadow-medium': '0 4px 12px rgba(0, 0, 0, 0.2)',
+      '--shadow-large': '0 8px 24px rgba(0, 0, 0, 0.25)',
+      '--shadow-neon': '0 0 20px rgba(37, 99, 235, 0.4)'
     };
 
     Object.entries(lightColors).forEach(([property, value]) => {

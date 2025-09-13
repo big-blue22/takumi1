@@ -28,30 +28,30 @@
 
 /* Light Theme Variables */
 [data-theme="light"] {
-  /* Light Mode Colors */
+  /* Light Mode Colors - Enhanced contrast */
   --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
+  --bg-secondary: #f1f5f9;
   --bg-card: #ffffff;
-  --text-primary: #1a1a1a;
-  --text-secondary: #4a5568;
-  --text-muted: #718096;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
   
   /* Light Mode Accent Colors */
-  --color-primary: #3182ce;
-  --color-accent: #e53e3e;
-  --color-success: #38a169;
-  --color-warning: #d69e2e;
-  --color-danger: #e53e3e;
+  --color-primary: #2563eb;
+  --color-accent: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #ca8a04;
+  --color-danger: #dc2626;
   
-  /* Light Mode Glass Effect */
-  --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(0, 0, 0, 0.1);
+  /* Light Mode Glass Effect - Enhanced visibility */
+  --glass-bg: rgba(248, 250, 252, 0.95);
+  --glass-border: rgba(15, 23, 42, 0.15);
   
-  /* Light Mode Shadows */
-  --shadow-small: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
-  --shadow-large: 0 8px 32px rgba(0, 0, 0, 0.2);
-  --shadow-neon: 0 0 20px rgba(49, 130, 206, 0.3);
+  /* Light Mode Shadows - Stronger shadows for better definition */
+  --shadow-small: 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-large: 0 8px 24px rgba(0, 0, 0, 0.25);
+  --shadow-neon: 0 0 20px rgba(37, 99, 235, 0.4);
 }
   
   /* Borders */
@@ -127,6 +127,13 @@ body {
   padding: var(--spacing-md) 0;
 }
 
+/* Light theme header */
+[data-theme="light"] .header {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
@@ -182,6 +189,22 @@ body {
   background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
   color: var(--text-primary);
   box-shadow: var(--shadow-neon);
+}
+
+/* Light theme navigation buttons */
+[data-theme="light"] .nav-btn {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .nav-btn:hover {
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--color-primary);
+}
+
+[data-theme="light"] .nav-btn.active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
 }
 
 .nav-icon {
@@ -257,22 +280,38 @@ body {
 
 /* Card Styles */
 .card {
+  background: var(--bg-card);
+  backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-large);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-medium);
+  transition: var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dark theme specific card styling */
+[data-theme="dark"] .card {
   background: linear-gradient(145deg, 
     rgba(22, 33, 62, 0.95), 
     rgba(26, 26, 46, 0.9)
   );
-  backdrop-filter: var(--backdrop-blur);
   border: 2px solid var(--glass-border);
-  border-radius: var(--border-radius-large);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
   box-shadow: 
     var(--shadow-medium),
     0 0 0 1px rgba(233, 69, 96, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: var(--transition-base);
-  position: relative;
-  overflow: hidden;
+}
+
+/* Light theme specific card styling */
+[data-theme="light"] .card {
+  background: var(--bg-card);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .card::before {
@@ -308,17 +347,35 @@ body {
   display: flex;
   gap: var(--spacing-xl);
   align-items: center;
+  padding: var(--spacing-xl);
+}
+
+/* Dark theme profile card */
+[data-theme="dark"] .profile-card {
   background: linear-gradient(145deg, 
     rgba(15, 52, 96, 0.6), 
     rgba(233, 69, 96, 0.2),
     rgba(22, 33, 62, 0.8)
   );
   border: 3px solid rgba(233, 69, 96, 0.5);
-  padding: var(--spacing-xl);
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(233, 69, 96, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Light theme profile card */
+[data-theme="light"] .profile-card {
+  background: linear-gradient(145deg, 
+    rgba(248, 250, 252, 0.9), 
+    rgba(241, 245, 249, 0.7),
+    #ffffff
+  );
+  border: 2px solid rgba(37, 99, 235, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(37, 99, 235, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .profile-info {
@@ -394,18 +451,34 @@ body {
 .stat-item {
   text-align: center;
   padding: var(--spacing-lg);
+  border-radius: var(--border-radius-large);
+  transition: var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dark theme stat items */
+[data-theme="dark"] .stat-item {
   background: linear-gradient(145deg, 
     rgba(22, 33, 62, 0.8), 
     rgba(15, 52, 96, 0.3)
   );
-  border-radius: var(--border-radius-large);
   border: 2px solid rgba(233, 69, 96, 0.3);
-  transition: var(--transition-base);
-  position: relative;
-  overflow: hidden;
   box-shadow: 
     0 4px 16px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Light theme stat items */
+[data-theme="light"] .stat-item {
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.95), 
+    rgba(248, 250, 252, 0.8)
+  );
+  border: 2px solid rgba(37, 99, 235, 0.2);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .stat-item::before {
@@ -627,6 +700,22 @@ body {
   color: var(--text-primary);
   font-size: var(--font-size-base);
   transition: var(--transition-base);
+}
+
+/* Light theme specific form styling */
+[data-theme="light"] .form-group input,
+[data-theme="light"] .form-group select,
+[data-theme="light"] .form-group textarea {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .form-group input:focus,
+[data-theme="light"] .form-group select:focus,
+[data-theme="light"] .form-group textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .form-group input:focus,
@@ -1703,6 +1792,11 @@ body {
   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   min-height: 100vh;
   transition: var(--transition-base);
+}
+
+/* Light theme app container */
+[data-theme="light"] .app-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
 }
 
 .header {
