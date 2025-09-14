@@ -48,20 +48,17 @@ class App {
         this.chatMessages = [];
     }
     
-    init() {
+    async init() {
         console.log('App initializing...');
         
         // テーマの初期化
         this.initTheme();
         
-        // ログインチェック
+        // ログインチェック（一旦非表示にする）
         this.checkAuthentication();
         
-        // API設定チェックと初期化
-        this.checkAndInitializeAPI();
-        
-        // APIキー初期設定が完了している場合のみ他の機能を初期化
-        this.continueInitialization();
+        // API設定チェックと初期化（非同期）
+        await this.checkAndInitializeAPI();
         
         // APIモーダル用のイベントリスナーを確実に設定
         setTimeout(() => {
@@ -185,18 +182,53 @@ class App {
     }
     
     // API設定チェックと初期化
-    checkAndInitializeAPI() {
+    async checkAndInitializeAPI() {
         // 統一APIマネージャーの確認
         if (!window.unifiedApiManager) {
             console.error('統合APIマネージャーが利用できません');
             return;
         }
         
-        // APIキー設定確認
-        const needsSetup = window.unifiedApiManager.needsInitialSetup();
+        // 保存済みAPIキーがあるかチェック
+        const hasStoredKey = window.unifiedApiManager.isConfigured();
         
-        if (needsSetup) {
-            // モーダル表示前にログインモーダルを非表示
+        if (hasStoredKey) {
+            console.log('保存済みAPIキーを発見、自動接続テストを実行中...');
+            
+            // ログインモーダルを非表示
+            const loginModal = document.getElementById('login-modal');
+            if (loginModal) {
+                loginModal.classList.add('hidden');
+            }
+            
+            try {
+                // 自動接続テストを実行
+                await this.performAutoConnectionTest();
+                
+                // 接続成功時はAPI設定画面をスキップしてメイン画面へ
+                console.log('自動接続テスト成功、API初期設定画面をスキップしてメイン画面へ遷移');
+                this.syncAPIKeyInputs();
+                
+                // 成功時のトーストを表示
+                this.showToast('保存されたAPIキーで接続に成功しました', 'success');
+                
+                // 初期化を続行してからログイン画面を表示
+                setTimeout(() => {
+                    this.continueInitialization();
+                    this.showLoginModal();
+                }, 300);
+                
+            } catch (error) {
+                console.warn('自動接続テストに失敗:', error);
+                
+                // 接続失敗時のエラーハンドリング
+                this.handleAutoConnectionTestFailure(error);
+            }
+        } else {
+            // APIキー未保存時は従来通り初期設定画面を表示
+            console.log('APIキーが保存されていません、初期設定画面を表示');
+            
+            // ログインモーダルを非表示
             const loginModal = document.getElementById('login-modal');
             if (loginModal) {
                 loginModal.classList.add('hidden');
@@ -206,9 +238,6 @@ class App {
             setTimeout(() => {
                 this.showInitialAPISetupModal();
             }, 100);
-        } else {
-            // 既存のAPIキー入力フィールドと統一APIマネージャーを同期
-            this.syncAPIKeyInputs();
         }
     }
     
@@ -472,6 +501,73 @@ class App {
         }
     }
     
+    // 自動接続テスト実行
+    async performAutoConnectionTest() {
+        if (!window.unifiedApiManager) {
+            throw new Error('統一APIマネージャーが利用できません');
+        }
+
+        if (!window.unifiedApiManager.isConfigured()) {
+            throw new Error('APIキーが設定されていません');
+        }
+
+        try {
+            // ローディング状態を表示（APIモーダルが非表示の場合はトースト表示）
+            const apiModal = document.getElementById('api-initial-setup-modal');
+            if (!apiModal || apiModal.classList.contains('hidden')) {
+                this.showToast('保存済みAPIキーで接続テスト中...', 'info');
+            }
+
+            // 統一APIマネージャーを使って接続テスト
+            const result = await window.unifiedApiManager.validateAPIKey();
+            
+            console.log('自動接続テスト成功:', result);
+            return result;
+            
+        } catch (error) {
+            console.error('自動接続テスト失敗:', error);
+            throw error;
+        }
+    }
+
+    // 自動接続テスト失敗時のハンドリング
+    handleAutoConnectionTestFailure(error) {
+        let errorMessage = '';
+        let shouldShowModal = true;
+        
+        // エラータイプ別のメッセージ設定
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            errorMessage = '保存されたAPIキーが無効です。新しいAPIキーを設定してください。';
+        } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+            errorMessage = 'APIキーの権限が不足しています。Gemini API の有効なキーを使用してください。';
+        } else if (error.message.includes('404') || error.message.includes('Not Found')) {
+            errorMessage = 'APIエンドポイントが見つかりません。しばらく後に再試行してください。';
+        } else if (error.message.includes('429') || error.message.includes('Rate limit')) {
+            errorMessage = 'APIの利用制限に達しました。しばらく後に再試行してください。';
+        } else if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
+            errorMessage = 'Gemini APIサーバーに問題が発生しています。しばらく後に再試行してください。';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+            errorMessage = 'ネットワーク接続に問題があります。インターネット接続を確認してください。';
+        } else {
+            errorMessage = `保存されたAPIキーでの接続に失敗しました: ${error.message}`;
+        }
+        
+        // エラートーストを表示
+        this.showToast(errorMessage, 'warning');
+        
+        // 初期設定画面を表示
+        setTimeout(() => {
+            this.showInitialAPISetupModal();
+            
+            // 初期設定画面内でエラーメッセージをハイライト
+            const errorHelp = document.querySelector('#api-initial-setup-modal .error-help');
+            if (errorHelp) {
+                errorHelp.textContent = errorMessage;
+                errorHelp.style.display = 'block';
+            }
+        }, 1000);
+    }
+
     // 初期APIセットアップをスキップ
     skipInitialAPISetup() {
         this.showToast('API設定をスキップしました。一部機能が制限されます。', 'info');
