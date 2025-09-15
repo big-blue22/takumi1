@@ -3,9 +3,11 @@ class GeminiService {
     constructor() {
         this.apiKey = '';
         this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-        this.chatModel = 'gemini-2.0-flash-exp';
-        this.visionModel = 'gemini-1.5-pro-vision';
+        this.chatModel = 'gemini-1.5-flash';
+        this.visionModel = 'gemini-1.5-flash';
         this.chatHistory = [];
+        this.retryDelay = 1000; // リトライ間隔（ミリ秒）
+        this.maxRetries = 3; // 最大リトライ回数
         
         // 統一APIマネージャとの連携
         this.initializeWithUnifiedAPI();
@@ -35,6 +37,16 @@ class GeminiService {
 
     // APIキー設定（統一APIマネージャ経由）
     setApiKey(apiKey) {
+        // APIキーの基本的な検証
+        if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) {
+            throw new Error('有効なAPIキーを入力してください');
+        }
+        
+        // Gemini APIキーの形式チェック（基本的なパターン）
+        if (!apiKey.startsWith('AIza') || apiKey.length < 30) {
+            console.warn('APIキーの形式が正しくない可能性があります。Gemini APIキーは通常"AIza"で始まり30文字以上です。');
+        }
+        
         this.apiKey = apiKey;
         if (window.unifiedApiManager) {
             window.unifiedApiManager.setAPIKey(apiKey);
@@ -42,6 +54,8 @@ class GeminiService {
             // フォールバック
             localStorage.setItem('gemini-api-key', apiKey);
         }
+        
+        console.log('✓ Gemini APIキーが設定されました');
     }
 
     getApiKey() {
@@ -77,11 +91,30 @@ class GeminiService {
         }
 
         try {
-            const response = await this.sendChatMessage('こんにちは');
-            return { success: true, message: '接続に成功しました' };
+            console.log('🔄 Gemini API接続テスト中...');
+            const response = await this.sendChatMessage('テスト', false);
+            console.log('✓ Gemini API接続テストに成功しました');
+            return { 
+                success: true, 
+                message: '接続に成功しました',
+                model: this.chatModel,
+                usage: response.usage || {}
+            };
         } catch (error) {
-            console.error('Connection test failed:', error);
-            throw new Error(`接続テストに失敗しました: ${error.message}`);
+            console.error('❌ Gemini API接続テストに失敗しました:', error);
+            
+            let userFriendlyMessage = '接続テストに失敗しました';
+            if (error.message.includes('API エンドポイントが見つかりません')) {
+                userFriendlyMessage = 'APIモデルまたはエンドポイントに問題があります';
+            } else if (error.message.includes('APIキーが無効です')) {
+                userFriendlyMessage = 'APIキーが無効です。正しいGemini APIキーを設定してください';
+            } else if (error.message.includes('レート制限')) {
+                userFriendlyMessage = 'APIの利用制限に達しています。しばらく待ってから再試行してください';
+            } else if (error.message.includes('ネットワーク接続')) {
+                userFriendlyMessage = 'インターネット接続を確認してください';
+            }
+            
+            throw new Error(`${userFriendlyMessage}: ${error.message}`);
         }
     }
 
@@ -166,6 +199,54 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 プレイヤーをサポートし、パフォーマンス向上を手助けしてください。`;
     }
 
+    // エラーハンドリングとリトライロジック
+    async makeAPIRequest(url, requestBody, retryCount = 0) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            // 429エラー（レート制限）の場合はリトライ
+            if (response.status === 429 && retryCount < this.maxRetries) {
+                const delay = this.retryDelay * Math.pow(2, retryCount); // 指数バックオフ
+                console.warn(`Rate limit exceeded. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${this.maxRetries})`);
+                await this.delay(delay);
+                return this.makeAPIRequest(url, requestBody, retryCount + 1);
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                const errorMessage = errorData?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+                
+                if (response.status === 404) {
+                    throw new Error('API エンドポイントが見つかりません。モデル名またはURLを確認してください。');
+                } else if (response.status === 401 || response.status === 403) {
+                    throw new Error('APIキーが無効です。正しいAPIキーを設定してください。');
+                } else if (response.status === 429) {
+                    throw new Error('レート制限に達しました。しばらく待ってから再試行してください。');
+                } else {
+                    throw new Error(errorMessage);
+                }
+            }
+
+            return response;
+        } catch (error) {
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                throw new Error('ネットワーク接続に失敗しました。インターネット接続を確認してください。');
+            }
+            throw error;
+        }
+    }
+
+    // 遅延処理
+    async delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     // チャットメッセージ送信
     async sendChatMessage(message, includeHistory = true) {
         if (!this.isConfigured()) {
@@ -216,18 +297,8 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 generationConfig: this.chatParams
             };
 
-            const response = await fetch(`${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-            }
+            const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
+            const response = await this.makeAPIRequest(url, requestBody);
 
             const data = await response.json();
             
@@ -320,18 +391,8 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 generationConfig: this.visionParams
             };
 
-            const response = await fetch(`${this.baseUrl}/models/${this.visionModel}:generateContent?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-            }
+            const url = `${this.baseUrl}/models/${this.visionModel}:generateContent?key=${this.apiKey}`;
+            const response = await this.makeAPIRequest(url, requestBody);
 
             const data = await response.json();
             
@@ -540,6 +601,31 @@ JSON形式で回答してください：
     // チャット履歴クリア
     clearChatHistory() {
         this.chatHistory = [];
+        console.log('チャット履歴をクリアしました');
+    }
+
+    // デバッグ情報取得
+    getDebugInfo() {
+        return {
+            isConfigured: this.isConfigured(),
+            chatModel: this.chatModel,
+            visionModel: this.visionModel,
+            baseUrl: this.baseUrl,
+            chatHistoryLength: this.chatHistory.length,
+            retrySettings: {
+                maxRetries: this.maxRetries,
+                retryDelay: this.retryDelay
+            },
+            apiKeyLength: this.apiKey ? this.apiKey.length : 0,
+            apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'なし'
+        };
+    }
+
+    // 設定リセット
+    reset() {
+        this.clearApiKey();
+        this.clearChatHistory();
+        console.log('Gemini Serviceの設定をリセットしました');
     }
 }
 
