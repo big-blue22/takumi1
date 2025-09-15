@@ -2474,6 +2474,9 @@ class App {
                 return;
             }
             
+            // コーチングアドバイスの最終更新日時を保存
+            this.saveCoachingAdviceLastUpdated();
+            
             // Gemini APIが利用可能かチェック
             if (!this.geminiService || !this.geminiService.isConfigured()) {
                 this.showOfflineRecommendations(goals, selectedGameData);
@@ -2502,6 +2505,34 @@ class App {
                 refreshBtn.innerHTML = '🔄';
             }
         }
+    }
+
+    // コーチングアドバイスの最終更新日時を保存
+    saveCoachingAdviceLastUpdated() {
+        const now = new Date();
+        localStorage.setItem('coachingAdviceLastUpdated', now.toISOString());
+    }
+
+    // コーチングアドバイスの最終更新日時を取得
+    getCoachingAdviceLastUpdated() {
+        const lastUpdated = localStorage.getItem('coachingAdviceLastUpdated');
+        if (lastUpdated) {
+            return new Date(lastUpdated);
+        }
+        return null;
+    }
+
+    // 日時をフォーマット（YYYY/MM/DD HH:mm）
+    formatLastUpdatedDate(date) {
+        if (!date) return '';
+        
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${year}/${month}/${day} ${hours}:${minutes}`;
     }
     
     selectPriorityGoal(goals) {
@@ -2565,6 +2596,10 @@ class App {
         if (!actionPlan) actionPlan = aiResponse.substring(0, 100) + '...';
         if (!effectiveness) effectiveness = 'コーチング理論に基づく効果的なアプローチです';
         if (!todayAction) todayAction = '練習を始めてみましょう';
+
+        // 最終更新日時を取得してフォーマット
+        const lastUpdated = this.getCoachingAdviceLastUpdated();
+        const lastUpdatedText = lastUpdated ? this.formatLastUpdatedDate(lastUpdated) : '';
         
         recommendationsContent.innerHTML = `
             <div class="coaching-advice-card">
@@ -2573,7 +2608,10 @@ class App {
                         <span class="goal-icon">🎯</span>
                         <span class="goal-title">目標: ${goal.title}</span>
                     </div>
-                    <div class="goal-deadline">期限: ${new Date(goal.deadline).toLocaleDateString('ja-JP')}</div>
+                    <div class="advice-meta">
+                        <div class="goal-deadline">期限: ${new Date(goal.deadline).toLocaleDateString('ja-JP')}</div>
+                        ${lastUpdatedText ? `<div class="last-updated">最終更新: ${lastUpdatedText}</div>` : ''}
+                    </div>
                 </div>
                 
                 <div class="advice-content">
@@ -2607,6 +2645,10 @@ class App {
         
         // ゲーム固有のオフライン推奨事項
         const offlineAdvice = this.getOfflineAdvice(priorityGoal, gameName);
+
+        // 最終更新日時を取得してフォーマット
+        const lastUpdated = this.getCoachingAdviceLastUpdated();
+        const lastUpdatedText = lastUpdated ? this.formatLastUpdatedDate(lastUpdated) : '';
         
         const recommendationsContent = document.getElementById('ai-recommendations-content');
         if (recommendationsContent) {
@@ -2617,7 +2659,10 @@ class App {
                             <span class="goal-icon">🎯</span>
                             <span class="goal-title">目標: ${priorityGoal.title}</span>
                         </div>
-                        <div class="offline-indicator">オフラインモード</div>
+                        <div class="advice-meta">
+                            <div class="offline-indicator">オフラインモード</div>
+                            ${lastUpdatedText ? `<div class="last-updated">最終更新: ${lastUpdatedText}</div>` : ''}
+                        </div>
                     </div>
                     
                     <div class="advice-content">

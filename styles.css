@@ -3233,9 +3233,30 @@ input, select, textarea {
   font-size: var(--font-size-base);
 }
 
+.advice-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  align-items: flex-end;
+}
+
 .goal-deadline {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
+}
+
+.last-updated {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  background: rgba(233, 69, 96, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-small);
+  border: 1px solid rgba(233, 69, 96, 0.2);
+}
+
+.coaching-advice-card.offline .last-updated {
+  background: rgba(156, 163, 175, 0.1);
+  border-color: rgba(156, 163, 175, 0.3);
 }
 
 .offline-indicator {
