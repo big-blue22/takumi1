@@ -2493,7 +2493,7 @@ class App {
             
             // Gemini AIからアドバイスを取得
             const prompt = this.generateCoachingPrompt(priorityGoal, selectedGameData);
-            const response = await this.geminiService.sendChatMessage(prompt, false);
+            const response = await this.geminiService.generateSingleResponse(prompt);
             
             // アドバイスとタイムスタンプを保存
             const coachingAdvice = {
