@@ -1082,7 +1082,8 @@ class App {
         } else {
             this.loadRecentMatches();
         }
-        this.loadAiRecommendations();
+        // 新しいAIコーチング機能を使用
+        this.loadAIRecommendations();
         // 新しい統計システムを使用
         if (this.playerStatsManager) {
             this.playerStatsManager.loadStatsToUI();
@@ -1132,32 +1133,15 @@ class App {
     }
     
     loadAiRecommendations() {
-        const container = document.getElementById('ai-recommendations-content');
-        if (!container) return;
-        
-        container.innerHTML = `
-            <div class="recommendation-item">
-                <h4>🎯 CS精度の向上</h4>
-                <p>10分時点でのCS目標を80に設定し、カスタムゲームで練習しましょう。</p>
-            </div>
-            <div class="recommendation-item">
-                <h4>📍 マップコントロール</h4>
-                <p>ワードの配置位置を最適化し、視界確保を改善しましょう。</p>
-            </div>
-            <div class="recommendation-item">
-                <h4>⚔️ チームファイト</h4>
-                <p>ポジショニングを意識し、エンゲージのタイミングを改善しましょう。</p>
-            </div>
-        `;
+        // この関数は非推奨 - 新しいAIコーチング機能を使用
+        console.log('🚨 Deprecated loadAiRecommendations called - redirecting to new AI coaching');
+        this.loadAIRecommendations();
     }
     
     refreshAiRecommendations() {
-        this.showLoading();
-        setTimeout(() => {
-            this.loadAiRecommendations();
-            this.hideLoading();
-            this.showToast('推奨事項を更新しました', 'success');
-        }, 1000);
+        // 新しいAIコーチング機能を使用
+        this.generateAIRecommendations();
+        this.showToast('推奨事項を更新しました', 'success');
     }
     
     loadGoalsList() {
@@ -2503,6 +2487,7 @@ class App {
     }
     
     async generateAIRecommendations() {
+        console.log('🔄 generateAIRecommendations called');
         const refreshBtn = document.getElementById('refresh-coaching');
         if (refreshBtn) {
             refreshBtn.disabled = true;
@@ -2513,13 +2498,17 @@ class App {
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
             const selectedGameData = JSON.parse(localStorage.getItem('selectedGameData') || '{}');
             
+            console.log('📊 Goals:', goals.length, 'Game:', selectedGameData.name);
+            
             if (goals.length === 0) {
+                console.log('❌ No goals found, showing no recommendations message');
                 this.showNoRecommendationsMessage();
                 return;
             }
             
             // Gemini APIが利用可能かチェック
             if (!this.geminiService || !this.geminiService.isConfigured()) {
+                console.log('🔧 Using offline recommendations');
                 this.showOfflineRecommendations(goals, selectedGameData);
                 return;
             }
@@ -2723,10 +2712,12 @@ class App {
     }
     
     getOfflineAdvice(goal, gameName) {
+        console.log('🎯 getOfflineAdvice called for game:', gameName);
         // 日付ベースで変化するアドバイスの生成
         const today = new Date();
         const dayOfWeek = today.getDay(); // 0=日曜, 1=月曜, ...
         const dateHash = today.getDate() + today.getMonth(); // 日付ベースのハッシュ
+        console.log('📅 Date hash:', dateHash, 'Day:', dayOfWeek);
         
         // ゲーム固有の複数のアドバイステンプレート
         const gameAdvicePool = {
@@ -2801,7 +2792,11 @@ class App {
         const adviceList = gameAdvicePool[gameName] || defaultAdvice;
         
         // 日付ベースでアドバイスを選択（同じ日なら同じアドバイス）
-        const selectedAdvice = adviceList[dateHash % adviceList.length];
+        const selectedIndex = dateHash % adviceList.length;
+        const selectedAdvice = adviceList[selectedIndex];
+        
+        console.log('✅ Selected advice index:', selectedIndex, 'from', adviceList.length, 'options');
+        console.log('📝 Selected advice:', selectedAdvice.actionPlan);
         
         return selectedAdvice;
     }
