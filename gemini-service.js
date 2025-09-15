@@ -258,59 +258,6 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         }
     }
 
-    // 単一の応答を生成（履歴なし）
-    async generateSingleResponse(prompt) {
-        if (!this.isConfigured()) {
-            throw new Error('Gemini APIキーが設定されていません');
-        }
-
-        try {
-            const context = this.getGameContext();
-            const systemPrompt = this.generateSystemPrompt(context);
-
-            const messages = [
-                { role: 'user', parts: [{ text: systemPrompt }] },
-                { role: 'model', parts: [{ text: 'eSportsコーチとして、あなたをサポートします。何でも聞いてください！' }] },
-                { role: 'user', parts: [{ text: prompt }] }
-            ];
-
-            const requestBody = {
-                contents: messages,
-                generationConfig: this.chatParams
-            };
-
-            const response = await fetch(`${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.candidates || data.candidates.length === 0) {
-                throw new Error('APIから有効な応答が得られませんでした');
-            }
-
-            const aiResponse = data.candidates[0].content.parts[0].text;
-
-            return {
-                response: aiResponse,
-                usage: data.usageMetadata || {}
-            };
-
-        } catch (error) {
-            console.error('Gemini single response error:', error);
-            throw error;
-        }
-    }
-
     // 画像分析
     async analyzeImage(imageData, fileName, gameContext = null) {
         if (!this.isConfigured()) {
