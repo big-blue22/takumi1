@@ -2408,6 +2408,9 @@ class App {
         const refreshCoachingBtn = document.getElementById('refresh-coaching');
         if (refreshCoachingBtn) {
             refreshCoachingBtn.addEventListener('click', () => {
+                // リフレッシュボタンが押された場合はキャッシュを強制削除
+                localStorage.removeItem('cached-coaching-advice');
+                localStorage.removeItem('coaching-advice-update-time');
                 this.generateAIRecommendations();
             });
         }
@@ -2448,6 +2451,17 @@ class App {
 
         try {
             const advice = JSON.parse(storedAdvice);
+            const lastUpdate = new Date(updateTime);
+            const now = new Date();
+            
+            // 24時間以上経過している場合はキャッシュを無効化
+            const hoursElapsed = (now - lastUpdate) / (1000 * 60 * 60);
+            if (hoursElapsed >= 24) {
+                localStorage.removeItem('cached-coaching-advice');
+                localStorage.removeItem('coaching-advice-update-time');
+                return false;
+            }
+            
             const recommendationsContent = document.getElementById('ai-recommendations-content');
             
             if (recommendationsContent && advice.html) {
@@ -2457,6 +2471,9 @@ class App {
             }
         } catch (error) {
             console.warn('Failed to load existing advice:', error);
+            // エラーの場合はキャッシュをクリア
+            localStorage.removeItem('cached-coaching-advice');
+            localStorage.removeItem('coaching-advice-update-time');
         }
         
         return false;
@@ -2706,30 +2723,87 @@ class App {
     }
     
     getOfflineAdvice(goal, gameName) {
-        // ゲーム固有の基本的なアドバイスを提供
-        const gameSpecificAdvice = {
-            'League of Legends': {
-                actionPlan: 'CSを意識してファームを安定させ、ワードで視界をコントロールしましょう',
-                effectiveness: 'ゲームの基礎であるファームと視界は勝率向上に直結します',
-                todayAction: 'カスタムゲームで10分間のCSハードキャップ練習'
-            },
-            'Valorant': {
-                actionPlan: 'クロスヘア配置とプリエイムを意識して正確性を向上させましょう',
-                effectiveness: '正確なエイムは直接的にキル数と勝率の向上につながります',
-                todayAction: 'エイム練習場で15分間フリックとトラッキング練習'
-            },
-            'Overwatch 2': {
-                actionPlan: 'ロール理解を深め、チーム連携とポジショニングを改善しましょう',
-                effectiveness: 'チーム戦が重要なゲームでは個人技より連携が勝敗を決めます',
-                todayAction: '自分のロールの責任を整理し、コミュニケーションを意識した試合を3戦'
-            }
+        // 日付ベースで変化するアドバイスの生成
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0=日曜, 1=月曜, ...
+        const dateHash = today.getDate() + today.getMonth(); // 日付ベースのハッシュ
+        
+        // ゲーム固有の複数のアドバイステンプレート
+        const gameAdvicePool = {
+            'League of Legends': [
+                {
+                    actionPlan: 'CSの精度を向上し、10分時点での目標を80に設定しましょう',
+                    effectiveness: 'CSは安定した金収入の基盤で、レート上昇に直結します',
+                    todayAction: 'カスタムゲームで15分間のファーム練習を2セット'
+                },
+                {
+                    actionPlan: 'ワードの配置位置を最適化し、視界確保を改善しましょう',
+                    effectiveness: 'マップコントロールは判断力とポジショニングを大幅に改善します',
+                    todayAction: 'ワード配置のセオリーを1つ覚え、3試合で実践'
+                },
+                {
+                    actionPlan: 'チームファイトでのポジショニングを意識しましょう',
+                    effectiveness: '正しいポジションは生存率と影響力を同時に向上させます',
+                todayAction: '録画を見ながらファイトでの立ち位置を分析'
+                },
+                {
+                    actionPlan: 'マップのタイミングを意識し、エンゲージのタイミングを改善しましょう',
+                    effectiveness: 'ゲーム理解の深化は個人技以上に勝利に貢献します',
+                    todayAction: 'ミニマップを3秒おきにチェックする習慣を3試合で実践'
+                }
+            ],
+            'Valorant': [
+                {
+                    actionPlan: 'クロスヘア配置の基本を徹底し、プリエイムを習慣化しましょう',
+                    effectiveness: '正確なクロスヘア配置は反応速度と精度を同時に向上させます',
+                    todayAction: 'レンジで角度を意識したクロスヘア練習15分'
+                },
+                {
+                    actionPlan: 'マップの定石ポジションと角度を覚えて活用しましょう',
+                    effectiveness: 'マップ知識は戦術的優位性を生み、勝率向上に直結します',
+                    todayAction: '今日のマップを1つ選んで、新しいポジションを1つ練習'
+                },
+                {
+                    actionPlan: 'チームコミュニケーションとコール精度を向上させましょう',
+                    effectiveness: 'チーム戦では情報共有が個人技以上に重要な要素です',
+                    todayAction: '簡潔で正確なコールを心がけた試合を3戦プレイ'
+                }
+            ],
+            'Overwatch 2': [
+                {
+                    actionPlan: 'ロール理解を深め、チーム連携とポジショニングを改善しましょう',
+                    effectiveness: 'チーム戦が重要なゲームでは個人技より連携が勝敗を決めます',
+                    todayAction: '自分のロールの責任を整理し、コミュニケーションを意識した試合を3戦'
+                }
+            ]
         };
         
-        return gameSpecificAdvice[gameName] || {
-            actionPlan: '基礎練習を継続し、試合の振り返りを定期的に行いましょう',
-            effectiveness: '継続的な改善サイクルがスキル向上の鍵です',
-            todayAction: '今日の試合を1回録画して後で見返す準備'
-        };
+        // デフォルトアドバイス（ゲームが見つからない場合）
+        const defaultAdvice = [
+            {
+                actionPlan: '基礎練習を継続し、試合の振り返りを定期的に行いましょう',
+                effectiveness: '継続的な改善サイクルがスキル向上の鍵です',
+                todayAction: '今日の試合を1回録画して後で見返す準備'
+            },
+            {
+                actionPlan: '目標を具体的な小目標に分解し、日々の進捗を測定しましょう',
+                effectiveness: '明確な指標があることで向上度合いが可視化されます',
+                todayAction: '今の自分の弱点を1つ特定し、改善方法を調べる'
+            },
+            {
+                actionPlan: '精神的なコンディション管理を意識しましょう',
+                effectiveness: 'メンタル面の安定は一貫したパフォーマンスの基盤です',
+                todayAction: '5分間の深呼吸とポジティブな自己暗示を試合前に実施'
+            }
+        ];
+        
+        // ゲーム固有のアドバイスリストを取得
+        const adviceList = gameAdvicePool[gameName] || defaultAdvice;
+        
+        // 日付ベースでアドバイスを選択（同じ日なら同じアドバイス）
+        const selectedAdvice = adviceList[dateHash % adviceList.length];
+        
+        return selectedAdvice;
     }
     
     setupAICoachingGoalsListener() {
