@@ -6,8 +6,8 @@ class GeminiService {
         this.chatModel = 'gemini-1.5-flash';
         this.visionModel = 'gemini-1.5-flash';
         this.chatHistory = [];
-        this.retryDelay = 1000; // リトライ間隔（ミリ秒）
-        this.maxRetries = 3; // 最大リトライ回数
+        this.retryDelay = 2000; // リトライ間隔（ミリ秒）- 503エラー対応で長めに設定
+        this.maxRetries = 4; // 最大リトライ回数 - 503エラー対応で増加
         
         // 統一APIマネージャとの連携
         this.initializeWithUnifiedAPI();
@@ -25,6 +25,14 @@ class GeminiService {
             maxOutputTokens: 2000,
             topP: 0.95,
             topK: 20
+        };
+        
+        // サーバー状態監視
+        this.serverStatus = {
+            isAvailable: true,
+            lastError: null,
+            overloadDetectedAt: null,
+            nextRetryAfter: null
         };
     }
 
@@ -112,10 +120,50 @@ class GeminiService {
                 userFriendlyMessage = 'APIの利用制限に達しています。しばらく待ってから再試行してください';
             } else if (error.message.includes('ネットワーク接続')) {
                 userFriendlyMessage = 'インターネット接続を確認してください';
+            } else if (error.message.includes('過負荷') || error.message.includes('overloaded')) {
+                userFriendlyMessage = 'Gemini APIサーバーが一時的に過負荷状態です。数分後に再試行してください';
+            } else if (error.message.includes('サーバーが一時的に利用できません')) {
+                userFriendlyMessage = 'Gemini APIサーバーが一時的に利用できません';
             }
             
             throw new Error(`${userFriendlyMessage}: ${error.message}`);
         }
+    }
+
+    // サーバー状態チェック（リクエスト前に呼び出し）
+    checkServerStatus() {
+        const now = Date.now();
+        
+        // 過負荷検出から5分以内の場合は待機
+        if (this.serverStatus.overloadDetectedAt && 
+            (now - this.serverStatus.overloadDetectedAt) < 300000) { // 5分
+            throw new Error('Gemini APIサーバーが過負荷状態です。5分後に再試行してください。');
+        }
+        
+        // 次回リトライ時刻が設定されており、まだ時刻に達していない場合
+        if (this.serverStatus.nextRetryAfter && now < this.serverStatus.nextRetryAfter) {
+            const waitMinutes = Math.ceil((this.serverStatus.nextRetryAfter - now) / 60000);
+            throw new Error(`Gemini APIサーバーが過負荷状態です。${waitMinutes}分後に再試行してください。`);
+        }
+        
+        return true;
+    }
+
+    // サーバー過負荷状態を記録
+    recordServerOverload() {
+        const now = Date.now();
+        this.serverStatus.isAvailable = false;
+        this.serverStatus.overloadDetectedAt = now;
+        this.serverStatus.nextRetryAfter = now + (5 * 60 * 1000); // 5分後
+        console.warn('🚨 Gemini APIサーバー過負荷を記録しました。5分間待機します。');
+    }
+
+    // サーバー状態をリセット（成功時）
+    resetServerStatus() {
+        this.serverStatus.isAvailable = true;
+        this.serverStatus.overloadDetectedAt = null;
+        this.serverStatus.nextRetryAfter = null;
+        this.serverStatus.lastError = null;
     }
 
     // ゲームコンテキスト情報を取得
@@ -201,6 +249,15 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 
     // エラーハンドリングとリトライロジック
     async makeAPIRequest(url, requestBody, retryCount = 0) {
+        // リクエスト前にサーバー状態をチェック（初回のみ）
+        if (retryCount === 0) {
+            try {
+                this.checkServerStatus();
+            } catch (error) {
+                throw error;
+            }
+        }
+        
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -210,10 +267,16 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 body: JSON.stringify(requestBody)
             });
 
-            // 429エラー（レート制限）の場合はリトライ
-            if (response.status === 429 && retryCount < this.maxRetries) {
+            // 429エラー（レート制限）や503エラー（サーバー過負荷）の場合はリトライ
+            if ((response.status === 429 || response.status === 503) && retryCount < this.maxRetries) {
+                // 503エラーの場合は過負荷状態を記録
+                if (response.status === 503) {
+                    this.recordServerOverload();
+                }
+                
                 const delay = this.retryDelay * Math.pow(2, retryCount); // 指数バックオフ
-                console.warn(`Rate limit exceeded. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${this.maxRetries})`);
+                const errorType = response.status === 429 ? 'Rate limit' : 'Server overloaded';
+                console.warn(`${errorType} detected. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${this.maxRetries})`);
                 await this.delay(delay);
                 return this.makeAPIRequest(url, requestBody, retryCount + 1);
             }
@@ -228,11 +291,21 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                     throw new Error('APIキーが無効です。正しいAPIキーを設定してください。');
                 } else if (response.status === 429) {
                     throw new Error('レート制限に達しました。しばらく待ってから再試行してください。');
+                } else if (response.status === 503) {
+                    // 503エラーの詳細なハンドリング
+                    this.recordServerOverload();
+                    if (errorMessage.includes('overloaded') || errorMessage.includes('The model is overloaded')) {
+                        throw new Error('Gemini APIサーバーが過負荷状態です。数分後に再試行してください。');
+                    } else {
+                        throw new Error('サーバーが一時的に利用できません。後ほど再試行してください。');
+                    }
                 } else {
                     throw new Error(errorMessage);
                 }
             }
 
+            // 成功時はサーバー状態をリセット
+            this.resetServerStatus();
             return response;
         } catch (error) {
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {

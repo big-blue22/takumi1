@@ -67,11 +67,32 @@ class App {
             console.log('バックグラウンドAPI接続成功、メイン画面へ遷移');
             // API接続成功時は直接メイン初期化
             await this.initializeMainApp();
+            
+            // 過負荷状態の場合は追加メッセージを表示
+            if (apiCheckResult.overloaded) {
+                // 5分後に再度チェックするタイマーを設定
+                setTimeout(() => {
+                    this.showToast('💡 Gemini APIの状態を再チェック中...', 'info');
+                    this.recheckGeminiAPI();
+                }, 5 * 60 * 1000); // 5分後
+            }
         } else {
             console.log('API未設定または接続失敗、初期設定画面を表示');
-            // API未設定または接続失敗時は初期設定画面を表示
-            this.showInitialAPISetupModal();
-            this.setupInitialAPIModalListeners();
+            
+            // 503エラーの場合は特別なメッセージ
+            if (apiCheckResult.error && (
+                apiCheckResult.error.message.includes('503') || 
+                apiCheckResult.error.message.includes('過負荷') ||
+                apiCheckResult.error.message.includes('overloaded')
+            )) {
+                this.showToast('⚠️ Gemini APIが一時的に過負荷中です。APIキーは保存されているので、後ほど自動的に利用可能になります。', 'warning');
+                // 過負荷の場合でもアプリは起動する
+                await this.initializeMainApp();
+            } else {
+                // API未設定または接続失敗時は初期設定画面を表示
+                this.showInitialAPISetupModal();
+                this.setupInitialAPIModalListeners();
+            }
         }
         
         console.log('App initialized successfully');
@@ -231,6 +252,16 @@ class App {
             
         } catch (error) {
             console.warn('バックグラウンド接続テストに失敗:', error);
+            
+            // 503エラー（サーバー過負荷）の場合は、初期設定モーダルを表示せずに
+            // APIキーが設定済みとしてアプリを起動する
+            if (error.message && (error.message.includes('overloaded') || error.message.includes('503'))) {
+                console.log('Gemini APIサーバーが過負荷中ですが、APIキーは設定済みのためアプリを起動します');
+                this.showToast('⚠️ Gemini APIが一時的に過負荷中です。AI機能は後ほど利用可能になります。', 'warning');
+                this.syncAPIKeyInputs();
+                return { success: true, overloaded: true };
+            }
+            
             return { 
                 success: false, 
                 reason: 'connection_failed',
@@ -2814,6 +2845,28 @@ class App {
                 }, 200);
             }
         };
+    }
+    
+    // Gemini API状態の再チェック（過負荷解消後）
+    async recheckGeminiAPI() {
+        if (!window.unifiedApiManager?.isConfigured()) {
+            return;
+        }
+        
+        try {
+            console.log('🔄 Gemini API状態を再チェック中...');
+            await window.unifiedApiManager.validateAPIKey();
+            this.showToast('✅ Gemini APIが復旧しました！AI機能が利用可能になりました。', 'success');
+            console.log('✅ Gemini API復旧を確認');
+        } catch (error) {
+            console.log('⚠️ Gemini APIはまだ過負荷中:', error.message);
+            // まだ過負荷中の場合、さらに5分後に再チェック
+            if (error.message.includes('過負荷') || error.message.includes('overloaded')) {
+                setTimeout(() => {
+                    this.recheckGeminiAPI();
+                }, 5 * 60 * 1000); // さらに5分後
+            }
+        }
     }
 }
 
