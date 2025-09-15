@@ -919,7 +919,7 @@ body {
 
 .ai-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: between;
   align-items: center;
   margin-bottom: var(--spacing-lg);
 }
@@ -3209,24 +3209,12 @@ input, select, textarea {
 }
 
 .advice-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid rgba(233, 69, 96, 0.2);
-    gap: 1rem;
-}
-
-.advice-header .goal-focus {
-    margin-right: auto;
-}
-
-.coaching-timestamp {
-    font-size: 0.85em;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid rgba(233, 69, 96, 0.2);
 }
 
 .goal-focus {

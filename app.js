@@ -2408,8 +2408,6 @@ class App {
         const refreshCoachingBtn = document.getElementById('refresh-coaching');
         if (refreshCoachingBtn) {
             refreshCoachingBtn.addEventListener('click', () => {
-                // 強制的に新しいアドバイスを生成するために、保存されたデータを削除
-                localStorage.removeItem('coachingAdvice');
                 this.generateAIRecommendations();
             });
         }
@@ -2423,19 +2421,13 @@ class App {
     
     loadAIRecommendations() {
         try {
-            const savedAdviceData = localStorage.getItem('coachingAdvice');
-            if (savedAdviceData) {
-                const coachingAdvice = JSON.parse(savedAdviceData);
-                this.renderAIRecommendations(coachingAdvice.advice, coachingAdvice.goal, coachingAdvice.timestamp);
+            const goalsData = localStorage.getItem('goals');
+            const goals = goalsData ? JSON.parse(goalsData) : [];
+            
+            if (goals.length === 0) {
+                this.showNoRecommendationsMessage();
             } else {
-                const goalsData = localStorage.getItem('goals');
-                const goals = goalsData ? JSON.parse(goalsData) : [];
-
-                if (goals.length === 0) {
-                    this.showNoRecommendationsMessage();
-                } else {
-                    this.generateAIRecommendations();
-                }
+                this.generateAIRecommendations();
             }
         } catch (error) {
             console.warn('Failed to load AI recommendations:', error);
@@ -2495,16 +2487,7 @@ class App {
             const prompt = this.generateCoachingPrompt(priorityGoal, selectedGameData);
             const response = await this.geminiService.sendChatMessage(prompt, false);
             
-            // アドバイスとタイムスタンプを保存
-            const coachingAdvice = {
-                advice: response.response,
-                goal: priorityGoal,
-                timestamp: new Date().toISOString()
-            };
-            localStorage.setItem('coachingAdvice', JSON.stringify(coachingAdvice));
-
-            // 保存されたデータをロードして表示
-            this.loadAIRecommendations();
+            this.renderAIRecommendations(response.response, priorityGoal);
             
         } catch (error) {
             console.warn('AI recommendations generation failed:', error);
@@ -2558,16 +2541,16 @@ class App {
 3. 今日実践できること（50文字以内）`;
     }
     
-    renderAIRecommendations(aiResponse, goal, timestamp) {
+    renderAIRecommendations(aiResponse, goal) {
         const recommendationsContent = document.getElementById('ai-recommendations-content');
         if (!recommendationsContent) return;
-
+        
         // AIレスポンスを解析
         const lines = aiResponse.split('\n').filter(line => line.trim());
         let actionPlan = '';
         let effectiveness = '';
         let todayAction = '';
-
+        
         lines.forEach(line => {
             if (line.includes('1.') || line.includes('行動指針')) {
                 actionPlan = line.replace(/^[1.]?\s*/, '').replace(/行動指針[：:]?\s*/, '');
@@ -2577,22 +2560,20 @@ class App {
                 todayAction = line.replace(/^[3.]?\s*/, '').replace(/今日.*?[：:]?\s*/, '');
             }
         });
-
+        
         // デフォルト値を設定
         if (!actionPlan) actionPlan = aiResponse.substring(0, 100) + '...';
         if (!effectiveness) effectiveness = 'コーチング理論に基づく効果的なアプローチです';
         if (!todayAction) todayAction = '練習を始めてみましょう';
-
-        const formattedTimestamp = timestamp ? this.formatTimestamp(timestamp) : '更新日時不明';
-
+        
         recommendationsContent.innerHTML = `
             <div class="coaching-advice-card">
-                 <div class="advice-header">
+                <div class="advice-header">
                     <div class="goal-focus">
                         <span class="goal-icon">🎯</span>
                         <span class="goal-title">目標: ${goal.title}</span>
                     </div>
-                    <div class="coaching-timestamp">${formattedTimestamp}</div>
+                    <div class="goal-deadline">期限: ${new Date(goal.deadline).toLocaleDateString('ja-JP')}</div>
                 </div>
                 
                 <div class="advice-content">
@@ -2613,17 +2594,6 @@ class App {
                 </div>
             </div>
         `;
-    }
-
-    formatTimestamp(isoString) {
-        if (!isoString) return '';
-        const date = new Date(isoString);
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${year}/${month}/${day} ${hours}:${minutes}`;
     }
     
     showOfflineRecommendations(goals, gameData) {
