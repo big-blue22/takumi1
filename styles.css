@@ -3212,9 +3212,67 @@ input, select, textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-md);
   border-bottom: 1px solid rgba(233, 69, 96, 0.2);
+}
+
+.advice-update-time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--border-radius-small);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.update-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.update-time {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.coaching-advice-card.offline .update-time {
+  background: linear-gradient(135deg, var(--text-muted), var(--text-secondary));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Light theme adjustments for advice update time */
+[data-theme="light"] .advice-update-time {
+  background: rgba(15, 23, 42, 0.02);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .update-label {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .update-time {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .coaching-advice-card.offline .update-time {
+  background: linear-gradient(135deg, #64748b, #334155);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .goal-focus {

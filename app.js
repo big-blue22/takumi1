@@ -2427,12 +2427,39 @@ class App {
             if (goals.length === 0) {
                 this.showNoRecommendationsMessage();
             } else {
-                this.generateAIRecommendations();
+                // まず既存のアドバイスがあれば表示、なければ新しく生成
+                if (!this.loadExistingAdvice()) {
+                    this.generateAIRecommendations();
+                }
             }
         } catch (error) {
             console.warn('Failed to load AI recommendations:', error);
             this.showNoRecommendationsMessage();
         }
+    }
+
+    loadExistingAdvice() {
+        const storedAdvice = localStorage.getItem('cached-coaching-advice');
+        const updateTime = localStorage.getItem('coaching-advice-update-time');
+        
+        if (!storedAdvice || !updateTime) {
+            return false;
+        }
+
+        try {
+            const advice = JSON.parse(storedAdvice);
+            const recommendationsContent = document.getElementById('ai-recommendations-content');
+            
+            if (recommendationsContent && advice.html) {
+                // 既存のHTMLをそのまま表示（更新日時は既に含まれている）
+                recommendationsContent.innerHTML = advice.html;
+                return true;
+            }
+        } catch (error) {
+            console.warn('Failed to load existing advice:', error);
+        }
+        
+        return false;
     }
     
     showNoRecommendationsMessage() {
@@ -2544,13 +2571,13 @@ class App {
     renderAIRecommendations(aiResponse, goal) {
         const recommendationsContent = document.getElementById('ai-recommendations-content');
         if (!recommendationsContent) return;
-        
+
         // AIレスポンスを解析
         const lines = aiResponse.split('\n').filter(line => line.trim());
         let actionPlan = '';
         let effectiveness = '';
         let todayAction = '';
-        
+
         lines.forEach(line => {
             if (line.includes('1.') || line.includes('行動指針')) {
                 actionPlan = line.replace(/^[1.]?\s*/, '').replace(/行動指針[：:]?\s*/, '');
@@ -2560,13 +2587,17 @@ class App {
                 todayAction = line.replace(/^[3.]?\s*/, '').replace(/今日.*?[：:]?\s*/, '');
             }
         });
-        
+
         // デフォルト値を設定
         if (!actionPlan) actionPlan = aiResponse.substring(0, 100) + '...';
         if (!effectiveness) effectiveness = 'コーチング理論に基づく効果的なアプローチです';
         if (!todayAction) todayAction = '練習を始めてみましょう';
-        
-        recommendationsContent.innerHTML = `
+
+        // 更新日時を保存
+        const updateTime = new Date().toLocaleString('ja-JP');
+        localStorage.setItem('coaching-advice-update-time', updateTime);
+
+        const adviceHTML = `
             <div class="coaching-advice-card">
                 <div class="advice-header">
                     <div class="goal-focus">
@@ -2574,6 +2605,11 @@ class App {
                         <span class="goal-title">目標: ${goal.title}</span>
                     </div>
                     <div class="goal-deadline">期限: ${new Date(goal.deadline).toLocaleDateString('ja-JP')}</div>
+                </div>
+                
+                <div class="advice-update-time">
+                    <span class="update-label">最終更新:</span>
+                    <span class="update-time">${updateTime}</span>
                 </div>
                 
                 <div class="advice-content">
@@ -2594,23 +2630,33 @@ class App {
                 </div>
             </div>
         `;
-    }
-    
-    showOfflineRecommendations(goals, gameData) {
+
+        recommendationsContent.innerHTML = adviceHTML;
+        
+        // アドバイス内容をキャッシュに保存
+        localStorage.setItem('cached-coaching-advice', JSON.stringify({
+            html: adviceHTML,
+            timestamp: Date.now()
+        }));
+    }    showOfflineRecommendations(goals, gameData) {
         if (goals.length === 0) {
             this.showNoRecommendationsMessage();
             return;
         }
-        
+
         const priorityGoal = this.selectPriorityGoal(goals);
         const gameName = gameData.name || 'eSports';
-        
+
         // ゲーム固有のオフライン推奨事項
         const offlineAdvice = this.getOfflineAdvice(priorityGoal, gameName);
-        
+
+        // 更新日時を保存
+        const updateTime = new Date().toLocaleString('ja-JP');
+        localStorage.setItem('coaching-advice-update-time', updateTime);
+
         const recommendationsContent = document.getElementById('ai-recommendations-content');
         if (recommendationsContent) {
-            recommendationsContent.innerHTML = `
+            const adviceHTML = `
                 <div class="coaching-advice-card offline">
                     <div class="advice-header">
                         <div class="goal-focus">
@@ -2618,6 +2664,11 @@ class App {
                             <span class="goal-title">目標: ${priorityGoal.title}</span>
                         </div>
                         <div class="offline-indicator">オフラインモード</div>
+                    </div>
+                    
+                    <div class="advice-update-time">
+                        <span class="update-label">最終更新:</span>
+                        <span class="update-time">${updateTime}</span>
                     </div>
                     
                     <div class="advice-content">
@@ -2643,6 +2694,14 @@ class App {
                     </div>
                 </div>
             `;
+
+            recommendationsContent.innerHTML = adviceHTML;
+            
+            // アドバイス内容をキャッシュに保存
+            localStorage.setItem('cached-coaching-advice', JSON.stringify({
+                html: adviceHTML,
+                timestamp: Date.now()
+            }));
         }
     }
     
