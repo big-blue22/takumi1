@@ -54,10 +54,17 @@ class ThemeManager {
 
   applyTheme(theme) {
     const root = document.documentElement;
+    const body = document.body;
     const toggleBtn = document.getElementById('theme-toggle-btn');
+    
+    // 既存のテーマクラスを削除
+    body.classList.remove('light-theme', 'dark-theme');
     
     // テーマ属性を設定
     root.setAttribute('data-theme', theme);
+    
+    // テーマクラスを追加（CSS優先度強化のため）
+    body.classList.add(theme === 'light' ? 'light-theme' : 'dark-theme');
     
     if (theme === 'light') {
       // ライトモードのCSS変数を設定
@@ -74,6 +81,11 @@ class ThemeManager {
         toggleBtn.setAttribute('title', 'ライトモードに切り替え');
       }
     }
+
+    // 強制的にスタイルを再計算
+    root.style.display = 'none';
+    root.offsetHeight; // reflow をトリガー
+    root.style.display = '';
 
     // スムーズな遷移効果
     document.body.style.transition = 'all 0.3s ease';
