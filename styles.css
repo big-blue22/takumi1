@@ -427,14 +427,30 @@ body {
   font-size: var(--font-size-3xl);
   box-shadow: var(--shadow-neon);
   border: 3px solid rgba(255, 255, 255, 0.2);
+  /* ダークテーマでのアイコン視認性 */
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Light theme avatar - enhanced contrast */
+/* Light theme avatar - maximum contrast for icon visibility */
 [data-theme="light"] .avatar-placeholder {
-  background: linear-gradient(135deg, var(--color-primary), #1d4ed8) !important;
-  border: 3px solid rgba(15, 23, 42, 0.3) !important;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4) !important;
+  background: linear-gradient(135deg, #1e3a8a, #1e40af) !important;
+  border: 3px solid rgba(15, 23, 42, 0.5) !important;
+  box-shadow: 
+    0 4px 16px rgba(37, 99, 235, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
   color: white !important;
+  /* 強いテキストシャドウでアイコンを際立たせる */
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  /* より濃い背景でコントラスト最大化 */
+  position: relative;
+}
+
+/* アイコンにさらなるコントラストを追加 */
+[data-theme="light"] .avatar-placeholder::before {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
 }
 
 .player-details h3 {
