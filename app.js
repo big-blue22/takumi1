@@ -2572,18 +2572,6 @@ class App {
 3. 今日実践できること（50文字以内）`;
     }
     
-    // Markdown記号を除去してクリーンなテキストにする
-    cleanMarkdownText(text) {
-        return text
-            .replace(/\*\*([^*]+)\*\*/g, '$1')  // **bold** -> bold
-            .replace(/\*([^*]+)\*/g, '$1')      // *italic* -> italic
-            .replace(/`([^`]+)`/g, '$1')        // `code` -> code
-            .replace(/#{1,6}\s*/g, '')          // # headers -> remove
-            .replace(/^\s*[-*+]\s*/gm, '')      // list markers -> remove
-            .replace(/^\s*\d+\.\s*/gm, '')      // numbered lists -> remove
-            .trim();
-    }
-
     renderAIRecommendations(aiResponse, goal) {
         const recommendationsContent = document.getElementById('ai-recommendations-content');
         if (!recommendationsContent) return;
@@ -2596,16 +2584,16 @@ class App {
         
         lines.forEach(line => {
             if (line.includes('1.') || line.includes('行動指針')) {
-                actionPlan = this.cleanMarkdownText(line.replace(/^[1.]?\s*/, '').replace(/行動指針[：:]?\s*/, ''));
+                actionPlan = line.replace(/^[1.]?\s*/, '').replace(/行動指針[：:]?\s*/, '');
             } else if (line.includes('2.') || line.includes('効果的')) {
-                effectiveness = this.cleanMarkdownText(line.replace(/^[2.]?\s*/, '').replace(/効果的.*?[：:]?\s*/, ''));
+                effectiveness = line.replace(/^[2.]?\s*/, '').replace(/効果的.*?[：:]?\s*/, '');
             } else if (line.includes('3.') || line.includes('今日')) {
-                todayAction = this.cleanMarkdownText(line.replace(/^[3.]?\s*/, '').replace(/今日.*?[：:]?\s*/, ''));
+                todayAction = line.replace(/^[3.]?\s*/, '').replace(/今日.*?[：:]?\s*/, '');
             }
         });
         
         // デフォルト値を設定
-        if (!actionPlan) actionPlan = this.cleanMarkdownText(aiResponse.substring(0, 100) + '...');
+        if (!actionPlan) actionPlan = aiResponse.substring(0, 100) + '...';
         if (!effectiveness) effectiveness = 'コーチング理論に基づく効果的なアプローチです';
         if (!todayAction) todayAction = '練習を始めてみましょう';
 
@@ -2680,17 +2668,17 @@ class App {
                     <div class="advice-content">
                         <div class="advice-item">
                             <h4>💡 行動指針</h4>
-                            <p>${this.cleanMarkdownText(offlineAdvice.actionPlan)}</p>
+                            <p>${offlineAdvice.actionPlan}</p>
                         </div>
                         
                         <div class="advice-item">
                             <h4>🔍 効果の理由</h4>
-                            <p>${this.cleanMarkdownText(offlineAdvice.effectiveness)}</p>
+                            <p>${offlineAdvice.effectiveness}</p>
                         </div>
                         
                         <div class="advice-item today-action">
                             <h4>⚡ 今日やること</h4>
-                            <p>${this.cleanMarkdownText(offlineAdvice.todayAction)}</p>
+                            <p>${offlineAdvice.todayAction}</p>
                         </div>
                     </div>
                     
