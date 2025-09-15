@@ -2,29 +2,34 @@
 class GeminiService {
     constructor() {
         this.apiKey = '';
-        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-        this.chatModel = 'gemini-1.5-flash';
-        this.visionModel = 'gemini-1.5-flash';
+        // 複数のAPIバージョンを試す
+        this.baseUrls = [
+            'https://generativelanguage.googleapis.com/v1beta',
+            'https://generativelanguage.googleapis.com/v1'
+        ];
+    this.baseUrl = this.baseUrls[0]; // デフォルト
+    this.chatModel = 'gemini-2.5-flash'; // 指定モデル：Gemini 2.5 Flash
+    this.visionModel = 'gemini-2.5-flash';
         this.chatHistory = [];
-        this.retryDelay = 2000; // リトライ間隔（ミリ秒）- 503エラー対応で長めに設定
-        this.maxRetries = 4; // 最大リトライ回数 - 503エラー対応で増加
+        this.retryDelay = 1000; // リトライ間隔を短縮
+        this.maxRetries = 2; // リトライ回数を減らして即座に問題を特定
         
         // 統一APIマネージャとの連携
         this.initializeWithUnifiedAPI();
         
-        // デフォルトパラメータ
+        // Gemini 2.5 Flash用の最適化されたパラメータ
         this.chatParams = {
             temperature: 0.7,
-            maxOutputTokens: 1000,
-            topP: 0.8,
-            topK: 10
+            maxOutputTokens: 2048, // Gemini 2.5 Flashの性能を活用
+            topP: 0.9,
+            topK: 40 // より幅広い回答生成
         };
         
         this.visionParams = {
             temperature: 0.4,
-            maxOutputTokens: 2000,
+            maxOutputTokens: 4096, // ビジョン分析用により大きなトークン数
             topP: 0.95,
-            topK: 20
+            topK: 40
         };
         
         // サーバー状態監視
@@ -76,10 +81,43 @@ class GeminiService {
 
     // APIキーが設定されているかチェック
     isConfigured() {
+        let isValid;
         if (window.unifiedApiManager) {
-            return window.unifiedApiManager.isConfigured();
+            isValid = window.unifiedApiManager.isConfigured();
+            this.apiKey = window.unifiedApiManager.getAPIKey() || '';
+        } else {
+            isValid = this.apiKey && this.apiKey.trim().length > 0;
         }
-        return this.apiKey && this.apiKey.trim().length > 0;
+        
+        console.log('🔍 API設定状況:', {
+            hasApiKey: !!this.apiKey,
+            apiKeyLength: this.apiKey?.length,
+            apiKeyPrefix: this.apiKey?.substring(0, 10),
+            isConfigured: isValid,
+            hasUnifiedManager: !!window.unifiedApiManager
+        });
+        
+        // APIキーの形式検証も実行
+        this.validateApiKeyFormat();
+        
+        return isValid;
+    }
+    
+    // APIキーの形式検証 (Gemini 2.5 Flash対応)
+    validateApiKeyFormat() {
+        if (!this.apiKey) return false;
+        
+        // Gemini APIキーの基本的な形式チェック (2024年以降の形式にも対応)
+        const isValidFormat = this.apiKey.startsWith('AIza') && this.apiKey.length >= 35 && this.apiKey.length <= 45;
+        console.log('🔍 Gemini 2.5 Flash用APIキー形式チェック:', {
+            startsWithAIza: this.apiKey.startsWith('AIza'),
+            length: this.apiKey.length,
+            lengthInRange: this.apiKey.length >= 35 && this.apiKey.length <= 45,
+            isValidFormat: isValidFormat,
+            apiKeyExample: this.apiKey.substring(0, 15) + '...'
+        });
+        
+        return isValidFormat;
     }
 
     // APIキーをクリア
@@ -99,71 +137,64 @@ class GeminiService {
         }
 
         try {
-            console.log('🔄 Gemini API接続テスト中...');
-            const response = await this.sendChatMessage('テスト', false);
-            console.log('✓ Gemini API接続テストに成功しました');
+            console.log('🔄 Gemini 2.5 Flash API接続テスト中...');
+            console.log('🔑 APIキー:', this.apiKey.substring(0, 10) + '...');
+            console.log('🎯 使用モデル:', this.chatModel, '(Gemini 2.5 Flash)');
+            
+            // 最もシンプルなリクエストでテスト
+            const simpleRequestBody = {
+                contents: [{
+                    parts: [{ text: 'Hello from Gemini 2.5 Flash' }]
+                }]
+            };
+            
+            const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
+            console.log('📍 テストURL:', url);
+            
+            const response = await this.makeAPIRequest(url, simpleRequestBody);
+            const data = await response.json();
+            
+            console.log('✅ Gemini API接続テスト成功:', data);
             return { 
                 success: true, 
                 message: '接続に成功しました',
                 model: this.chatModel,
-                usage: response.usage || {}
+                usage: data.usageMetadata || {}
             };
         } catch (error) {
-            console.error('❌ Gemini API接続テストに失敗しました:', error);
+            console.error('❌ Gemini API接続テスト失敗:', error);
             
             let userFriendlyMessage = '接続テストに失敗しました';
             if (error.message.includes('API エンドポイントが見つかりません')) {
                 userFriendlyMessage = 'APIモデルまたはエンドポイントに問題があります';
-            } else if (error.message.includes('APIキーが無効です')) {
-                userFriendlyMessage = 'APIキーが無効です。正しいGemini APIキーを設定してください';
-            } else if (error.message.includes('レート制限')) {
-                userFriendlyMessage = 'APIの利用制限に達しています。しばらく待ってから再試行してください';
+            } else if (error.message.includes('APIキーが無効') || error.message.includes('401') || error.message.includes('403')) {
+                userFriendlyMessage = 'APIキーが無効か、権限がありません';
+            } else if (error.message.includes('レート制限') || error.message.includes('429')) {
+                userFriendlyMessage = 'APIの利用制限に達しています';
             } else if (error.message.includes('ネットワーク接続')) {
                 userFriendlyMessage = 'インターネット接続を確認してください';
-            } else if (error.message.includes('過負荷') || error.message.includes('overloaded')) {
-                userFriendlyMessage = 'Gemini APIサーバーが一時的に過負荷状態です。数分後に再試行してください';
-            } else if (error.message.includes('サーバーが一時的に利用できません')) {
-                userFriendlyMessage = 'Gemini APIサーバーが一時的に利用できません';
+            } else if (error.message.includes('503')) {
+                userFriendlyMessage = 'Gemini APIサービスに問題があります';
             }
             
             throw new Error(`${userFriendlyMessage}: ${error.message}`);
         }
     }
 
-    // サーバー状態チェック（リクエスト前に呼び出し）
+    // サーバー状態チェック（リクエスト前に呼び出し）- 診断モード用に無効化
     checkServerStatus() {
-        const now = Date.now();
-        
-        // 過負荷検出から5分以内の場合は待機
-        if (this.serverStatus.overloadDetectedAt && 
-            (now - this.serverStatus.overloadDetectedAt) < 300000) { // 5分
-            throw new Error('Gemini APIサーバーが過負荷状態です。5分後に再試行してください。');
-        }
-        
-        // 次回リトライ時刻が設定されており、まだ時刻に達していない場合
-        if (this.serverStatus.nextRetryAfter && now < this.serverStatus.nextRetryAfter) {
-            const waitMinutes = Math.ceil((this.serverStatus.nextRetryAfter - now) / 60000);
-            throw new Error(`Gemini APIサーバーが過負荷状態です。${waitMinutes}分後に再試行してください。`);
-        }
-        
+        console.log('🔍 診断モード: サーバー状態チェックをスキップ');
         return true;
     }
 
-    // サーバー過負荷状態を記録
+    // サーバー過負荷状態を記録（診断モード用に無効化）
     recordServerOverload() {
-        const now = Date.now();
-        this.serverStatus.isAvailable = false;
-        this.serverStatus.overloadDetectedAt = now;
-        this.serverStatus.nextRetryAfter = now + (5 * 60 * 1000); // 5分後
-        console.warn('🚨 Gemini APIサーバー過負荷を記録しました。5分間待機します。');
+        console.log('� 診断モード: 過負荷状態の記録をスキップ');
     }
 
     // サーバー状態をリセット（成功時）
     resetServerStatus() {
-        this.serverStatus.isAvailable = true;
-        this.serverStatus.overloadDetectedAt = null;
-        this.serverStatus.nextRetryAfter = null;
-        this.serverStatus.lastError = null;
+        console.log('🔍 診断モード: サーバー状態リセットをスキップ');
     }
 
     // ゲームコンテキスト情報を取得
@@ -220,24 +251,30 @@ class GeminiService {
         }
     }
 
-    // システムプロンプトを生成
+    // Gemini 2.5 Flash用の高度なシステムプロンプトを生成
     generateSystemPrompt(context) {
         const { game, stats, goals } = context;
         
-        return `あなたは経験豊富なeSportsコーチです。以下の情報を参考に、プレイヤーの質問に答えてください：
+        return `あなたは Gemini 2.5 Flash を活用した最新のeSportsパフォーマンスコーチです。高度な分析能力と迅速な応答を特徴とし、以下の情報を基に専門的なアドバイスを提供してください：
 
 【プレイヤー情報】
 - ゲーム: ${game.name} (${game.category})
-- ランク: ${stats.rank}
+- 現在のランク: ${stats.rank}
 - 勝率: ${stats.winRate}
 - 平均KDA: ${stats.avgKda}
-- 試合数: ${stats.gamesPlayed}
+- 総試合数: ${stats.gamesPlayed}
 
 【設定目標】
-${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join('\n') : '- 目標未設定'}
+${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join('\n') : '- まだ目標が設定されていません'}
 
-【指示】
-1. ${game.name}に特化したアドバイスを提供する
+【コーチング方針 (Gemini 2.5 Flash Enhanced)】
+1. ${game.name}の最新メタとトレンドを考慮した具体的アドバイス
+2. データドリブンな改善提案と実践的な練習方法
+3. プレイヤーの現在レベルに適した段階的スキルアップ計画
+4. メンタル面も含む総合的なパフォーマンス向上支援
+5. 迅速で的確な回答（Gemini 2.5 Flashの高速処理能力を活用）
+
+回答は具体的で実践しやすく、プレイヤーのモチベーション向上にも配慮してください。
 2. プレイヤーの現在のスキルレベルに適した内容にする
 3. 具体的で実行可能なアドバイスを心がける
 4. 励ましの言葉も含める
@@ -249,14 +286,14 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 
     // エラーハンドリングとリトライロジック
     async makeAPIRequest(url, requestBody, retryCount = 0) {
-        // リクエスト前にサーバー状態をチェック（初回のみ）
-        if (retryCount === 0) {
-            try {
-                this.checkServerStatus();
-            } catch (error) {
-                throw error;
-            }
-        }
+        console.log(`🔍 API Request Details:`, {
+            url: url,
+            method: 'POST',
+            hasApiKey: !!this.apiKey,
+            apiKeyLength: this.apiKey?.length,
+            requestBodySize: JSON.stringify(requestBody).length,
+            retryCount: retryCount
+        });
         
         try {
             const response = await fetch(url, {
@@ -267,47 +304,93 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 body: JSON.stringify(requestBody)
             });
 
-            // 429エラー（レート制限）や503エラー（サーバー過負荷）の場合はリトライ
-            if ((response.status === 429 || response.status === 503) && retryCount < this.maxRetries) {
-                // 503エラーの場合は過負荷状態を記録
-                if (response.status === 503) {
-                    this.recordServerOverload();
+            console.log(`📡 API Response:`, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
+            });
+
+            // 503エラーの場合、詳細な診断を実行
+            if (response.status === 503) {
+                const errorData = await response.json().catch(() => null);
+                console.error(`🔍 503エラーの詳細:`, {
+                    errorData: errorData,
+                    responseHeaders: Object.fromEntries(response.headers.entries()),
+                    url: url,
+                    requestBodySample: JSON.stringify(requestBody).substring(0, 200) + '...'
+                });
+                
+                // 代替エンドポイントやAPIバージョンを試す
+                if (retryCount === 0) {
+                    // 1. 異なるAPIバージョンを試す
+                    if (url.includes('/v1beta/')) {
+                        console.log('🔄 Trying v1 API version...');
+                        const alternativeUrl = url.replace('/v1beta/', '/v1/');
+                        try {
+                            return await this.makeAPIRequest(alternativeUrl, requestBody, retryCount + 1);
+                        } catch (alternativeError) {
+                            console.log('❌ v1 API also failed:', alternativeError.message);
+                        }
+                    }
+                    
+                    // 2. 異なるモデルを試す
+                    if (url.includes('gemini-2.5-flash')) {
+                        // Gemini 2.5 Flash が失敗した場合、代替モデルを試す
+                        console.log('🔄 Trying gemini-1.5-flash model as fallback...');
+                        const alternativeUrl = url.replace('gemini-2.5-flash', 'gemini-1.5-flash');
+                        try {
+                            return await this.makeAPIRequest(alternativeUrl, requestBody, retryCount + 1);
+                        } catch (alternativeError) {
+                            console.log('❌ gemini-1.5-flash also failed, trying gemini-pro...');
+                            const fallbackUrl = url.replace('gemini-2.5-flash', 'gemini-pro');
+                            try {
+                                return await this.makeAPIRequest(fallbackUrl, requestBody, retryCount + 2);
+                            } catch (fallbackError) {
+                                console.log('❌ All models failed:', fallbackError.message);
+                            }
+                        }
+                    }
                 }
                 
-                const delay = this.retryDelay * Math.pow(2, retryCount); // 指数バックオフ
-                const errorType = response.status === 429 ? 'Rate limit' : 'Server overloaded';
-                console.warn(`${errorType} detected. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${this.maxRetries})`);
-                await this.delay(delay);
-                return this.makeAPIRequest(url, requestBody, retryCount + 1);
+                // すべての代替手段が失敗した場合
+                const detailMessage = errorData?.error?.message || 'Service Unavailable';
+                if (detailMessage.includes('quota') || detailMessage.includes('exceeded')) {
+                    throw new Error(`APIクォータまたは制限に達しています: ${detailMessage}`);
+                } else if (detailMessage.includes('billing') || detailMessage.includes('payment')) {
+                    throw new Error(`課金またはAPIキーの問題があります: ${detailMessage}`);
+                } else if (detailMessage.includes('region') || detailMessage.includes('location')) {
+                    throw new Error(`地域制限またはアクセス制限があります: ${detailMessage}`);
+                } else {
+                    throw new Error(`API接続エラー (503): ${detailMessage}`);
+                }
             }
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
                 const errorMessage = errorData?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
                 
+                console.error(`❌ API Error:`, {
+                    status: response.status,
+                    errorData: errorData,
+                    url: url
+                });
+                
                 if (response.status === 404) {
                     throw new Error('API エンドポイントが見つかりません。モデル名またはURLを確認してください。');
                 } else if (response.status === 401 || response.status === 403) {
-                    throw new Error('APIキーが無効です。正しいAPIキーを設定してください。');
+                    throw new Error('APIキーが無効か、権限がありません。APIキーを確認してください。');
                 } else if (response.status === 429) {
                     throw new Error('レート制限に達しました。しばらく待ってから再試行してください。');
-                } else if (response.status === 503) {
-                    // 503エラーの詳細なハンドリング
-                    this.recordServerOverload();
-                    if (errorMessage.includes('overloaded') || errorMessage.includes('The model is overloaded')) {
-                        throw new Error('Gemini APIサーバーが過負荷状態です。数分後に再試行してください。');
-                    } else {
-                        throw new Error('サーバーが一時的に利用できません。後ほど再試行してください。');
-                    }
                 } else {
                     throw new Error(errorMessage);
                 }
             }
 
-            // 成功時はサーバー状態をリセット
-            this.resetServerStatus();
+            console.log(`✅ API Request successful`);
             return response;
         } catch (error) {
+            console.error(`💥 API Request failed:`, error);
+            
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                 throw new Error('ネットワーク接続に失敗しました。インターネット接続を確認してください。');
             }
