@@ -1090,8 +1090,18 @@ class App {
         }, 3000);
     }
     
-    // ローディング表示
-    showLoading() {
+    // ローディング表示（任意メッセージ対応）
+    showLoading(message = 'ロード中...') {
+        // テキストを更新（重複IDに対応して全て更新）
+        try {
+            const msgNodes = document.querySelectorAll('#loading .loading-content p');
+            if (msgNodes && msgNodes.length > 0) {
+                msgNodes.forEach(p => p.textContent = message);
+            }
+        } catch (e) {
+            console.debug('loading message update skipped:', e);
+        }
+
         const loading = document.getElementById('loading');
         if (loading) {
             loading.classList.remove('hidden');

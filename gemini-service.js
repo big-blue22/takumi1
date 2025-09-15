@@ -286,6 +286,9 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 
     // エラーハンドリングとリトライロジック
     async makeAPIRequest(url, requestBody, retryCount = 0) {
+        // ローディング開始（初回のみ表示）
+        try { window.app?.showLoading(retryCount === 0 ? 'AIに問い合わせ中...' : '再試行中...'); } catch {}
+
         console.log(`🔍 API Request Details:`, {
             url: url,
             method: 'POST',
@@ -387,6 +390,7 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             }
 
             console.log(`✅ API Request successful`);
+            try { window.app?.hideLoading(); } catch {}
             return response;
         } catch (error) {
             console.error(`💥 API Request failed:`, error);
@@ -394,6 +398,7 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                 throw new Error('ネットワーク接続に失敗しました。インターネット接続を確認してください。');
             }
+            try { if (retryCount >= (this.maxRetries || 0)) window.app?.hideLoading(); } catch {}
             throw error;
         }
     }
@@ -410,6 +415,7 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         }
 
         try {
+            try { window.app?.showLoading('AIが考え中...'); } catch {}
             const context = this.getGameContext();
             const systemPrompt = this.generateSystemPrompt(context);
 
@@ -474,12 +480,16 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 this.chatHistory = this.chatHistory.slice(-20);
             }
 
-            return {
+            const result = {
                 response: aiResponse,
                 usage: data.usageMetadata || {}
             };
 
+            try { window.app?.hideLoading(); } catch {}
+            return result;
+
         } catch (error) {
+            try { window.app?.hideLoading(); } catch {}
             console.error('Gemini chat error:', error);
             throw error;
         }
