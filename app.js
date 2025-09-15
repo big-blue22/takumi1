@@ -54,37 +54,25 @@ class App {
         // テーマの初期化
         this.initTheme();
         
-        // ログインチェック（一旦非表示にする）
-        this.checkAuthentication();
+        // すべてのモーダルを非表示にする
+        this.hideAllModals();
         
-        // API設定チェックと初期化（非同期）
-        await this.checkAndInitializeAPI();
+        // 統一APIマネージャーの初期化完了を待つ
+        await this.waitForUnifiedAPIManager();
         
-        // APIモーダル用のイベントリスナーを確実に設定
-        setTimeout(() => {
-            if (!window.apiModalListenersSet) {
-                this.setupInitialAPIModalListeners();
-            }
-        }, 500);
+        // API設定チェックと初期化（非同期）- この結果によって画面遷移が決まる
+        const apiCheckResult = await this.performBackgroundAPICheck();
         
-        // ゲーム選択とダッシュボード機能の初期化
-        this.initGameSelection();
-        this.initDashboardGoals();
-        
-        // その他のナビゲーション機能
-        this.initNavigationHelpers();
-        
-        // AIコーチング機能の初期化
-        this.initAICoaching();
-        
-        // 初期ページの表示
-        this.showPage(this.currentPage);
-        
-        // チャートの初期化
-        this.initCharts();
-        
-        // データのロード
-        this.loadUserData();
+        if (apiCheckResult.success) {
+            console.log('バックグラウンドAPI接続成功、メイン画面へ遷移');
+            // API接続成功時は直接メイン初期化
+            await this.initializeMainApp();
+        } else {
+            console.log('API未設定または接続失敗、初期設定画面を表示');
+            // API未設定または接続失敗時は初期設定画面を表示
+            this.showInitialAPISetupModal();
+            this.setupInitialAPIModalListeners();
+        }
         
         console.log('App initialized successfully');
     }
@@ -181,64 +169,113 @@ class App {
         }
     }
     
-    // API設定チェックと初期化
-    async checkAndInitializeAPI() {
-        // 統一APIマネージャーの確認
+    // すべてのモーダルを非表示
+    hideAllModals() {
+        const modals = [
+            'login-modal',
+            'api-initial-setup-modal',
+            'api-setup-modal'
+        ];
+        
+        modals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }
+        });
+    }
+
+    // 統一APIマネージャーの初期化完了を待つ
+    async waitForUnifiedAPIManager() {
+        let attempts = 0;
+        const maxAttempts = 50; // 5秒待機
+        
+        while (!window.unifiedApiManager && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
         if (!window.unifiedApiManager) {
-            console.error('統合APIマネージャーが利用できません');
-            return;
+            console.error('統一APIマネージャーの初期化に失敗');
+            throw new Error('統一APIマネージャーが利用できません');
         }
         
-        // 保存済みAPIキーがあるかチェック
-        const hasStoredKey = window.unifiedApiManager.isConfigured();
-        
-        if (hasStoredKey) {
-            console.log('保存済みAPIキーを発見、自動接続テストを実行中...');
-            
-            // ログインモーダルを非表示
-            const loginModal = document.getElementById('login-modal');
-            if (loginModal) {
-                loginModal.classList.add('hidden');
+        console.log('統一APIマネージャー初期化完了');
+    }
+
+    // バックグラウンドでAPI設定をチェック
+    async performBackgroundAPICheck() {
+        try {
+            if (!window.unifiedApiManager) {
+                return { success: false, reason: 'manager_unavailable' };
             }
             
-            try {
-                // 自動接続テストを実行
-                await this.performAutoConnectionTest();
-                
-                // 接続成功時はAPI設定画面をスキップしてメイン画面へ
-                console.log('自動接続テスト成功、API初期設定画面をスキップしてメイン画面へ遷移');
-                this.syncAPIKeyInputs();
-                
-                // 成功時のトーストを表示
-                this.showToast('保存されたAPIキーで接続に成功しました', 'success');
-                
-                // 初期化を続行してからログイン画面を表示
-                setTimeout(() => {
-                    this.continueInitialization();
-                    this.showLoginModal();
-                }, 300);
-                
-            } catch (error) {
-                console.warn('自動接続テストに失敗:', error);
-                
-                // 接続失敗時のエラーハンドリング
-                this.handleAutoConnectionTestFailure(error);
-            }
-        } else {
-            // APIキー未保存時は従来通り初期設定画面を表示
-            console.log('APIキーが保存されていません、初期設定画面を表示');
+            // 保存済みAPIキーがあるかチェック
+            const hasStoredKey = window.unifiedApiManager.isConfigured();
             
-            // ログインモーダルを非表示
-            const loginModal = document.getElementById('login-modal');
-            if (loginModal) {
-                loginModal.classList.add('hidden');
+            if (!hasStoredKey) {
+                console.log('APIキーが保存されていません');
+                return { success: false, reason: 'no_api_key' };
             }
             
-            // APIキー初期設定モーダルを表示
-            setTimeout(() => {
-                this.showInitialAPISetupModal();
-            }, 100);
+            console.log('保存済みAPIキーを発見、バックグラウンドで接続テスト中...');
+            
+            // バックグラウンドで接続テストを実行
+            const result = await window.unifiedApiManager.validateAPIKey();
+            
+            console.log('バックグラウンド接続テスト成功:', result);
+            this.syncAPIKeyInputs();
+            
+            return { success: true, result: result };
+            
+        } catch (error) {
+            console.warn('バックグラウンド接続テストに失敗:', error);
+            return { 
+                success: false, 
+                reason: 'connection_failed',
+                error: error 
+            };
         }
+    }
+
+    // メインアプリを初期化（API接続成功時）
+    async initializeMainApp() {
+        // ログインチェック
+        this.checkAuthentication();
+        
+        // 残りの初期化を実行
+        this.continueInitialization();
+        
+        // ゲーム選択とダッシュボード機能の初期化
+        this.initGameSelection();
+        this.initDashboardGoals();
+        
+        // その他のナビゲーション機能
+        this.initNavigationHelpers();
+        
+        // AIコーチング機能の初期化
+        this.initAICoaching();
+        
+        // 初期ページの表示
+        this.showPage(this.currentPage);
+        
+        // チャートの初期化
+        this.initCharts();
+        
+        // データのロード
+        this.loadUserData();
+        
+        // ログイン画面を表示
+        setTimeout(() => {
+            this.showLoginModal();
+        }, 100);
+    }
+
+    // API設定チェックと初期化（従来のメソッド、互換性のため残す）
+    async checkAndInitializeAPI() {
+        // 新しいフローに置き換えられたため、何もしない
+        console.log('checkAndInitializeAPIは新しいフローに置き換えられました');
     }
     
     // 初期化の続行（APIキー設定後）
@@ -268,10 +305,7 @@ class App {
             modal.classList.remove('hidden');
             modal.style.display = 'flex'; // 確実に表示
             
-            // イベントリスナーを一度だけ設定
-            if (!window.apiModalListenersSet) {
-                setTimeout(() => this.setupInitialAPIModalListeners(), 300);
-            }
+            console.log('初期API設定モーダルを表示');
             
             // 入力フィールドの初期状態をチェック
             setTimeout(() => {
@@ -287,8 +321,11 @@ class App {
     setupInitialAPIModalListeners() {
         // 重複登録を防ぐ
         if (window.apiModalListenersSet) {
+            console.log('APIモーダルリスナーは既に設定済み');
             return;
         }
+        
+        console.log('APIモーダルリスナーを設定中...');
         
         // イベント委譲を使用してdocumentレベルでイベントをキャッチ
         document.addEventListener('click', (e) => {
@@ -326,6 +363,7 @@ class App {
         
         // 重複設定防止フラグを設定
         window.apiModalListenersSet = true;
+        console.log('APIモーダルリスナー設定完了');
     }
     
     // APIキー表示/非表示切り替え
@@ -486,10 +524,9 @@ class App {
             this.showToast('APIキーを保存しました', 'success');
             this.closeInitialAPISetupModal();
             
-            // APIキー設定完了後、残りの初期化を実行してからログイン画面を表示
-            setTimeout(() => {
-                this.continueInitialization();
-                this.showLoginModal();
+            // APIキー設定完了後、メインアプリを初期化
+            setTimeout(async () => {
+                await this.initializeMainApp();
             }, 500);
             
         } catch (error) {
@@ -573,10 +610,9 @@ class App {
         this.showToast('API設定をスキップしました。一部機能が制限されます。', 'info');
         this.closeInitialAPISetupModal();
         
-        // スキップ後も残りの初期化を実行してからログイン画面を表示
-        setTimeout(() => {
-            this.continueInitialization();
-            this.showLoginModal();
+        // スキップ後もメインアプリを初期化
+        setTimeout(async () => {
+            await this.initializeMainApp();
         }, 500);
     }
     
