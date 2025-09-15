@@ -2477,9 +2477,6 @@ class App {
             // コーチングアドバイスの最終更新日時を保存
             this.saveCoachingAdviceLastUpdated();
             
-            // 古いキャッシュをクリア
-            localStorage.removeItem('cachedCoachingAdvice');
-            
             // Gemini APIが利用可能かチェック
             if (!this.geminiService || !this.geminiService.isConfigured()) {
                 this.showOfflineRecommendations(goals, selectedGameData);
@@ -2561,17 +2558,18 @@ class App {
         const progress = goal.progress || 0;
         const deadline = new Date(goal.deadline).toLocaleDateString('ja-JP');
         
-        return `あなたは${gameName}の専門コーチです。
+        return `あなたはeSportsコーチングの専門家です。
+以下の目標に対して、具体的で実践的なアドバイスを提供してください。
 
+ゲーム: ${gameName}
 目標: ${goal.title}
 期限: ${deadline}
-進捗: ${progress}%
+現在の進捗: ${progress}%
 
-この目標達成のために、以下の3つを自然な日本語で回答してください。番号や見出しは付けず、内容のみ答えてください。
-
-まず、具体的にどのような練習や行動を取るべきか一文で教えてください。
-次に、その方法がなぜ効果的なのか理由を一文で説明してください。
-最後に、今日すぐにできる具体的な行動を一文で提案してください。`;
+以下の形式で日本語で簡潔に回答してください：
+1. 具体的な行動指針（50文字以内）
+2. なぜそれが効果的か（100文字以内）
+3. 今日実践できること（50文字以内）`;
     }
     
     // Markdown記号を除去してクリーンなテキストにする
@@ -2597,36 +2595,34 @@ class App {
     parseAIResponse(aiResponse) {
         // AIレスポンスをクリーンアップ
         const cleanText = this.cleanMarkdownText(aiResponse);
-        const sentences = cleanText.split(/[。．\n]/).filter(s => s.trim().length > 10);
+        const lines = cleanText.split('\n').filter(line => line.trim());
         
         let actionPlan = '';
         let effectiveness = '';
         let todayAction = '';
         
-        // 文章を順番に割り当て（新しいプロンプト形式に対応）
-        if (sentences.length >= 3) {
-            actionPlan = sentences[0].trim();
-            effectiveness = sentences[1].trim();
-            todayAction = sentences[2].trim();
-        } else if (sentences.length === 2) {
-            actionPlan = sentences[0].trim();
-            effectiveness = sentences[1].trim();
-            todayAction = 'まずは基礎練習から始めましょう';
-        } else if (sentences.length === 1) {
-            actionPlan = sentences[0].trim();
-            effectiveness = '継続的な練習がスキル向上につながります';
-            todayAction = '今日から練習を始めましょう';
+        // より柔軟な解析パターン
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // 行動指針を探す
+            if (line.match(/^[1１][\.\．]?\s*/) || line.includes('行動指針') || line.includes('具体的')) {
+                actionPlan = line.replace(/^[1１][\.\．]?\s*/, '').replace(/.*?[：:]?\s*/, '').trim();
+            }
+            // 効果の理由を探す
+            else if (line.match(/^[2２][\.\．]?\s*/) || line.includes('効果') || line.includes('理由')) {
+                effectiveness = line.replace(/^[2２][\.\．]?\s*/, '').replace(/.*?[：:]?\s*/, '').trim();
+            }
+            // 今日やることを探す  
+            else if (line.match(/^[3３][\.\．]?\s*/) || line.includes('今日') || line.includes('実践')) {
+                todayAction = line.replace(/^[3３][\.\．]?\s*/, '').replace(/.*?[：:]?\s*/, '').trim();
+            }
         }
         
-        // フォールバック用のデフォルト値
-        if (!actionPlan) actionPlan = 'コーチング理論に基づく効果的な練習を行う';
-        if (!effectiveness) effectiveness = '継続的な練習がスキル向上の基本です';
-        if (!todayAction) todayAction = '基礎練習を15分間行う';
-        
         return {
-            actionPlan: actionPlan,
-            effectiveness: effectiveness,
-            todayAction: todayAction
+            actionPlan: actionPlan || 'コーチング理論に基づく効果的な練習を行いましょう',
+            effectiveness: effectiveness || '継続的な練習がスキル向上の基本です',
+            todayAction: todayAction || '基礎練習を15分間行いましょう'
         };
     }
 
@@ -2732,34 +2728,34 @@ class App {
     }
     
     getOfflineAdvice(goal, gameName) {
-        // ゲーム固有の基本的なアドバイスを提供 - 完全に自然な日本語版
+        // ゲーム固有の基本的なアドバイスを提供
         const gameSpecificAdvice = {
             'League of Legends': {
-                actionPlan: 'CSを意識したファーミングと効果的なワード配置を心がける',
-                effectiveness: 'ファーミングと視界管理はゲームの基礎であり、勝率向上に直結します',
-                todayAction: 'カスタムゲームで10分間CSトレーニングを実施する'
+                actionPlan: 'CSを意識してファームを安定させ、ワードで視界をコントロールする',
+                effectiveness: 'ゲームの基礎であるファーミングと視界管理は勝率向上の基盤となります',
+                todayAction: 'カスタムゲームで10分間CSトレーニングを行う'
             },
             'Valorant': {
-                actionPlan: 'エイムトレーニングとクロスヘア配置の最適化に集中する',
-                effectiveness: 'FPSゲームでは正確なエイムが直接的にフラグ率向上につながります',
-                todayAction: 'エイム練習場で15分間フリックとトラッキングを練習する'
+                actionPlan: 'エイム練習とクロスヘア配置を重点的に改善する',
+                effectiveness: 'FPSゲームでは正確なエイムが直接的にフラグ率とラウンド勝率に影響します',
+                todayAction: 'エイム練習場で15分間のフリック・トラッキング練習'
             },
             'Overwatch 2': {
-                actionPlan: 'ロール理解を深めてチーム連携とポジショニングを改善する',
-                effectiveness: 'チーム戦では個人スキルより連携力が勝敗を決定します',
-                todayAction: '自分のロールを再確認してコミュニケーションを意識し3戦プレイする'
+                actionPlan: 'ロール理解を深め、チーム連携とポジショニングを改善する',
+                effectiveness: 'チーム戦が重要なゲームでは個人スキルより連携力が勝敗を左右します',
+                todayAction: '自分のロールの役割を再確認し、コミュニケーションを意識して3戦プレイ'
             },
             'Rocket League': {
-                actionPlan: 'フリープレイでひたすらボールを追いかけ、触る！',
-                effectiveness: 'ボールコントロールの基礎は反復練習。予測、加速、ジャンプのタイミングを体で覚えられます',
-                todayAction: 'フリープレイで15分、ボールに触り続ける！'
+                actionPlan: 'フリープレイでボールコントロールの基礎を身につける',
+                effectiveness: '基本的なボール操作を反復練習することで、試合中の判断速度と操作精度が向上します',
+                todayAction: 'フリープレイで15分間ドリブル練習を行う'
             }
         };
         
         return gameSpecificAdvice[gameName] || {
-            actionPlan: '基礎練習を継続し試合の振り返りを定期的に行う',
-            effectiveness: '継続的な改善サイクルがスキル向上の鍵となります',
-            todayAction: '今日の試合を1回録画して後で見返す'
+            actionPlan: '基礎練習を継続し、試合の振り返りを定期的に行いましょう',
+            effectiveness: '継続的な改善サイクルがスキル向上の鍵です',
+            todayAction: '今日の試合を1回録画して後で見返す準備'
         };
     }
     
