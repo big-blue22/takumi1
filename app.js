@@ -2574,56 +2574,14 @@ class App {
     
     // Markdown記号を除去してクリーンなテキストにする
     cleanMarkdownText(text) {
-        if (!text) return '';
-        
         return text
             .replace(/\*\*([^*]+)\*\*/g, '$1')  // **bold** -> bold
             .replace(/\*([^*]+)\*/g, '$1')      // *italic* -> italic
             .replace(/`([^`]+)`/g, '$1')        // `code` -> code
             .replace(/#{1,6}\s*/g, '')          // # headers -> remove
             .replace(/^\s*[-*+]\s*/gm, '')      // list markers -> remove
-            .replace(/^\s*[1-9]\d*[\.\)]?\s*/gm, '') // numbered lists -> remove
-            .replace(/[：:]\s*$/, '')           // trailing colons -> remove
-            .replace(/^[：:]\s*/, '')           // leading colons -> remove
-            .replace(/なぜそれがか\s*[：:]\s*/, '') // 問題の文言を除去
-            .replace(/実践できること\s*[：:]\s*/, '') // 問題の文言を除去
-            .replace(/具体的な\s*[：:]\s*/, '')   // 問題の文言を除去
+            .replace(/^\s*\d+\.\s*/gm, '')      // numbered lists -> remove
             .trim();
-    }
-
-    // AIレスポンスを構造化された形式で解析
-    parseAIResponse(aiResponse) {
-        // AIレスポンスをクリーンアップ
-        const cleanText = this.cleanMarkdownText(aiResponse);
-        const lines = cleanText.split('\n').filter(line => line.trim());
-        
-        let actionPlan = '';
-        let effectiveness = '';
-        let todayAction = '';
-        
-        // より柔軟な解析パターン
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            
-            // 行動指針を探す
-            if (line.match(/^[1１][\.\．]?\s*/) || line.includes('行動指針') || line.includes('具体的')) {
-                actionPlan = line.replace(/^[1１][\.\．]?\s*/, '').replace(/.*?[：:]?\s*/, '').trim();
-            }
-            // 効果の理由を探す
-            else if (line.match(/^[2２][\.\．]?\s*/) || line.includes('効果') || line.includes('理由')) {
-                effectiveness = line.replace(/^[2２][\.\．]?\s*/, '').replace(/.*?[：:]?\s*/, '').trim();
-            }
-            // 今日やることを探す  
-            else if (line.match(/^[3３][\.\．]?\s*/) || line.includes('今日') || line.includes('実践')) {
-                todayAction = line.replace(/^[3３][\.\．]?\s*/, '').replace(/.*?[：:]?\s*/, '').trim();
-            }
-        }
-        
-        return {
-            actionPlan: actionPlan || 'コーチング理論に基づく効果的な練習を行いましょう',
-            effectiveness: effectiveness || '継続的な練習がスキル向上の基本です',
-            todayAction: todayAction || '基礎練習を15分間行いましょう'
-        };
     }
 
     renderAIRecommendations(aiResponse, goal) {
@@ -2631,7 +2589,25 @@ class App {
         if (!recommendationsContent) return;
         
         // AIレスポンスを解析
-        const parsed = this.parseAIResponse(aiResponse);
+        const lines = aiResponse.split('\n').filter(line => line.trim());
+        let actionPlan = '';
+        let effectiveness = '';
+        let todayAction = '';
+        
+        lines.forEach(line => {
+            if (line.includes('1.') || line.includes('行動指針')) {
+                actionPlan = this.cleanMarkdownText(line.replace(/^[1.]?\s*/, '').replace(/行動指針[：:]?\s*/, ''));
+            } else if (line.includes('2.') || line.includes('効果的')) {
+                effectiveness = this.cleanMarkdownText(line.replace(/^[2.]?\s*/, '').replace(/効果的.*?[：:]?\s*/, ''));
+            } else if (line.includes('3.') || line.includes('今日')) {
+                todayAction = this.cleanMarkdownText(line.replace(/^[3.]?\s*/, '').replace(/今日.*?[：:]?\s*/, ''));
+            }
+        });
+        
+        // デフォルト値を設定
+        if (!actionPlan) actionPlan = this.cleanMarkdownText(aiResponse.substring(0, 100) + '...');
+        if (!effectiveness) effectiveness = 'コーチング理論に基づく効果的なアプローチです';
+        if (!todayAction) todayAction = '練習を始めてみましょう';
 
         // 最終更新日時を取得してフォーマット
         const lastUpdated = this.getCoachingAdviceLastUpdated();
@@ -2653,17 +2629,17 @@ class App {
                 <div class="advice-content">
                     <div class="advice-item">
                         <h4>💡 行動指針</h4>
-                        <p>${parsed.actionPlan}</p>
+                        <p>${actionPlan}</p>
                     </div>
                     
                     <div class="advice-item">
                         <h4>🔍 効果の理由</h4>
-                        <p>${parsed.effectiveness}</p>
+                        <p>${effectiveness}</p>
                     </div>
                     
                     <div class="advice-item today-action">
                         <h4>⚡ 今日やること</h4>
-                        <p>${parsed.todayAction}</p>
+                        <p>${todayAction}</p>
                     </div>
                 </div>
             </div>
@@ -2747,8 +2723,8 @@ class App {
             },
             'Rocket League': {
                 actionPlan: 'フリープレイでボールコントロールの基礎を身につける',
-                effectiveness: '基本的なボール操作を反復練習することで、試合中の判断速度と操作精度が向上します',
-                todayAction: 'フリープレイで15分間ドリブル練習を行う'
+                effectiveness: 'ボールコントロールの基礎を身につけることで、操作感覚を体に覚え込ませることができます。反復練習が重要です',
+                todayAction: 'フリープレイで15分間、ボールを追いかける練習'
             }
         };
         
