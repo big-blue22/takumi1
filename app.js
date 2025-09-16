@@ -46,18 +46,6 @@ class App {
         // メディア解析用のファイル配列
         this.uploadedFiles = [];
         this.chatMessages = [];
-
-        // 初期化ガード用フラグ（重複初期化・リスナー多重登録の防止）
-        this.isMainInitialized = false;
-        this.listenersBound = false;
-        this.navigationInitialized = false;
-        this.aiCoachingInitialized = false;
-        this.gameSelectionInitialized = false;
-        this.dashboardGoalsInitialized = false;
-        this.navigationHelpersInitialized = false;
-        this.chatInitialized = false;
-        this.mediaInitialized = false;
-    this.isAIGenerating = false;
     }
     
     async init() {
@@ -284,14 +272,6 @@ class App {
 
     // メインアプリを初期化（API接続成功時）
     async initializeMainApp() {
-        // 重複初期化を防止
-        if (this.isMainInitialized) {
-            console.log('initializeMainApp: 既に初期化済みのためスキップ');
-            // キー入力欄の同期など軽量処理のみ実行
-            this.syncAPIKeyInputs();
-            return;
-        }
-        this.isMainInitialized = true;
         // ログインチェック
         this.checkAuthentication();
         
@@ -299,26 +279,14 @@ class App {
         this.continueInitialization();
         
         // ゲーム選択とダッシュボード機能の初期化
-        if (!this.gameSelectionInitialized) {
-            this.initGameSelection();
-            this.gameSelectionInitialized = true;
-        }
-        if (!this.dashboardGoalsInitialized) {
-            this.initDashboardGoals();
-            this.dashboardGoalsInitialized = true;
-        }
+        this.initGameSelection();
+        this.initDashboardGoals();
         
         // その他のナビゲーション機能
-        if (!this.navigationHelpersInitialized) {
-            this.initNavigationHelpers();
-            this.navigationHelpersInitialized = true;
-        }
+        this.initNavigationHelpers();
         
         // AIコーチング機能の初期化
-        if (!this.aiCoachingInitialized) {
-            this.initAICoaching();
-            this.aiCoachingInitialized = true;
-        }
+        this.initAICoaching();
         
         // 初期ページの表示
         this.showPage(this.currentPage);
@@ -348,29 +316,17 @@ class App {
             return;
         }
         
-        // イベントリスナーの設定（1回のみ）
-        if (!this.listenersBound) {
-            this.setupEventListeners();
-            this.listenersBound = true;
-        }
+        // イベントリスナーの設定
+        this.setupEventListeners();
         
-        // ナビゲーションの初期化（1回のみ）
-        if (!this.navigationInitialized) {
-            this.initNavigation();
-            this.navigationInitialized = true;
-        }
+        // ナビゲーションの初期化
+        this.initNavigation();
         
-        // チャット機能の初期化（1回のみ）
-        if (!this.chatInitialized) {
-            this.initChat();
-            this.chatInitialized = true;
-        }
+        // チャット機能の初期化
+        this.initChat();
         
-        // メディア解析機能の初期化（1回のみ）
-        if (!this.mediaInitialized) {
-            this.initMediaAnalysis();
-            this.mediaInitialized = true;
-        }
+        // メディア解析機能の初期化
+        this.initMediaAnalysis();
     }
     
     // 初期APIセットアップモーダルを表示
@@ -599,16 +555,9 @@ class App {
             this.showToast('APIキーを保存しました', 'success');
             this.closeInitialAPISetupModal();
             
-            // APIキー設定完了後、未初期化ならメインアプリを初期化
+            // APIキー設定完了後、メインアプリを初期化
             setTimeout(async () => {
-                if (!this.isMainInitialized) {
-                    await this.initializeMainApp();
-                } else {
-                    // 既に初期化済みの場合は、AI関連のみ再実行（必要に応じて）
-                    try {
-                        this.loadAIRecommendations();
-                    } catch (e) { console.debug(e); }
-                }
+                await this.initializeMainApp();
             }, 500);
             
         } catch (error) {
@@ -2642,14 +2591,13 @@ class App {
         
         // リフレッシュボタンのイベントリスナー
         const refreshCoachingBtn = document.getElementById('refresh-coaching');
-        if (refreshCoachingBtn && !refreshCoachingBtn.getAttribute('data-listener-added')) {
+        if (refreshCoachingBtn) {
             refreshCoachingBtn.addEventListener('click', () => {
                 // リフレッシュボタンが押された場合はキャッシュを強制削除
                 localStorage.removeItem('cached-coaching-advice');
                 localStorage.removeItem('coaching-advice-update-time');
                 this.generateAIRecommendations();
             });
-            refreshCoachingBtn.setAttribute('data-listener-added', 'true');
         }
         
         // 初期のAI推奨事項をロード
@@ -2741,11 +2689,6 @@ class App {
     
     async generateAIRecommendations() {
         console.log('🔄 generateAIRecommendations called');
-        if (this.isAIGenerating) {
-            console.log('AI推奨の生成が既に進行中のため、新規リクエストをスキップ');
-            return;
-        }
-        this.isAIGenerating = true;
         const refreshBtn = document.getElementById('refresh-coaching');
         if (refreshBtn) {
             refreshBtn.disabled = true;
@@ -2788,7 +2731,6 @@ class App {
             const selectedGameData = JSON.parse(localStorage.getItem('selectedGameData') || '{}');
             this.showOfflineRecommendations(goals, selectedGameData);
         } finally {
-            this.isAIGenerating = false;
             if (refreshBtn) {
                 refreshBtn.disabled = false;
                 refreshBtn.innerHTML = '🔄';
@@ -2853,33 +2795,10 @@ class App {
             }
         });
 
-        // プレースホルダ/低品質出力の検知（テンプレ語や極端に短い場合）
-        const looksPlaceholder = (text) => {
-            if (!text) return true;
-            const t = text.replace(/[*_`#>-]/g, '').trim();
-            const tooShort = t.length < 6; // あまりに短い
-            const templateWords = ['具体的な', '効果的', '今日', 'ここに', 'xxx', 'yyy'];
-            const isJustTemplate = templateWords.includes(t) || /^\d\.$/.test(t);
-            return tooShort || isJustTemplate;
-        };
-
         // デフォルト値を設定
         if (!actionPlan) actionPlan = aiResponse.substring(0, 100) + '...';
         if (!effectiveness) effectiveness = 'コーチング理論に基づく効果的なアプローチです';
         if (!todayAction) todayAction = '練習を始めてみましょう';
-
-        // 品質チェックに失敗した場合はオフラインにフォールバック
-        if (looksPlaceholder(actionPlan) || looksPlaceholder(effectiveness) || looksPlaceholder(todayAction)) {
-            console.warn('AI出力がプレースホルダ/低品質と判断されました。オフライン推奨へフォールバックします。');
-            try {
-                const goals = JSON.parse(localStorage.getItem('goals') || '[]');
-                const selectedGameData = JSON.parse(localStorage.getItem('selectedGameData') || '{}');
-                this.showOfflineRecommendations(goals, selectedGameData);
-                return;
-            } catch (e) {
-                console.debug('フォールバック中にエラー:', e);
-            }
-        }
 
         // 更新日時を保存
         const updateTime = new Date().toLocaleString('ja-JP');
