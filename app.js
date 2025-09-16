@@ -2874,7 +2874,11 @@ class App {
             .filter(Boolean);
 
         const pickByNumber = (n) => {
-            const re = new RegExp(`^(?:${n}|[${'０１２３'}[n-1] ?])\s*[\u002E\u3002\)\]、:：\-]?\s*(.+)$`);
+            // 日本語数字（全角）の配列を作成
+            const jpNumbers = ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'];
+            const jpNumbersUpToN = jpNumbers.slice(0, n).join('');
+            
+            const re = new RegExp(`^(?:${n}|[${jpNumbersUpToN}])\\s*[\\.。\\)\\]、:：\\-]?\\s*(.+)$`);
             for (const l of lines) {
                 const m = l.match(re);
                 if (m && m[1]) return m[1].trim();
