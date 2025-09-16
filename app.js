@@ -974,9 +974,84 @@ class App {
             duration: parseInt(document.getElementById('match-duration').value)
         };
         
+        // 1) 分析結果の表示
         this.analyzeMatch(matchData);
+
+        // 2) 試合を保存し、ダッシュボード統計を更新（連動）
+        this.storeMatchAndRefresh(matchData);
         document.getElementById('match-form').reset();
         this.showToast('分析を実行しています...', 'info');
+    }
+
+    // 分析ページの入力をローカルに保存し、ダッシュボードを更新
+    storeMatchAndRefresh(matchData) {
+        try {
+            // 保存フォーマットへ整形
+            const newMatch = {
+                id: Date.now(),
+                result: matchData.result || 'WIN',
+                kills: matchData.kills || 0,
+                deaths: matchData.deaths || 0,
+                assists: matchData.assists || 0,
+                cs: matchData.cs || 0,
+                duration: matchData.duration || 1,
+                kda: `${matchData.kills || 0}/${matchData.deaths || 0}/${matchData.assists || 0}`,
+                date: new Date().toISOString().split('T')[0],
+                gameMode: 'Custom'
+            };
+
+            // 直近試合へ追加（最大50件）
+            const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+            matches.unshift(newMatch);
+            if (matches.length > 50) matches.length = 50;
+            localStorage.setItem('recentMatches', JSON.stringify(matches));
+
+            // 集計してプレイヤー統計を更新
+            const totalMatches = matches.length;
+            const wins = matches.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
+            const totals = matches.reduce((acc, m) => {
+                acc.k += (m.kills || 0);
+                acc.d += (m.deaths || 0);
+                acc.a += (m.assists || 0);
+                acc.cs += (m.cs || 0);
+                acc.t += (m.duration || 0);
+                return acc;
+            }, { k:0, d:0, a:0, cs:0, t:0 });
+
+            const winRate = totalMatches ? +(((wins / totalMatches) * 100).toFixed(1)) : 0;
+            const avgKDA = totals.d === 0 ? +(totals.k + totals.a).toFixed(2) : +(((totals.k + totals.a) / Math.max(totals.d, 1)).toFixed(2));
+            const csPerMin = totals.t ? +((totals.cs / totals.t).toFixed(1)) : 0;
+
+            const updatedStats = {
+                winRate,
+                avgKDA,
+                csPerMin,
+                gamesPlayed: totalMatches
+            };
+
+            if (this.playerStatsManager) {
+                this.playerStatsManager.savePlayerStats(updatedStats);
+                // UIを即時更新
+                this.playerStatsManager.loadStatsToUI();
+                this.playerStatsManager.loadRecentMatches();
+            } else {
+                localStorage.setItem('playerStats', JSON.stringify(updatedStats));
+                this.loadRecentMatches();
+                // 手動でUIへ反映
+                const mapping = {
+                    'win-rate': `${winRate}%`,
+                    'avg-kda': `${avgKDA}`,
+                    'cs-per-min': `${csPerMin}`,
+                    'games-played': `${totalMatches}`
+                };
+                Object.entries(mapping).forEach(([id, value]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = value;
+                });
+            }
+        } catch (e) {
+            console.warn('Failed to store match and refresh stats:', e);
+        }
     }
     
     // 目標追加
@@ -2195,8 +2270,8 @@ class App {
         if (playerName) {
             playerName.textContent = `${gameData.name} プレイヤー`;
         }
-        
-        // ランクを設定
+
+        // ランクを設定（固定の例。ここはランダムではないため従来通り）
         const playerRank = document.getElementById('player-rank');
         if (playerRank) {
             const ranks = {
@@ -2208,21 +2283,71 @@ class App {
             };
             playerRank.textContent = ranks[gameData.name] || 'Platinum II';
         }
-        
-        // 統計データをサンプル値で更新
-        const stats = {
-            'win-rate': this.generateRandomStat(45, 75, '%'),
-            'avg-kda': this.generateRandomStat(1.2, 3.5, '', 1),
-            'cs-per-min': this.generateRandomStat(5.5, 8.5, '', 1),
-            'games-played': Math.floor(Math.random() * 300) + 50
-        };
-        
-        Object.entries(stats).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = value;
+
+        // 1) まずは保存済みの統計があればそれを使用（安定表示）
+        let stableStats = null;
+        if (this.playerStatsManager && this.playerStatsManager.hasValidStats()) {
+            stableStats = this.playerStatsManager.getPlayerStats();
+        }
+
+        // 2) なければ mock-data.js のデータから安定値を計算
+        if (!stableStats) {
+            try {
+                // mock-data.js が読み込まれていれば、最近の試合から指標を算出
+                let metrics = null;
+                if (typeof window !== 'undefined' && window.mockDataHelpers && typeof window.mockDataHelpers.calculatePerformanceMetrics === 'function') {
+                    metrics = window.mockDataHelpers.calculatePerformanceMetrics();
+                }
+
+                // K/D/A の平均値（棒グラフ用）も作っておく
+                let avgKills = 0, avgDeaths = 0, avgAssists = 0;
+                const matches = (typeof window !== 'undefined' && window.mockPlayerData && Array.isArray(window.mockPlayerData.recentMatches))
+                    ? window.mockPlayerData.recentMatches : [];
+                if (matches.length) {
+                    matches.forEach(m => { avgKills += m.kills; avgDeaths += m.deaths; avgAssists += m.assists; });
+                    avgKills = +(avgKills / matches.length).toFixed(1);
+                    avgDeaths = +(avgDeaths / matches.length).toFixed(1);
+                    avgAssists = +(avgAssists / matches.length).toFixed(1);
+                }
+
+                // 安定表示用の値を決定
+                stableStats = {
+                    winRate: metrics ? parseFloat(metrics.winRate) : (window.mockPlayerData?.stats?.winRate ?? 0),
+                    avgKDA: metrics ? parseFloat(metrics.avgKDA) : (window.mockPlayerData?.stats?.avgKDA ?? 0),
+                    csPerMin: metrics ? parseFloat(metrics.avgCSPerMin) : (window.mockPlayerData?.stats?.avgCSPerMin ?? 0),
+                    gamesPlayed: window.mockPlayerData?.stats?.gamesPlayed ?? (metrics?.totalMatches ?? 0),
+                    // チャート用の補助データ（任意）
+                    performanceData: (typeof window !== 'undefined' && window.mockPerformanceData) ? window.mockPerformanceData : undefined,
+                    kdaData: (matches.length ? { kills: avgKills, deaths: avgDeaths, assists: avgAssists } : undefined)
+                };
+
+                // 次回以降も同じ値を表示できるよう保存
+                if (this.playerStatsManager) {
+                    this.playerStatsManager.savePlayerStats(stableStats);
+                }
+            } catch (e) {
+                console.warn('Failed to build stable stats from mock data:', e);
             }
-        });
+        }
+
+        // 3) UI へ反映（存在しなければハイフンのまま）
+        if (stableStats) {
+            const mapping = {
+                'win-rate': `${Number(stableStats.winRate).toFixed(0)}%`,
+                'avg-kda': `${Number(stableStats.avgKDA)}`,
+                'cs-per-min': `${Number(stableStats.csPerMin).toFixed(1)}`,
+                'games-played': `${parseInt(stableStats.gamesPlayed, 10)}`
+            };
+            Object.entries(mapping).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            });
+
+            // チャート初期化（保存している場合のみ）
+            if (this.playerStatsManager) {
+                this.playerStatsManager.loadStatsToUI();
+            }
+        }
     }
     
     generateRandomStat(min, max, suffix = '', decimals = 0) {
