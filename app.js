@@ -2298,45 +2298,7 @@ class App {
             stableStats = this.playerStatsManager.getPlayerStats();
         }
 
-        // 2) なければ mock-data.js のデータから安定値を計算
-        if (!stableStats) {
-            try {
-                // mock-data.js が読み込まれていれば、最近の試合から指標を算出
-                let metrics = null;
-                if (typeof window !== 'undefined' && window.mockDataHelpers && typeof window.mockDataHelpers.calculatePerformanceMetrics === 'function') {
-                    metrics = window.mockDataHelpers.calculatePerformanceMetrics();
-                }
-
-                // K/D/A の平均値（棒グラフ用）も作っておく
-                let avgKills = 0, avgDeaths = 0, avgAssists = 0;
-                const matches = (typeof window !== 'undefined' && window.mockPlayerData && Array.isArray(window.mockPlayerData.recentMatches))
-                    ? window.mockPlayerData.recentMatches : [];
-                if (matches.length) {
-                    matches.forEach(m => { avgKills += m.kills; avgDeaths += m.deaths; avgAssists += m.assists; });
-                    avgKills = +(avgKills / matches.length).toFixed(1);
-                    avgDeaths = +(avgDeaths / matches.length).toFixed(1);
-                    avgAssists = +(avgAssists / matches.length).toFixed(1);
-                }
-
-                // 安定表示用の値を決定
-                stableStats = {
-                    winRate: metrics ? parseFloat(metrics.winRate) : (window.mockPlayerData?.stats?.winRate ?? 0),
-                    avgKDA: metrics ? parseFloat(metrics.avgKDA) : (window.mockPlayerData?.stats?.avgKDA ?? 0),
-                    csPerMin: metrics ? parseFloat(metrics.avgCSPerMin) : (window.mockPlayerData?.stats?.avgCSPerMin ?? 0),
-                    gamesPlayed: window.mockPlayerData?.stats?.gamesPlayed ?? (metrics?.totalMatches ?? 0),
-                    // チャート用の補助データ（任意）
-                    performanceData: (typeof window !== 'undefined' && window.mockPerformanceData) ? window.mockPerformanceData : undefined,
-                    kdaData: (matches.length ? { kills: avgKills, deaths: avgDeaths, assists: avgAssists } : undefined)
-                };
-
-                // 次回以降も同じ値を表示できるよう保存
-                if (this.playerStatsManager) {
-                    this.playerStatsManager.savePlayerStats(stableStats);
-                }
-            } catch (e) {
-                console.warn('Failed to build stable stats from mock data:', e);
-            }
-        }
+        // 2) 保存済みの統計がない場合は何もしない（初期状態は「-」のまま）
 
         // 3) UI へ反映（存在しなければハイフンのまま）
         if (stableStats) {
@@ -2350,7 +2312,6 @@ class App {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
             });
-
             // チャート初期化（保存している場合のみ）
             if (this.playerStatsManager) {
                 this.playerStatsManager.loadStatsToUI();
