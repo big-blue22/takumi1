@@ -272,6 +272,11 @@ class App {
 
     // メインアプリを初期化（API接続成功時）
     async initializeMainApp() {
+        // 統一APIマネージャーからGeminiServiceへのAPIキー同期を確保
+        if (window.unifiedApiManager && window.unifiedApiManager.isConfigured()) {
+            window.unifiedApiManager.updateLegacyAPIKeys();
+        }
+        
         // ログインチェック
         this.checkAuthentication();
         
@@ -1529,8 +1534,8 @@ class App {
     }
     
     async testGeminiConnection() {
-        if (!this.geminiService) {
-            this.showToast('Geminiサービスが利用できません', 'error');
+        if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
+            this.showToast('Gemini APIキーが設定されていません', 'error');
             return;
         }
         
@@ -1541,7 +1546,7 @@ class App {
         }
         
         try {
-            await this.geminiService.testConnection();
+            await window.unifiedApiManager.validateAPIKey();
             this.showToast('接続テストに成功しました', 'success');
         } catch (error) {
             this.showToast(`接続テストに失敗: ${error.message}`, 'error');
@@ -1557,7 +1562,13 @@ class App {
         const chatInput = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-message');
         
-        if (!chatInput || !this.geminiService) return;
+        if (!chatInput) return;
+        
+        // APIが設定されているか確認
+        if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
+            this.showToast('Gemini APIキーが設定されていません', 'warning');
+            return;
+        }
         
         const message = chatInput.value.trim();
         if (!message) return;
@@ -1878,7 +1889,7 @@ class App {
     }
     
     async analyzeFile(file) {
-        if (!this.geminiService || !this.geminiService.isConfigured()) {
+        if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
             this.showToast('Gemini APIキーが設定されていません', 'warning');
             return;
         }
@@ -2710,9 +2721,9 @@ class App {
                 return;
             }
             
-            // Gemini APIが利用可能かチェック
-            if (!this.geminiService || !this.geminiService.isConfigured()) {
-                console.log('🔧 Using offline recommendations');
+            // Gemini APIが利用可能かチェック（統一APIマネージャーを使用）
+            if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
+                console.log('🔧 Using offline recommendations - API not configured');
                 this.showOfflineRecommendations(goals, selectedGameData);
                 return;
             }
