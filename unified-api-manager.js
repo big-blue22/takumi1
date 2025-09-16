@@ -4,9 +4,13 @@ class UnifiedAPIManager {
         this.apiKey = null;
         this.isInitialized = false;
         this.encryptionKey = this.generateEncryptionKey();
+        this.updatingLegacyKeys = false; // 循環参照防止フラグ
+        
+        console.log('🚀 UnifiedAPIManager initializing...');
         
         // 初期化時にAPIキーを読み込み
-        this.loadAPIKey();
+        const loaded = this.loadAPIKey();
+        console.log('🚀 UnifiedAPIManager constructor complete. API key loaded:', loaded);
     }
     
     generateEncryptionKey() {
@@ -150,8 +154,9 @@ class UnifiedAPIManager {
     
     // 既存の個別APIキーを統一キーで更新
     updateLegacyAPIKeys() {
-        if (!this.isConfigured()) return;
+        if (!this.isConfigured() || this.updatingLegacyKeys) return;
         
+        this.updatingLegacyKeys = true;
         try {
             // Geminiサービスが存在する場合はAPIキーを設定
             if (window.geminiService && typeof window.geminiService.setApiKey === 'function') {
@@ -173,12 +178,21 @@ class UnifiedAPIManager {
             
         } catch (error) {
             console.warn('Failed to update legacy API keys:', error);
+        } finally {
+            this.updatingLegacyKeys = false;
         }
     }
     
     // APIキーが設定されているかチェック
     isConfigured() {
-        return this.isInitialized && this.apiKey && this.apiKey.length > 10;
+        const result = this.isInitialized && this.apiKey && this.apiKey.length > 10;
+        console.log('🔧 UnifiedAPIManager.isConfigured():', {
+            isInitialized: this.isInitialized,
+            hasApiKey: !!this.apiKey,
+            apiKeyLength: this.apiKey ? this.apiKey.length : 0,
+            result: result
+        });
+        return result;
     }
     
     // 接続テスト

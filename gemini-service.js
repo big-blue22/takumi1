@@ -61,12 +61,8 @@ class GeminiService {
         }
         
         this.apiKey = apiKey;
-        if (window.unifiedApiManager) {
-            window.unifiedApiManager.setAPIKey(apiKey);
-        } else {
-            // フォールバック
-            localStorage.setItem('gemini-api-key', apiKey);
-        }
+        // 循環参照を避けるため、統一APIマネージャーへの逆呼び出しは削除
+        // 統一APIマネージャーから一方向でのみAPIキーを受け取る
         
         console.log('✓ Gemini APIキーが設定されました');
     }

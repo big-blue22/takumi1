@@ -290,8 +290,10 @@ class App {
         // その他のナビゲーション機能
         this.initNavigationHelpers();
         
-        // AIコーチング機能の初期化
-        this.initAICoaching();
+        // AIコーチング機能の初期化（少し遅延させてAPI設定が確実に完了するのを待つ）
+        setTimeout(() => {
+            this.initAICoaching();
+        }, 500);
         
         // 初期ページの表示
         this.showPage(this.currentPage);
@@ -2722,6 +2724,12 @@ class App {
             }
             
             // Gemini APIが利用可能かチェック（統一APIマネージャーを使用）
+            console.log('🔧 API状態チェック:', {
+                unifiedApiManagerExists: !!window.unifiedApiManager,
+                isConfigured: window.unifiedApiManager ? window.unifiedApiManager.isConfigured() : false,
+                apiKey: window.unifiedApiManager ? (window.unifiedApiManager.getAPIKey() ? '設定済み' : '未設定') : '管理システム無し'
+            });
+            
             if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
                 console.log('🔧 Using offline recommendations - API not configured');
                 this.showOfflineRecommendations(goals, selectedGameData);
