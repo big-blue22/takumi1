@@ -2674,10 +2674,17 @@ class App {
     }
 
     loadExistingAdvice() {
+        console.log('🔍 loadExistingAdvice() called');
         const storedAdvice = localStorage.getItem('cached-coaching-advice');
         const updateTime = localStorage.getItem('coaching-advice-update-time');
         
+        console.log('💾 Cached advice check:', {
+            hasStoredAdvice: !!storedAdvice,
+            hasUpdateTime: !!updateTime
+        });
+        
         if (!storedAdvice || !updateTime) {
+            console.log('❌ No cached advice found, will generate new');
             return false;
         }
 
@@ -2688,7 +2695,10 @@ class App {
             
             // 24時間以上経過している場合はキャッシュを無効化
             const hoursElapsed = (now - lastUpdate) / (1000 * 60 * 60);
+            console.log(`⏰ Cached advice age: ${hoursElapsed.toFixed(1)} hours`);
+            
             if (hoursElapsed >= 24) {
+                console.log('🗑️ Cache expired (>24h), removing');
                 localStorage.removeItem('cached-coaching-advice');
                 localStorage.removeItem('coaching-advice-update-time');
                 return false;
@@ -2696,10 +2706,29 @@ class App {
             
             const recommendationsContent = document.getElementById('ai-recommendations-content');
             
+            // API状態が変わっている場合（オフライン→オンラインまたはその逆）はキャッシュを無効化
+            const currentlyOnline = window.unifiedApiManager && window.unifiedApiManager.isConfigured();
+            const cachedWasOffline = advice.html && advice.html.includes('offline');
+            
+            console.log('🔄 API state check:', {
+                currentlyOnline: currentlyOnline,
+                cachedWasOffline: cachedWasOffline
+            });
+            
+            if (currentlyOnline && cachedWasOffline) {
+                console.log('🔄 API is now online but cache was offline, regenerating');
+                localStorage.removeItem('cached-coaching-advice');
+                localStorage.removeItem('coaching-advice-update-time');
+                return false;
+            }
+            
             if (recommendationsContent && advice.html) {
                 // 既存のHTMLをそのまま表示（更新日時は既に含まれている）
+                console.log('✅ Displaying cached advice');
                 recommendationsContent.innerHTML = advice.html;
                 return true;
+            } else {
+                console.log('❌ Missing recommendations content element or cached HTML');
             }
         } catch (error) {
             console.warn('Failed to load existing advice:', error);
