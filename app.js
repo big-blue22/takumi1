@@ -2775,30 +2775,89 @@ class App {
 3. 今日実践できること（50文字以内）`;
     }
     
+    // AI応答を堅牢に解析して3要素に分解（不足時はnullを返す）
+    parseAIAdvice(aiResponse) {
+        if (!aiResponse || typeof aiResponse !== 'string') {
+            return { actionPlan: null, effectiveness: null, todayAction: null };
+        }
+
+        const text = aiResponse
+            // Markdown 的な強調などを除去
+            .replace(/\*\*|__|`|\*|>\s?/g, '')
+            .replace(/\r/g, '')
+            .trim();
+
+        const lines = text.split('\n')
+            .map(l => l.trim())
+            .filter(Boolean);
+
+        const pickByNumber = (n) => {
+            const re = new RegExp(`^(?:${n}|[${'０１２３'}[n-1] ?])\s*[\u002E\u3002\)\]、:：\-]?\s*(.+)$`);
+            for (const l of lines) {
+                const m = l.match(re);
+                if (m && m[1]) return m[1].trim();
+            }
+            return null;
+        };
+
+        const pickByLabel = (labels) => {
+            const re = new RegExp(`^(?:${labels.join('|')})[\s:：\-]+(.+)$`);
+            for (const l of lines) {
+                const m = l.match(re);
+                if (m && m[1]) return m[1].trim();
+            }
+            return null;
+        };
+
+        let actionPlan = pickByNumber(1) || pickByLabel(['行動指針', '行動計画', 'アクションプラン']);
+        let effectiveness = pickByNumber(2) || pickByLabel(['効果の理由', 'なぜそれが効果的か', '理由']);
+        let todayAction = pickByNumber(3) || pickByLabel(['今日やること', '今日実践できること', '次の一歩', 'Next Action']);
+
+        // 先頭の箇条書き記号などを除去
+        const clean = (s) => s && s
+            .replace(/^[-・\u2022\u25CF\u30fb\s]+/, '')
+            .replace(/^\.*\s*/, '')
+            .trim();
+
+        actionPlan = clean(actionPlan);
+        effectiveness = clean(effectiveness);
+        todayAction = clean(todayAction);
+
+        // 明らかなプレースホルダー・無内容の検出
+        const looksPlaceholder = (s) => !s || s.length < 5 || /(具体的な|なぜそれが|実践できること)\s*$/.test(s);
+        if (looksPlaceholder(actionPlan)) actionPlan = null;
+        if (looksPlaceholder(effectiveness)) effectiveness = null;
+        if (looksPlaceholder(todayAction)) todayAction = null;
+
+        return { actionPlan, effectiveness, todayAction };
+    }
+
     renderAIRecommendations(aiResponse, goal) {
         const recommendationsContent = document.getElementById('ai-recommendations-content');
         if (!recommendationsContent) return;
 
-        // AIレスポンスを解析
-        const lines = aiResponse.split('\n').filter(line => line.trim());
-        let actionPlan = '';
-        let effectiveness = '';
-        let todayAction = '';
+        // 解析（不足時は後で部分補完）
+        const parsed = this.parseAIAdvice(aiResponse);
 
-        lines.forEach(line => {
-            if (line.includes('1.') || line.includes('行動指針')) {
-                actionPlan = line.replace(/^[1.]?\s*/, '').replace(/行動指針[：:]?\s*/, '');
-            } else if (line.includes('2.') || line.includes('効果的')) {
-                effectiveness = line.replace(/^[2.]?\s*/, '').replace(/効果的.*?[：:]?\s*/, '');
-            } else if (line.includes('3.') || line.includes('今日')) {
-                todayAction = line.replace(/^[3.]?\s*/, '').replace(/今日.*?[：:]?\s*/, '');
+        let actionPlan = parsed.actionPlan;
+        let effectiveness = parsed.effectiveness;
+        let todayAction = parsed.todayAction;
+
+        // 不足項目がある場合はオフライン提案で補完
+        if (!actionPlan || !effectiveness || !todayAction) {
+            try {
+                const selectedGameData = JSON.parse(localStorage.getItem('selectedGameData') || '{}');
+                const offline = this.getOfflineAdvice(goal, selectedGameData?.name || 'eSports');
+                actionPlan = actionPlan || offline.actionPlan;
+                effectiveness = effectiveness || offline.effectiveness;
+                todayAction = todayAction || offline.todayAction;
+            } catch (e) {
+                // それでも取得できない場合の最終デフォルト
+                actionPlan = actionPlan || '具体的な練習テーマを1つ決めて集中して取り組みましょう';
+                effectiveness = effectiveness || '焦点を絞ることで学習効率が上がり、短期間で成果が出やすくなります';
+                todayAction = todayAction || '今日の練習時間を30分確保し、1つの課題に集中する';
             }
-        });
-
-        // デフォルト値を設定
-        if (!actionPlan) actionPlan = aiResponse.substring(0, 100) + '...';
-        if (!effectiveness) effectiveness = 'コーチング理論に基づく効果的なアプローチです';
-        if (!todayAction) todayAction = '練習を始めてみましょう';
+        }
 
         // 更新日時を保存
         const updateTime = new Date().toLocaleString('ja-JP');
@@ -2903,6 +2962,24 @@ class App {
             `;
 
             recommendationsContent.innerHTML = adviceHTML;
+            // API設定ボタンのイベントを付与
+            const setupBtn = document.getElementById('goto-api-setup');
+            if (setupBtn) {
+                setupBtn.addEventListener('click', () => {
+                    try {
+                        this.showPage('settings');
+                        this.updateNavigation('settings');
+                        // 初期設定モーダルが必要なら表示
+                        const needsSetup = !window.unifiedApiManager || !window.unifiedApiManager.isConfigured();
+                        if (needsSetup) {
+                            this.showInitialAPISetupModal();
+                            this.setupInitialAPIModalListeners();
+                        }
+                    } catch (e) {
+                        console.debug('Failed to open API setup:', e);
+                    }
+                });
+            }
             
             // アドバイス内容をキャッシュに保存
             localStorage.setItem('cached-coaching-advice', JSON.stringify({
