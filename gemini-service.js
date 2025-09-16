@@ -72,34 +72,70 @@ class GeminiService {
     }
 
     getApiKey() {
-        // 統一APIマネージャから取得を試行
-        if (window.unifiedApiManager && window.unifiedApiManager.isConfigured()) {
-            this.apiKey = window.unifiedApiManager.getAPIKey();
+        // 1) 統一APIマネージャから取得（利用可能かつ設定済みなら最優先）
+        if (window.unifiedApiManager) {
+            try {
+                if (window.unifiedApiManager.isConfigured()) {
+                    this.apiKey = window.unifiedApiManager.getAPIKey() || this.apiKey;
+                    return this.apiKey;
+                }
+            } catch (e) {
+                console.debug('UnifiedAPIManager getAPIKey failed, falling back:', e?.message);
+            }
+        }
+
+        // 2) レガシー保存のフォールバック（過去の入力を尊重）
+        const legacy = localStorage.getItem('gemini-api-key')
+            || localStorage.getItem('ai_api_key')
+            || localStorage.getItem('gemini_unified_api_key');
+        if (legacy) {
+            this.apiKey = legacy.trim();
         }
         return this.apiKey;
     }
 
     // APIキーが設定されているかチェック
     isConfigured() {
-        let isValid;
+        let isValid = false;
+
+        // 1) 統一APIマネージャがあり設定済みならそれを使用
         if (window.unifiedApiManager) {
-            isValid = window.unifiedApiManager.isConfigured();
-            this.apiKey = window.unifiedApiManager.getAPIKey() || '';
-        } else {
-            isValid = this.apiKey && this.apiKey.trim().length > 0;
+            try {
+                if (window.unifiedApiManager.isConfigured()) {
+                    this.apiKey = window.unifiedApiManager.getAPIKey() || '';
+                    isValid = !!this.apiKey;
+                }
+            } catch (e) {
+                console.debug('UnifiedAPIManager isConfigured check failed:', e?.message);
+            }
         }
-        
+
+        // 2) マネージャが未設定の場合はローカル保存をフォールバック
+        if (!isValid) {
+            // 既に this.apiKey に値があればそれを優先
+            let candidate = this.apiKey && this.apiKey.trim().length > 0 ? this.apiKey : null;
+            if (!candidate) {
+                candidate = localStorage.getItem('gemini-api-key')
+                    || localStorage.getItem('ai_api_key')
+                    || localStorage.getItem('gemini_unified_api_key');
+            }
+            if (candidate) {
+                this.apiKey = candidate.trim();
+                isValid = this.apiKey.length > 0;
+            }
+        }
+
         console.log('🔍 API設定状況:', {
             hasApiKey: !!this.apiKey,
             apiKeyLength: this.apiKey?.length,
-            apiKeyPrefix: this.apiKey?.substring(0, 10),
+            apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 10) : '',
             isConfigured: isValid,
             hasUnifiedManager: !!window.unifiedApiManager
         });
-        
-        // APIキーの形式検証も実行
+
+        // APIキーの形式検証も実行（ログ用途）
         this.validateApiKeyFormat();
-        
+
         return isValid;
     }
     

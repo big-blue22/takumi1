@@ -79,6 +79,18 @@ class UnifiedAPIManager {
         
         // 既存の個別APIキーを更新
         this.updateLegacyAPIKeys();
+
+        // グローバルサービスに即時反映（存在しない場合のフォールバック保存も）
+        try {
+            if (window.geminiService && typeof window.geminiService.setApiKey === 'function') {
+                window.geminiService.apiKey = this.apiKey; // 直接反映（ループ防止）
+            } else {
+                // 次回初期化時に拾えるようレガシーキーも更新
+                localStorage.setItem('gemini-api-key', this.apiKey);
+            }
+        } catch (e) {
+            console.debug('Failed to propagate API key to geminiService:', e?.message);
+        }
         
         // アプリに初期化完了を通知
         if (window.app && typeof window.app.onAPIKeyConfigured === 'function') {

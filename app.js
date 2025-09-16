@@ -1513,10 +1513,13 @@ class App {
                 // 他の入力フィールドも同期
                 this.syncAPIKeyInputs();
                 this.showToast('APIキーを保存しました', 'success');
+                // コーチングをオンラインで再生成
+                try { this.generateAIRecommendations(); } catch {}
             } else if (this.geminiService) {
                 // フォールバック
                 this.geminiService.setApiKey(apiKey);
                 this.showToast('Gemini APIキーを保存しました', 'success');
+                try { this.generateAIRecommendations(); } catch {}
             } else {
                 this.showToast('APIサービスが初期化されていません', 'error');
             }
@@ -2905,18 +2908,13 @@ class App {
             timestamp: Date.now()
         }));
     }    showOfflineRecommendations(goals, gameData) {
-        if (goals.length === 0) {
+        // 目標がゼロの場合は従来の「目標を設定して…」を表示
+        if (!goals || goals.length === 0) {
             this.showNoRecommendationsMessage();
             return;
         }
 
-        const priorityGoal = this.selectPriorityGoal(goals);
-        const gameName = gameData.name || 'eSports';
-
-        // ゲーム固有のオフライン推奨事項
-        const offlineAdvice = this.getOfflineAdvice(priorityGoal, gameName);
-
-        // 更新日時を保存
+        // オフラインのためアドバイスは表示しない方針
         const updateTime = new Date().toLocaleString('ja-JP');
         localStorage.setItem('coaching-advice-update-time', updateTime);
 
@@ -2927,41 +2925,29 @@ class App {
                     <div class="advice-header">
                         <div class="goal-focus">
                             <span class="goal-icon">🎯</span>
-                            <span class="goal-title">目標: ${priorityGoal.title}</span>
+                            <span class="goal-title">AIアドバイスを表示できません</span>
                         </div>
-                        <div class="offline-indicator">オフラインモード</div>
+                        <div class="offline-indicator">オフラインまたはAPI未設定</div>
                     </div>
-                    
                     <div class="advice-update-time">
-                        <span class="update-label">最終更新:</span>
+                        <span class="update-label">最終確認:</span>
                         <span class="update-time">${updateTime}</span>
                     </div>
-                    
                     <div class="advice-content">
                         <div class="advice-item">
-                            <h4>💡 行動指針</h4>
-                            <p>${offlineAdvice.actionPlan}</p>
-                        </div>
-                        
-                        <div class="advice-item">
-                            <h4>🔍 効果の理由</h4>
-                            <p>${offlineAdvice.effectiveness}</p>
-                        </div>
-                        
-                        <div class="advice-item today-action">
-                            <h4>⚡ 今日やること</h4>
-                            <p>${offlineAdvice.todayAction}</p>
+                            <h4>ℹ️ ご案内</h4>
+                            <p>現在オフライン、または Gemini API キーが未設定のため、コーチングアドバイスを表示できません。APIを設定後に再度お試しください。</p>
                         </div>
                     </div>
-                    
                     <div class="api-setup-suggestion">
-                        <p>さらに詳細なアドバイスを受けるにはGemini APIを設定してください</p>
+                        <p>Gemini APIを設定して、パーソナライズされたアドバイスを受け取りましょう。</p>
                         <button class="btn-secondary" id="goto-api-setup">API設定</button>
                     </div>
                 </div>
             `;
 
             recommendationsContent.innerHTML = adviceHTML;
+
             // API設定ボタンのイベントを付与
             const setupBtn = document.getElementById('goto-api-setup');
             if (setupBtn) {
@@ -2980,8 +2966,8 @@ class App {
                     }
                 });
             }
-            
-            // アドバイス内容をキャッシュに保存
+
+            // 表示をキャッシュに保存
             localStorage.setItem('cached-coaching-advice', JSON.stringify({
                 html: adviceHTML,
                 timestamp: Date.now()
