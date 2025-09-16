@@ -2616,15 +2616,18 @@ class App {
             });
         }
         
-        // 初期のAI推奨事項をロード
+        // 初期のAI推奨事項をロード（非同期）
         this.loadAIRecommendations();
         
         // 目標の変更を監視してAI推奨事項を更新
         this.setupAICoachingGoalsListener();
     }
     
-    loadAIRecommendations() {
+    async loadAIRecommendations() {
         try {
+            // 統一APIマネージャーの準備完了を確認
+            await this.ensureUnifiedAPIManagerReady();
+            
             const goalsData = localStorage.getItem('goals');
             const goals = goalsData ? JSON.parse(goalsData) : [];
             
@@ -2640,6 +2643,34 @@ class App {
             console.warn('Failed to load AI recommendations:', error);
             this.showNoRecommendationsMessage();
         }
+    }
+    
+    async ensureUnifiedAPIManagerReady() {
+        // 統一APIマネージャーが存在しない場合は少し待つ
+        let attempts = 0;
+        const maxAttempts = 20;
+        
+        while (!window.unifiedApiManager && attempts < maxAttempts) {
+            console.log(`⏳ Waiting for UnifiedAPIManager... (${attempts + 1}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (!window.unifiedApiManager) {
+            console.warn('⚠️ UnifiedAPIManager not available after waiting');
+            return false;
+        }
+        
+        // さらに初期化が完了するまで待つ
+        attempts = 0;
+        while ((!window.unifiedApiManager.isInitialized) && attempts < maxAttempts) {
+            console.log(`⏳ Waiting for UnifiedAPIManager initialization... (${attempts + 1}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        console.log('✅ UnifiedAPIManager is ready');
+        return true;
     }
 
     loadExistingAdvice() {

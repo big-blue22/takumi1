@@ -112,9 +112,16 @@ class UnifiedAPIManager {
     
     // LocalStorageからAPIキーを読み込み
     loadAPIKey() {
+        console.log('🔄 Loading API key from localStorage...');
         try {
             const storedKey = localStorage.getItem('gemini_unified_api_key');
             const timestamp = localStorage.getItem('api_key_timestamp');
+            
+            console.log('🔍 LocalStorage check:', {
+                hasStoredKey: !!storedKey,
+                keyLength: storedKey ? storedKey.length : 0,
+                hasTimestamp: !!timestamp
+            });
             
             if (storedKey) {
                 // 平文で保存されたキーを直接読み込み（クリーンアップ適用）
@@ -126,6 +133,12 @@ class UnifiedAPIManager {
                 if (cleanedKey.length > 0) {
                     this.apiKey = cleanedKey;
                     this.isInitialized = true;
+                    
+                    console.log('✅ API key set successfully:', {
+                        keyLength: cleanedKey.length,
+                        isInitialized: this.isInitialized,
+                        keyStartsWith: cleanedKey.substring(0, 6) + '...'
+                    });
                     
                     // キーの有効期限チェック（30日）
                     if (timestamp) {
@@ -140,15 +153,20 @@ class UnifiedAPIManager {
                     // 既存の個別APIキーを更新
                     this.updateLegacyAPIKeys();
                     
-                    console.log('API key loaded successfully (plain text)');
+                    console.log('✅ API key loaded successfully (plain text)');
                     return true;
+                } else {
+                    console.warn('⚠️ Stored API key is empty after cleaning');
                 }
+            } else {
+                console.log('ℹ️ No API key found in localStorage');
             }
         } catch (error) {
-            console.warn('Failed to load API key:', error);
+            console.warn('❌ Failed to load API key:', error);
             this.clearAPIKey();
         }
         
+        console.log('❌ API key loading failed');
         return false;
     }
     
