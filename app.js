@@ -2649,16 +2649,6 @@ class App {
                 localStorage.removeItem('coaching-advice-update-time');
                 return false;
             }
-
-            // オンライン利用可能時は「オフラインカード」のキャッシュを無視
-            const apiAvailable = (this.geminiService?.isConfigured?.() === true) || (window.unifiedApiManager?.isConfigured?.() === true);
-            if (apiAvailable && advice?.html && /coaching-advice-card\s+offline/.test(advice.html)) {
-                // オフライン表示が残っていれば破棄して再生成させる
-                localStorage.removeItem('cached-coaching-advice');
-                // 更新時刻は残しておいてもよいが、一貫性のため削除
-                localStorage.removeItem('coaching-advice-update-time');
-                return false;
-            }
             
             const recommendationsContent = document.getElementById('ai-recommendations-content');
             
@@ -2720,15 +2710,6 @@ class App {
                 return;
             }
             
-            // オンライン利用可能なら、過去のオフラインキャッシュは破棄
-            if (this.geminiService?.isConfigured?.()) {
-                const cached = localStorage.getItem('cached-coaching-advice');
-                if (cached && /coaching-advice-card\s+offline/.test(cached)) {
-                    localStorage.removeItem('cached-coaching-advice');
-                    localStorage.removeItem('coaching-advice-update-time');
-                }
-            }
-
             // Gemini APIが利用可能かチェック
             if (!this.geminiService || !this.geminiService.isConfigured()) {
                 console.log('🔧 Using offline recommendations');
