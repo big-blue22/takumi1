@@ -867,6 +867,14 @@ class App {
                 this.hideGameSelector();
             });
         }
+
+        // アプリ初期化ボタン
+        const resetBtn = document.getElementById('reset-app-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetAppData();
+            });
+        }
     }
     
     // タブ切り替え
@@ -2380,6 +2388,66 @@ class App {
         const guidance = document.getElementById('game-selection-guidance');
         if (guidance) {
             guidance.classList.add('hidden');
+        }
+    }
+
+    // アプリ全体の初期化（データ消去）
+    resetAppData() {
+        // 確認ダイアログ
+        const ok = confirm('アプリを初期化します。保存された試合・目標・APIキーなどのデータが削除されます。よろしいですか？');
+        if (!ok) return;
+
+        try {
+            // localStorage の主なキーを削除
+            const localKeys = [
+                'playerStats',
+                'recentMatches',
+                'goals',
+                'selectedGame',
+                'selectedGameData',
+                'theme',
+                'theme-manual',
+                'ai_provider',
+                'ai_api_key',
+                'ai_model',
+                'gemini_unified_api_key',
+                'api_key_timestamp',
+                'gemini-api-key',
+                'vision_api_key',
+                'video_api_key'
+            ];
+            localKeys.forEach(k => localStorage.removeItem(k));
+
+            // sessionStorage の主なキーを削除
+            const sessionKeys = ['currentUser', 'isGuest'];
+            sessionKeys.forEach(k => sessionStorage.removeItem(k));
+
+            // 内部サービスのクリーンアップ
+            if (this.geminiService && typeof this.geminiService.clearApiKey === 'function') {
+                try { this.geminiService.clearApiKey(); } catch (e) { console.debug(e); }
+            }
+            if (window.unifiedApiManager && typeof window.unifiedApiManager.clearAPIKey === 'function') {
+                try { window.unifiedApiManager.clearAPIKey(); } catch (e) { console.debug(e); }
+            }
+
+            // UI リセット
+            this.clearGameData();
+            const statsIds = ['win-rate', 'avg-kda', 'cs-per-min', 'games-played'];
+            statsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
+            const matchesContainer = document.getElementById('recent-matches');
+            if (matchesContainer) matchesContainer.innerHTML = '<p class="no-data">試合記録がまだありません</p>';
+            const goalsList = document.getElementById('goals-list');
+            if (goalsList) goalsList.innerHTML = '<p class="no-data">目標がまだ設定されていません</p>';
+
+            // テーマをデフォルトに戻す
+            this.currentTheme = 'dark';
+            this.applyTheme(this.currentTheme);
+
+            this.showToast('アプリを初期化しました。ページを再読み込みします…', 'success');
+            setTimeout(() => window.location.reload(), 600);
+        } catch (e) {
+            console.warn('Failed to reset app:', e);
+            this.showToast('初期化に失敗しました', 'error');
         }
     }
 
