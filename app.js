@@ -2874,14 +2874,33 @@ class App {
             .filter(Boolean);
 
         const pickByNumber = (n) => {
-            // 日本語数字（全角）の配列を作成
-            const jpNumbers = ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'];
-            const jpNumbersUpToN = jpNumbers.slice(0, n).join('');
-            
-            const re = new RegExp(`^(?:${n}|[${jpNumbersUpToN}])\\s*[\\.。\\)\\]、:：\\-]?\\s*(.+)$`);
-            for (const l of lines) {
-                const m = l.match(re);
-                if (m && m[1]) return m[1].trim();
+            try {
+                // より簡単で安全な正規表現を使用
+                const re = new RegExp(`^${n}[\\s\\.。\\)\\]、:：\\-]*(.+)$`);
+                for (const l of lines) {
+                    const m = l.match(re);
+                    if (m && m[1]) return m[1].trim();
+                }
+                
+                // 数字の後に内容がある行を探す（フォールバック）
+                for (const l of lines) {
+                    if (l.startsWith(n.toString())) {
+                        const content = l.substring(1).replace(/^[\s\\.。\\)\\]、:：\\-]+/, '').trim();
+                        if (content) return content;
+                    }
+                }
+            } catch (error) {
+                console.warn('正規表現エラー:', error);
+                // シンプルな文字列マッチングにフォールバック
+                for (const l of lines) {
+                    if (l.startsWith(n.toString())) {
+                        const content = l.substring(1).trim();
+                        if (content.match(/^[\s\\.。\\)\\]、:：\\-]+/)) {
+                            return content.replace(/^[\s\\.。\\)\\]、:：\\-]+/, '').trim();
+                        }
+                        return content;
+                    }
+                }
             }
             return null;
         };
