@@ -2399,6 +2399,12 @@ class App {
             if (matchesContainer) matchesContainer.innerHTML = '<p class="no-data">試合記録がまだありません</p>';
             const goalsList = document.getElementById('goals-list');
             if (goalsList) goalsList.innerHTML = '<p class="no-data">目標がまだ設定されていません</p>';
+            const advice = document.getElementById('ai-recommendations-content');
+            if (advice) advice.innerHTML = '<div class="no-recommendations-message"><p class="message-text">目標を設定してパーソナライズされたアドバイスを受け取りましょう</p></div>';
+
+            // AIコーチングのキャッシュも削除
+            localStorage.removeItem('cached-coaching-advice');
+            localStorage.removeItem('coaching-advice-update-time');
 
             // テーマをデフォルトに戻す
             this.currentTheme = 'dark';
