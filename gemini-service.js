@@ -11,8 +11,8 @@ class GeminiService {
     this.chatModel = 'gemini-2.5-flash'; // 指定モデル：Gemini 2.5 Flash
     this.visionModel = 'gemini-2.5-flash';
         this.chatHistory = [];
-        this.retryDelay = 1000; // リトライ間隔を短縮
-        this.maxRetries = 2; // リトライ回数を減らして即座に問題を特定
+        this.retryDelay = 2000; // リトライ間隔を調整（2秒）
+        this.maxRetries = 1; // サービス過負荷時は早めに諦める
         
         // 統一APIマネージャとの連携
         this.initializeWithUnifiedAPI();
@@ -430,13 +430,15 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 // すべての代替手段が失敗した場合
                 const detailMessage = errorData?.error?.message || 'Service Unavailable';
                 if (detailMessage.includes('quota') || detailMessage.includes('exceeded')) {
-                    throw new Error(`APIクォータまたは制限に達しています: ${detailMessage}`);
+                    throw new Error(`APIクォータまたは制限に達しています。しばらく待ってから再試行してください。`);
                 } else if (detailMessage.includes('billing') || detailMessage.includes('payment')) {
-                    throw new Error(`課金またはAPIキーの問題があります: ${detailMessage}`);
+                    throw new Error(`課金またはAPIキーの問題があります。Google Cloudコンソールで設定を確認してください。`);
                 } else if (detailMessage.includes('region') || detailMessage.includes('location')) {
-                    throw new Error(`地域制限またはアクセス制限があります: ${detailMessage}`);
+                    throw new Error(`地域制限またはアクセス制限があります。お住まいの地域での利用可能性を確認してください。`);
+                } else if (detailMessage.includes('overloaded') || detailMessage.includes('Overloaded')) {
+                    throw new Error(`Gemini AIサービスが一時的に過負荷状態です。数分後に再試行してください。`);
                 } else {
-                    throw new Error(`API接続エラー (503): ${detailMessage}`);
+                    throw new Error(`Gemini AIサービスが一時的に利用できません (503)。しばらく待ってから再試行してください。`);
                 }
             }
 

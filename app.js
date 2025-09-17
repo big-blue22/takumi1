@@ -2808,6 +2808,9 @@ class App {
         } catch (error) {
             console.warn('AI recommendations generation failed:', error);
             
+            // エラーの種類に応じてユーザーにメッセージを表示
+            this.showAIErrorMessage(error);
+            
             // フォールバック: オフライン推奨事項
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
             const selectedGameData = JSON.parse(localStorage.getItem('selectedGameData') || '{}');
@@ -2818,6 +2821,78 @@ class App {
                 refreshBtn.innerHTML = '🔄';
             }
         }
+    }
+
+    // AI接続エラー時のユーザー向けメッセージ表示
+    showAIErrorMessage(error) {
+        const errorContainer = document.querySelector('#ai-coaching .card-content');
+        if (!errorContainer) return;
+
+        let userMessage = '';
+        let retryMessage = '';
+        let isRetryable = true;
+
+        // エラーの種類によってメッセージを変更
+        if (error.message.includes('過負荷') || error.message.includes('overloaded') || error.message.includes('503')) {
+            userMessage = '🔄 Gemini AIサービスが混雑しています';
+            retryMessage = '自動的に再試行します...';
+            // 過負荷エラーの場合、30秒後に自動リトライ
+            setTimeout(() => {
+                console.log('🔄 Auto-retry after 503 error...');
+                this.generateAIRecommendations();
+            }, 30000);
+        } else if (error.message.includes('クォータ') || error.message.includes('quota') || error.message.includes('429')) {
+            userMessage = '⚠️ API利用制限に達しました';
+            retryMessage = '1時間後に再試行してください';
+            isRetryable = false;
+        } else if (error.message.includes('APIキー') || error.message.includes('401') || error.message.includes('403')) {
+            userMessage = '🔑 APIキーに問題があります';
+            retryMessage = '設定を確認してください';
+            isRetryable = false;
+        } else if (error.message.includes('ネットワーク')) {
+            userMessage = '🌐 インターネット接続を確認してください';
+            retryMessage = '接続復旧後に自動的に再試行します';
+        } else {
+            userMessage = '❌ AI接続に問題が発生しました';
+            retryMessage = 'しばらく待ってから再試行してください';
+        }
+
+        // エラーメッセージを表示
+        const errorHTML = `
+            <div class="ai-error-message" style="
+                background: linear-gradient(135deg, #ff6b6b, #ffa500);
+                color: white;
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 15px;
+                text-align: center;
+                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            ">
+                <h4 style="margin: 0 0 8px 0;">${userMessage}</h4>
+                <p style="margin: 0; opacity: 0.9; font-size: 0.9em;">${retryMessage}</p>
+                ${isRetryable ? `
+                    <button id="manual-retry-btn" style="
+                        margin-top: 10px;
+                        padding: 8px 16px;
+                        background: rgba(255,255,255,0.2);
+                        border: 1px solid rgba(255,255,255,0.3);
+                        color: white;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-size: 0.8em;
+                    " onclick="app.generateAIRecommendations()">
+                        今すぐ再試行
+                    </button>
+                ` : ''}
+            </div>
+        `;
+
+        // 既存のエラーメッセージを削除してから新しいものを追加
+        const existingError = errorContainer.querySelector('.ai-error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        errorContainer.insertAdjacentHTML('afterbegin', errorHTML);
     }
     
     selectPriorityGoal(goals) {
