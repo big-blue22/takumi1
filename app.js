@@ -2863,6 +2863,29 @@ class App {
             return { actionPlan: null, effectiveness: null, todayAction: null };
         }
 
+        // まずコードブロック内のJSONを優先的に抽出（AIがJSONで返すケースに対応）
+        try {
+            const jsonBlockMatch = aiResponse.match(/```(?:json)?\n([\s\S]*?)```/i);
+            const raw = jsonBlockMatch ? jsonBlockMatch[1] : aiResponse;
+            const possibleJson = raw.trim().startsWith('{') || raw.trim().startsWith('[');
+            if (possibleJson) {
+                const data = JSON.parse(raw);
+                const obj = Array.isArray(data) ? data[0] : data;
+                const ap = obj.actionPlan || obj.action || obj.action_plan || obj.plan;
+                const eff = obj.effectiveness || obj.reason || obj.why;
+                const ta = obj.todayAction || obj.nextAction || obj.today || obj.action_today;
+                if (ap || eff || ta) {
+                    return {
+                        actionPlan: ap || null,
+                        effectiveness: eff || null,
+                        todayAction: ta || null
+                    };
+                }
+            }
+        } catch (_) {
+            // JSONではなかった場合は通常解析にフォールバック
+        }
+
         const text = aiResponse
             // Markdown 的な強調などを除去
             .replace(/\*\*|__|`|\*|>\s?/g, '')
@@ -2873,43 +2896,45 @@ class App {
             .map(l => l.trim())
             .filter(Boolean);
 
+        const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         const pickByNumber = (n) => {
             try {
-                // より簡単で安全な正規表現を使用
+                // 1 / 1. / 1) / 1：/ 1- などを許容
                 const re = new RegExp(`^${n}[\\s\\.。\\)\\]、:：\\-]*(.+)$`);
                 for (const l of lines) {
                     const m = l.match(re);
                     if (m && m[1]) return m[1].trim();
                 }
-                
-                // 数字の後に内容がある行を探す（フォールバック）
+                // フォールバック
                 for (const l of lines) {
                     if (l.startsWith(n.toString())) {
-                        const content = l.substring(1).replace(/^[\s\\.。\\)\\]、:：\\-]+/, '').trim();
+                        const content = l.substring(1).replace(/^[\s\.。\)\]、:：\-]+/, '').trim();
                         if (content) return content;
                     }
                 }
             } catch (error) {
                 console.warn('正規表現エラー:', error);
-                // シンプルな文字列マッチングにフォールバック
-                for (const l of lines) {
-                    if (l.startsWith(n.toString())) {
-                        const content = l.substring(1).trim();
-                        if (content.match(/^[\s\\.。\\)\\]、:：\\-]+/)) {
-                            return content.replace(/^[\s\\.。\\)\\]、:：\\-]+/, '').trim();
-                        }
-                        return content;
-                    }
-                }
             }
             return null;
         };
 
         const pickByLabel = (labels) => {
-            const re = new RegExp(`^(?:${labels.join('|')})[\s:：\-]+(.+)$`);
+            // ラベルの正規表現を安全に構築し、先頭/コロン/ダッシュ/空白を許容
+            const re = new RegExp(`^(?:${labels.map(escapeRegExp).join('|')})[\\s:：\-]+(.+)$`);
             for (const l of lines) {
                 const m = l.match(re);
                 if (m && m[1]) return m[1].trim();
+            }
+            // 行の途中にラベルがあるケース（例: 「行動指針: xxx」）
+            for (const l of lines) {
+                for (const label of labels) {
+                    const idx = l.indexOf(label);
+                    if (idx >= 0) {
+                        const tail = l.substring(idx + label.length).replace(/^[\s:：\-]+/, '').trim();
+                        if (tail) return tail;
+                    }
+                }
             }
             return null;
         };
@@ -2920,7 +2945,7 @@ class App {
 
         // 先頭の箇条書き記号などを除去
         const clean = (s) => s && s
-            .replace(/^[-・\u2022\u25CF\u30fb\s]+/, '')
+            .replace(/^[\-・\u2022\u25CF\u30fb\s]+/, '')
             .replace(/^\.*\s*/, '')
             .trim();
 
@@ -2948,25 +2973,48 @@ class App {
         let effectiveness = parsed.effectiveness;
         let todayAction = parsed.todayAction;
 
-        // 不足項目がある場合はオフライン提案で補完
-        if (!actionPlan || !effectiveness || !todayAction) {
-            try {
-                const selectedGameData = JSON.parse(localStorage.getItem('selectedGameData') || '{}');
-                const offline = this.getOfflineAdvice(goal, selectedGameData?.name || 'eSports');
-                actionPlan = actionPlan || offline.actionPlan;
-                effectiveness = effectiveness || offline.effectiveness;
-                todayAction = todayAction || offline.todayAction;
-            } catch (e) {
-                // それでも取得できない場合の最終デフォルト
-                actionPlan = actionPlan || '具体的な練習テーマを1つ決めて集中して取り組みましょう';
-                effectiveness = effectiveness || '焦点を絞ることで学習効率が上がり、短期間で成果が出やすくなります';
-                todayAction = todayAction || '今日の練習時間を30分確保し、1つの課題に集中する';
-            }
-        }
+        // 部分オフライン補完は不要: AIが返した内容のみを使用（欠損は描画スキップ）
+        // 空要素は描画しない方針（定型文は挿入しない）
+        actionPlan = actionPlan && String(actionPlan).trim();
+        effectiveness = effectiveness && String(effectiveness).trim();
+        todayAction = todayAction && String(todayAction).trim();
 
         // 更新日時を保存
         const updateTime = new Date().toLocaleString('ja-JP');
         localStorage.setItem('coaching-advice-update-time', updateTime);
+
+        // 描画用の項目を動的に組み立て（空は描画しない）
+        const items = [];
+        if (actionPlan) {
+            items.push(`
+                <div class="advice-item">
+                    <h4>💡 行動指針</h4>
+                    <p>${actionPlan}</p>
+                </div>
+            `);
+        }
+        if (effectiveness) {
+            items.push(`
+                <div class="advice-item">
+                    <h4>🔍 効果の理由</h4>
+                    <p>${effectiveness}</p>
+                </div>
+            `);
+        }
+        if (todayAction) {
+            items.push(`
+                <div class="advice-item today-action">
+                    <h4>⚡ 今日やること</h4>
+                    <p>${todayAction}</p>
+                </div>
+            `);
+        }
+
+        // すべて空なら描画を行わずにリターン（既存表示を維持）
+        if (items.length === 0) {
+            console.warn('No advice items to render (all empty). Skipping UI update.');
+            return;
+        }
 
         const adviceHTML = `
             <div class="coaching-advice-card">
@@ -2977,27 +3025,12 @@ class App {
                     </div>
                     <div class="goal-deadline">期限: ${new Date(goal.deadline).toLocaleDateString('ja-JP')}</div>
                 </div>
-                
                 <div class="advice-update-time">
                     <span class="update-label">最終更新:</span>
                     <span class="update-time">${updateTime}</span>
                 </div>
-                
                 <div class="advice-content">
-                    <div class="advice-item">
-                        <h4>💡 行動指針</h4>
-                        <p>${actionPlan}</p>
-                    </div>
-                    
-                    <div class="advice-item">
-                        <h4>🔍 効果の理由</h4>
-                        <p>${effectiveness}</p>
-                    </div>
-                    
-                    <div class="advice-item today-action">
-                        <h4>⚡ 今日やること</h4>
-                        <p>${todayAction}</p>
-                    </div>
+                    ${items.join('\n')}
                 </div>
             </div>
         `;
