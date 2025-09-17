@@ -32,6 +32,10 @@ class GeminiService {
             topK: 40
         };
         
+        // フォールバック制御フラグ
+        this.enableModelFallback = false;   // モデル変更はデフォルト無効（常に gemini-2.5-flash を使用）
+        this.enableVersionFallback = true;  // v1beta→v1 などエンドポイントのバージョン切替は既定で許可
+        
         // サーバー状態監視
         this.serverStatus = {
             isAvailable: true,
@@ -321,8 +325,16 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         // ローディング開始（初回のみ表示）
         try { window.app?.showLoading(retryCount === 0 ? 'AIに問い合わせ中...' : '再試行中...'); } catch {}
 
+        const maskUrl = (u) => {
+            try {
+                const obj = new URL(u);
+                if (obj.searchParams.has('key')) obj.searchParams.set('key', '***');
+                return obj.toString();
+            } catch { return u.replace(/key=[^&]+/, 'key=***'); }
+        };
+
         console.log(`🔍 API Request Details:`, {
-            url: url,
+            url: maskUrl(url),
             method: 'POST',
             hasApiKey: !!this.apiKey,
             apiKeyLength: this.apiKey?.length,
@@ -345,20 +357,48 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 headers: Object.fromEntries(response.headers.entries())
             });
 
-            // 503エラーの場合、詳細な診断を実行
+            // 503エラーの場合、詳細な診断と再試行方針（Retry-After尊重）
             if (response.status === 503) {
                 const errorData = await response.json().catch(() => null);
                 console.error(`🔍 503エラーの詳細:`, {
                     errorData: errorData,
                     responseHeaders: Object.fromEntries(response.headers.entries()),
-                    url: url,
+                    url: maskUrl(url),
                     requestBodySample: JSON.stringify(requestBody).substring(0, 200) + '...'
                 });
+                // サーバー状態へ記録
+                try {
+                    const retryAfterHeader = response.headers.get('retry-after');
+                    const parseRetryAfter = (h) => {
+                        if (!h) return null;
+                        const s = parseInt(h, 10);
+                        if (!Number.isNaN(s)) return Math.max(1, s);
+                        const dt = new Date(h);
+                        if (!Number.isNaN(dt.getTime())) {
+                            const secs = Math.ceil((dt.getTime() - Date.now()) / 1000);
+                            return Math.max(1, secs);
+                        }
+                        return null;
+                    };
+                    const retryAfterSec = parseRetryAfter(retryAfterHeader) ?? 20;
+                    this.serverStatus.isAvailable = false;
+                    this.serverStatus.lastError = '503-overloaded';
+                    this.serverStatus.overloadDetectedAt = Date.now();
+                    this.serverStatus.nextRetryAfter = Date.now() + retryAfterSec * 1000;
+
+                    // まずは同一URLでRetry-Afterに従いリトライ
+                    if (retryCount < (this.maxRetries ?? 0)) {
+                        const waitMs = Math.min(retryAfterSec, 30) * 1000; // 上限30秒
+                        console.log(`⏳ Retry-After ${retryAfterSec}s. Waiting ${waitMs}ms before retry...`);
+                        await this.delay(waitMs);
+                        return await this.makeAPIRequest(url, requestBody, retryCount + 1);
+                    }
+                } catch (_) { /* 記録/待機に失敗してもフォールバックへ */ }
                 
-                // 代替エンドポイントやAPIバージョンを試す
-                if (retryCount === 0) {
+                // 代替エンドポイントやAPIバージョンを試す（上記リトライ後も失敗した場合）
+                if (retryCount >= (this.maxRetries ?? 0)) {
                     // 1. 異なるAPIバージョンを試す
-                    if (url.includes('/v1beta/')) {
+                    if (this.enableVersionFallback && url.includes('/v1beta/')) {
                         console.log('🔄 Trying v1 API version...');
                         const alternativeUrl = url.replace('/v1beta/', '/v1/');
                         try {
@@ -369,7 +409,7 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                     }
                     
                     // 2. 異なるモデルを試す
-                    if (url.includes('gemini-2.5-flash')) {
+                    if (this.enableModelFallback && url.includes('gemini-2.5-flash')) {
                         // Gemini 2.5 Flash が失敗した場合、代替モデルを試す
                         console.log('🔄 Trying gemini-1.5-flash model as fallback...');
                         const alternativeUrl = url.replace('gemini-2.5-flash', 'gemini-1.5-flash');
