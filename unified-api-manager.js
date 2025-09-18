@@ -281,40 +281,30 @@ class UnifiedAPIManager {
     // APIキーの強度チェック
     validateAPIKeyStrength(apiKey) {
         const issues = [];
-        const warnings = [];
-
+        
         if (!apiKey) {
             issues.push('APIキーが入力されていません');
-            return { valid: false, issues, warnings };
+            return { valid: false, issues };
         }
-
-        const normalizedKey = apiKey.trim();
-
-        if (normalizedKey.length < 20) {
-            issues.push('APIキーが短すぎます（20文字以上が必要）');
-        } else if (normalizedKey.length > 120) {
-            issues.push('APIキーが異常に長い可能性があります（120文字以内を想定）');
+        
+        if (apiKey.length < 20) {
+            issues.push('APIキーが短すぎます（20文字以上必要）');
         }
-
-        if (!normalizedKey.match(/^[A-Za-z0-9_-]+$/)) {
+        
+        if (!apiKey.match(/^[A-Za-z0-9_-]+$/)) {
             issues.push('APIキーに無効な文字が含まれています');
         }
-
-        const knownPrefixes = ['AIza', 'AI', 'GOC', 'ya29', 'gl', '1//'];
-        const hasKnownPrefix = knownPrefixes.some(prefix => normalizedKey.startsWith(prefix));
-
-        if (!hasKnownPrefix) {
-            warnings.push('APIキーの形式が既知のGeminiキーと異なる可能性があります。必要に応じて再確認してください。');
+        
+        if (!apiKey.startsWith('AIza')) {
+            issues.push('Google Gemini APIキーは "AIza" で始まる必要があります');
         }
-
+        
         return {
             valid: issues.length === 0,
-            issues,
-            warnings
+            issues: issues
         };
     }
-
-
+    
     // 使用可能な機能リストを取得
     getAvailableFeatures() {
         if (!this.isConfigured()) {
