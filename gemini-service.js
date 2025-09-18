@@ -287,39 +287,6 @@ class GeminiService {
         }
     }
 
-    // Gemini 2.5 Flash用の高度なシステムプロンプトを生成
-    generateSystemPrompt(context) {
-        const { game, stats, goals } = context;
-        
-        return `あなたは Gemini 2.5 Flash を活用した最新のeSportsパフォーマンスコーチです。高度な分析能力と迅速な応答を特徴とし、以下の情報を基に専門的なアドバイスを提供してください：
-
-【プレイヤー情報】
-- ゲーム: ${game.name} (${game.category})
-- 現在のランク: ${stats.rank}
-- 勝率: ${stats.winRate}
-- 平均KDA: ${stats.avgKda}
-- 総試合数: ${stats.gamesPlayed}
-
-【設定目標】
-${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join('\n') : '- まだ目標が設定されていません'}
-
-【コーチング方針 (Gemini 2.5 Flash Enhanced)】
-1. ${game.name}の最新メタとトレンドを考慮した具体的アドバイス
-2. データドリブンな改善提案と実践的な練習方法
-3. プレイヤーの現在レベルに適した段階的スキルアップ計画
-4. メンタル面も含む総合的なパフォーマンス向上支援
-5. 迅速で的確な回答（Gemini 2.5 Flashの高速処理能力を活用）
-
-回答は具体的で実践しやすく、プレイヤーのモチベーション向上にも配慮してください。
-2. プレイヤーの現在のスキルレベルに適した内容にする
-3. 具体的で実行可能なアドバイスを心がける
-4. 励ましの言葉も含める
-5. 回答は日本語で行う
-6. 必要に応じて質問で詳細を確認する
-
-プレイヤーをサポートし、パフォーマンス向上を手助けしてください。`;
-    }
-
     // エラーハンドリングとリトライロジック
     async makeAPIRequest(url, requestBody, retryCount = 0) {
         // ローディング開始（初回のみ表示）
@@ -489,32 +456,17 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         }
 
         try {
-            try { window.app?.showLoading('AIが考え中...'); } catch {}
-            const context = this.getGameContext();
-            const systemPrompt = this.generateSystemPrompt(context);
+            try { window.app?.showLoading('AIが応答中...'); } catch {}
 
-            // メッセージ履歴を構築
             const messages = [];
-            
-            // システムプロンプトを追加
-            messages.push({
-                role: 'user',
-                parts: [{ text: systemPrompt }]
-            });
-            
-            messages.push({
-                role: 'model',
-                parts: [{ text: 'eSportsコーチとして、あなたをサポートします。何でも聞いてください！' }]
-            });
 
-            // 履歴を含める場合は追加
             if (includeHistory && this.chatHistory.length > 0) {
                 this.chatHistory.forEach(item => {
                     messages.push({
                         role: 'user',
                         parts: [{ text: item.user }]
                     });
-                    
+
                     messages.push({
                         role: 'model',
                         parts: [{ text: item.assistant }]
@@ -522,7 +474,6 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 });
             }
 
-            // 現在のメッセージを追加
             messages.push({
                 role: 'user',
                 parts: [{ text: message }]
@@ -537,14 +488,13 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             const response = await this.makeAPIRequest(url, requestBody);
 
             const data = await response.json();
-            
+
             if (!data.candidates || data.candidates.length === 0) {
                 throw new Error('APIから有効な応答が得られませんでした');
             }
 
             const aiResponse = data.candidates[0].content.parts[0].text;
 
-            // チャット履歴を更新（最新20件まで保持）
             this.chatHistory.push({
                 user: message,
                 assistant: aiResponse
