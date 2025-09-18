@@ -889,33 +889,6 @@ body {
   font-size: var(--font-size-sm);
 }
 
-/* AI Recommendations */
-.ai-recommendations {
-  background: linear-gradient(145deg, 
-    rgba(15, 52, 96, 0.5), 
-    rgba(233, 69, 96, 0.2),
-    rgba(22, 33, 62, 0.8)
-  );
-  border: 3px solid rgba(233, 69, 96, 0.5);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(233, 69, 96, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-/* Light theme AI Recommendations */
-[data-theme="light"] .ai-recommendations {
-  background: linear-gradient(145deg, 
-    rgba(248, 250, 252, 0.9), 
-    rgba(241, 245, 249, 0.7),
-    #ffffff
-  ) !important;
-  border: 3px solid rgba(37, 99, 235, 0.4) !important;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(37, 99, 235, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
-}
 
 .ai-header {
   display: flex;
@@ -3188,92 +3161,12 @@ input, select, textarea {
   box-shadow: var(--shadow-small);
 }
 
-/* AI Coaching Advice */
-.coaching-advice-card {
-  background: linear-gradient(135deg, 
-    rgba(15, 52, 96, 0.1), 
-    rgba(233, 69, 96, 0.05)
-  );
-  border: 1px solid rgba(233, 69, 96, 0.2);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
-}
 
-.coaching-advice-card.offline {
-  background: linear-gradient(135deg, 
-    rgba(156, 163, 175, 0.1), 
-    rgba(75, 85, 99, 0.05)
-  );
-  border-color: rgba(156, 163, 175, 0.3);
-}
 
-.advice-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid rgba(233, 69, 96, 0.2);
-}
 
-.advice-update-time {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-lg);
-  padding: var(--spacing-sm);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: var(--border-radius-small);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
 
-.update-label {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  font-weight: 500;
-}
 
-.update-time {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  font-weight: 600;
-  background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
 
-.coaching-advice-card.offline .update-time {
-  background: linear-gradient(135deg, var(--text-muted), var(--text-secondary));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Light theme adjustments for advice update time */
-[data-theme="light"] .advice-update-time {
-  background: rgba(15, 23, 42, 0.02);
-  border-color: rgba(15, 23, 42, 0.08);
-}
-
-[data-theme="light"] .update-label {
-  color: var(--text-muted);
-}
-
-[data-theme="light"] .update-time {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-[data-theme="light"] .coaching-advice-card.offline .update-time {
-  background: linear-gradient(135deg, #64748b, #334155);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
 
 .goal-focus {
   display: flex;
@@ -3305,52 +3198,13 @@ input, select, textarea {
   font-weight: 500;
 }
 
-.advice-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
 
-.advice-item {
-  padding: var(--spacing-md);
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--border-radius-small);
-  border-left: 3px solid var(--color-accent);
-}
 
-.coaching-advice-card.offline .advice-item {
-  border-left-color: rgba(156, 163, 175, 0.5);
-}
 
-.advice-item h4 {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-accent);
-  margin: 0 0 var(--spacing-sm) 0;
-}
 
-.coaching-advice-card.offline .advice-item h4 {
-  color: var(--text-muted);
-}
 
-.advice-item p {
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 1.5;
-}
 
-.advice-item.today-action {
-  background: linear-gradient(135deg, 
-    rgba(233, 69, 96, 0.1), 
-    rgba(233, 69, 96, 0.05)
-  );
-  border-left-color: var(--color-warning);
-}
 
-.advice-item.today-action h4 {
-  color: var(--color-warning);
-}
 
 .api-setup-suggestion {
   margin-top: var(--spacing-lg);

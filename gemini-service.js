@@ -303,7 +303,7 @@ class GeminiService {
 【設定目標】
 ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join('\n') : '- まだ目標が設定されていません'}
 
-【コーチング方針 (Gemini 2.5 Flash Enhanced)】
+【対話方針 (Gemini 2.5 Flash Enhanced)】
 1. ${game.name}の最新メタとトレンドを考慮した具体的アドバイス
 2. データドリブンな改善提案と実践的な練習方法
 3. プレイヤーの現在レベルに適した段階的スキルアップ計画

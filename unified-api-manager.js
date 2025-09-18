@@ -324,12 +324,6 @@ class UnifiedAPIManager {
                 model: 'gemini-2.5-pro',
                 available: true
             },
-            {
-                name: 'AIコーチング',
-                description: '目標に基づくパーソナライズされたアドバイス（Gemini 2.5 Flash）',
-                model: 'gemini-2.5-flash',
-                available: true
-            }
         ];
     }
 }
