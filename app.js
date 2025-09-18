@@ -6,6 +6,11 @@ class App {
         this.isGuest = false;
         this.currentUser = null;
         
+        // エラー追跡
+        this.apiErrorCount = 0;
+        this.lastSuccessfulAPICall = Date.now();
+        this.consecutiveErrors = 0;
+        
         // サービスの初期化
         this.initializeServices();
         
@@ -2805,11 +2810,28 @@ class App {
             
             this.renderAIRecommendations(response.response, priorityGoal);
             
+            // 成功時: エラーカウンターをリセット
+            this.consecutiveErrors = 0;
+            this.lastSuccessfulAPICall = Date.now();
+            
         } catch (error) {
             console.warn('AI recommendations generation failed:', error);
             
-            // エラーの種類に応じてユーザーにメッセージを表示
-            this.showAIErrorMessage(error);
+            // エラー時: カウンターを増加
+            this.consecutiveErrors++;
+            this.apiErrorCount++;
+            
+            // 連続エラーが2回以上の場合のみエラーメッセージを表示
+            if (this.consecutiveErrors >= 2) {
+                this.showAIErrorMessage(error);
+            } else {
+                console.log(`🔄 First error (${this.consecutiveErrors}/2), retrying silently...`);
+                // 最初のエラーは静かに処理し、3秒後に再試行
+                setTimeout(() => {
+                    this.generateAIRecommendations();
+                }, 3000);
+                return; // エラーメッセージは表示せず、オフライン表示もスキップ
+            }
             
             // フォールバック: オフライン推奨事項
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
@@ -2832,15 +2854,31 @@ class App {
         let retryMessage = '';
         let isRetryable = true;
 
+        // 連続エラー回数をメッセージに反映
+        const errorContext = this.consecutiveErrors > 2 ? '（継続的な問題）' : '';
+
         // エラーの種類によってメッセージを変更
         if (error.message.includes('過負荷') || error.message.includes('overloaded') || error.message.includes('503')) {
-            userMessage = '🔄 Gemini AIサービスが混雑しています';
-            retryMessage = '自動的に再試行します...';
-            // 過負荷エラーの場合、30秒後に自動リトライ
+            userMessage = `🔄 Gemini AIサービスが一時的に混雑中${errorContext}`;
+            retryMessage = `<span id="retry-countdown">60</span>秒後に自動的に再試行します... (エラー回数: ${this.consecutiveErrors})`;
+            // 過負荷エラーの場合、60秒後に自動リトライ（カウントダウン付き）
+            let countdown = 60;
+            const countdownTimer = setInterval(() => {
+                countdown--;
+                const countdownElement = document.getElementById('retry-countdown');
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                if (countdown <= 0) {
+                    clearInterval(countdownTimer);
+                }
+            }, 1000);
+
             setTimeout(() => {
-                console.log('🔄 Auto-retry after 503 error...');
+                console.log('🔄 Auto-retry after 503 error (60s delay)...');
+                clearInterval(countdownTimer);
                 this.generateAIRecommendations();
-            }, 30000);
+            }, 60000);
         } else if (error.message.includes('クォータ') || error.message.includes('quota') || error.message.includes('429')) {
             userMessage = '⚠️ API利用制限に達しました';
             retryMessage = '1時間後に再試行してください';
@@ -3040,6 +3078,12 @@ class App {
     renderAIRecommendations(aiResponse, goal) {
         const recommendationsContent = document.getElementById('ai-recommendations-content');
         if (!recommendationsContent) return;
+
+        // 成功時: 既存のエラーメッセージを削除
+        const existingError = recommendationsContent.querySelector('.ai-error-message');
+        if (existingError) {
+            existingError.remove();
+        }
 
         // 解析（不足時は後で部分補完）
         const parsed = this.parseAIAdvice(aiResponse);

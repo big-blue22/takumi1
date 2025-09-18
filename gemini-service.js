@@ -11,8 +11,8 @@ class GeminiService {
     this.chatModel = 'gemini-2.5-flash'; // 指定モデル：Gemini 2.5 Flash
     this.visionModel = 'gemini-2.5-flash';
         this.chatHistory = [];
-        this.retryDelay = 2000; // リトライ間隔を調整（2秒）
-        this.maxRetries = 1; // サービス過負荷時は早めに諦める
+        this.retryDelay = 1000; // リトライ間隔を短縮
+        this.maxRetries = 2; // リトライ回数を減らして即座に問題を特定
         
         // 統一APIマネージャとの連携
         this.initializeWithUnifiedAPI();
