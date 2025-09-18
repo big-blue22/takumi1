@@ -54,21 +54,30 @@ class GeminiService {
 
     // APIキー設定（統一APIマネージャ経由）
     setApiKey(apiKey) {
-        // APIキーの基本的な検証
         if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) {
             throw new Error('有効なAPIキーを入力してください');
         }
-        
-        // Gemini APIキーの形式チェック（基本的なパターン）
-        if (!apiKey.startsWith('AIza') || apiKey.length < 30) {
-            console.warn('APIキーの形式が正しくない可能性があります。Gemini APIキーは通常"AIza"で始まり30文字以上です。');
+
+        const normalizedKey = apiKey.trim();
+
+        if (normalizedKey.length < 20) {
+            console.warn('APIキーが短すぎる可能性があります。最新のGemini APIキーは通常20文字以上です。');
+        } else if (normalizedKey.length > 120) {
+            console.warn('APIキーが想定より長い可能性があります。');
         }
-        
-        this.apiKey = apiKey;
-        // 循環参照を避けるため、統一APIマネージャーへの逆呼び出しは削除
-        // 統一APIマネージャーから一方向でのみAPIキーを受け取る
-        
-        console.log('✓ Gemini APIキーが設定されました');
+
+        if (!/^[A-Za-z0-9_-]+$/.test(normalizedKey)) {
+            console.warn('APIキーに想定外の文字が含まれています。');
+        }
+
+        const knownPrefixes = ['AIza', 'AI', 'GOC', 'ya29', 'gl', '1//'];
+        if (!knownPrefixes.some(prefix => normalizedKey.startsWith(prefix))) {
+            console.warn('APIキーの形式が既知のGeminiキーと異なる可能性があります。');
+        }
+
+        this.apiKey = normalizedKey;
+
+        console.log('Gemini APIキーが設定されました');
     }
 
     getApiKey() {
@@ -142,17 +151,23 @@ class GeminiService {
     // APIキーの形式検証 (Gemini 2.5 Flash対応)
     validateApiKeyFormat() {
         if (!this.apiKey) return false;
-        
-        // Gemini APIキーの基本的な形式チェック (2024年以降の形式にも対応)
-        const isValidFormat = this.apiKey.startsWith('AIza') && this.apiKey.length >= 35 && this.apiKey.length <= 45;
-        console.log('🔍 Gemini 2.5 Flash用APIキー形式チェック:', {
-            startsWithAIza: this.apiKey.startsWith('AIza'),
-            length: this.apiKey.length,
-            lengthInRange: this.apiKey.length >= 35 && this.apiKey.length <= 45,
-            isValidFormat: isValidFormat,
-            apiKeyExample: this.apiKey.substring(0, 15) + '...'
+
+        const normalizedKey = this.apiKey.trim();
+        const lengthValid = normalizedKey.length >= 20 && normalizedKey.length <= 120;
+        const charsetValid = /^[A-Za-z0-9_-]+$/.test(normalizedKey);
+        const knownPrefixes = ['AIza', 'AI', 'GOC', 'ya29', 'gl', '1//'];
+        const hasKnownPrefix = knownPrefixes.some(prefix => normalizedKey.startsWith(prefix));
+
+        const isValidFormat = lengthValid && charsetValid;
+
+        console.log('Gemini APIキー形式チェック:', {
+            length: normalizedKey.length,
+            lengthValid,
+            charsetValid,
+            hasKnownPrefix,
+            isValidFormat
         });
-        
+
         return isValidFormat;
     }
 

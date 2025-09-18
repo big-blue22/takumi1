@@ -467,7 +467,7 @@ class App {
             return;
         }
         
-        const apiKey = apiKeyInput.value;
+        const apiKey = apiKeyInput.value.trim();
         if (!apiKey) {
             this.showToast('API繧ｭ繝ｼ繧貞・蜉帙＠縺ｦ縺上□縺輔＞', 'warning');
             return;
@@ -475,6 +475,9 @@ class App {
         
         // API繧ｭ繝ｼ縺ｮ蠑ｷ蠎ｦ繝√ぉ繝・け
         const validation = window.unifiedApiManager.validateAPIKeyStrength(apiKey);
+        if (validation.warnings && validation.warnings.length > 0) {
+            console.warn('APIキー警告:', validation.warnings);
+        }
         if (!validation.valid) {
             this.showToast(`API繧ｭ繝ｼ繧ｨ繝ｩ繝ｼ: ${validation.issues[0]}`, 'error');
             return;
@@ -548,6 +551,9 @@ class App {
         
         // API繧ｭ繝ｼ縺ｮ蠖｢蠑上メ繧ｧ繝・け
         const validation = window.unifiedApiManager.validateAPIKeyStrength(apiKey);
+        if (validation.warnings && validation.warnings.length > 0) {
+            console.warn('APIキー警告:', validation.warnings);
+        }
         if (!validation.valid) {
             this.showToast(`API繧ｭ繝ｼ縺檎┌蜉ｹ縺ｧ縺・ ${validation.issues.join(', ')}`, 'error');
             return;
