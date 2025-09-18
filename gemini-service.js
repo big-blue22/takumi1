@@ -66,8 +66,7 @@ class GeminiService {
             console.warn('APIキーが想定より長い可能性があります。');
         }
 
-        const allowedPattern = /^[A-Za-z0-9_\-/.=]+$/;
-        if (!allowedPattern.test(normalizedKey)) {
+        if (!/^[A-Za-z0-9_-]+$/.test(normalizedKey)) {
             console.warn('APIキーに想定外の文字が含まれています。');
         }
 
@@ -155,8 +154,7 @@ class GeminiService {
 
         const normalizedKey = this.apiKey.trim();
         const lengthValid = normalizedKey.length >= 20 && normalizedKey.length <= 120;
-        const allowedPattern = /^[A-Za-z0-9_\-/.=]+$/;
-        const charsetValid = allowedPattern.test(normalizedKey);
+        const charsetValid = /^[A-Za-z0-9_-]+$/.test(normalizedKey);
         const knownPrefixes = ['AIza', 'AI', 'GOC', 'ya29', 'gl', '1//'];
         const hasKnownPrefix = knownPrefixes.some(prefix => normalizedKey.startsWith(prefix));
 
