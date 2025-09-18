@@ -1,4 +1,4 @@
-﻿// app.js - 螳悟・菫ｮ蠕ｩ迚・
+// app.js - 完全修復版
 class App {
     constructor() {
         this.currentPage = 'dashboard';
@@ -6,15 +6,15 @@ class App {
         this.isGuest = false;
         this.currentUser = null;
         
-        // 繧ｨ繝ｩ繝ｼ霑ｽ霍｡
+        // エラー追跡
         this.apiErrorCount = 0;
         this.lastSuccessfulAPICall = Date.now();
         this.consecutiveErrors = 0;
         
-        // 繧ｵ繝ｼ繝薙せ縺ｮ蛻晄悄蛹・
+        // サービスの初期化
         this.initializeServices();
         
-        // DOMContentLoaded縺ｧ蛻晄悄蛹・
+        // DOMContentLoadedで初期化
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.init());
         } else {
@@ -23,32 +23,32 @@ class App {
     }
     
     initializeServices() {
-        // API繧ｵ繝ｼ繝薙せ縺悟ｭ伜惠縺吶ｋ蝣ｴ蜷医・縺ｿ蛻晄悄蛹・
+        // APIサービスが存在する場合のみ初期化
         if (typeof AICoachingService !== 'undefined') {
             this.aiService = new AICoachingService();
         }
         
-        // 隱崎ｨｼ繧ｵ繝ｼ繝薙せ
+        // 認証サービス
         if (typeof AuthService !== 'undefined') {
             this.authService = new AuthService();
         }
         
-        // 繧ｲ繝ｼ繝繝槭ロ繝ｼ繧ｸ繝｣繝ｼ
+        // ゲームマネージャー
         if (typeof GameManager !== 'undefined') {
             this.gameManager = new GameManager();
         }
         
-        // Gemini繧ｵ繝ｼ繝薙せ
+        // Geminiサービス
         if (typeof GeminiService !== 'undefined') {
             this.geminiService = new GeminiService();
         }
         
-        // 繝励Ξ繧､繝､繝ｼ邨ｱ險医・繝阪・繧ｸ繝｣繝ｼ
+        // プレイヤー統計マネージャー
         if (typeof PlayerStatsManager !== 'undefined') {
             this.playerStatsManager = new PlayerStatsManager();
         }
         
-        // 繝｡繝・ぅ繧｢隗｣譫千畑縺ｮ繝輔ぃ繧､繝ｫ驟榊・
+        // メディア解析用のファイル配列
         this.uploadedFiles = [];
         this.chatMessages = [];
     }
@@ -56,45 +56,45 @@ class App {
     async init() {
         console.log('App initializing...');
         
-        // 繝・・繝槭・蛻晄悄蛹・
+        // テーマの初期化
         this.initTheme();
         
-        // 縺吶∋縺ｦ縺ｮ繝｢繝ｼ繝繝ｫ繧帝撼陦ｨ遉ｺ縺ｫ縺吶ｋ
+        // すべてのモーダルを非表示にする
         this.hideAllModals();
         
-        // 邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺ｮ蛻晄悄蛹門ｮ御ｺ・ｒ蠕・▽
+        // 統一APIマネージャーの初期化完了を待つ
         await this.waitForUnifiedAPIManager();
         
-        // API險ｭ螳壹メ繧ｧ繝・け縺ｨ蛻晄悄蛹厄ｼ磯撼蜷梧悄・・ 縺薙・邨先棡縺ｫ繧医▲縺ｦ逕ｻ髱｢驕ｷ遘ｻ縺梧ｱｺ縺ｾ繧・
+        // API設定チェックと初期化（非同期）- この結果によって画面遷移が決まる
         const apiCheckResult = await this.performBackgroundAPICheck();
         
         if (apiCheckResult.success) {
-            console.log('繝舌ャ繧ｯ繧ｰ繝ｩ繧ｦ繝ｳ繝陰PI謗･邯壽・蜉溘√Γ繧､繝ｳ逕ｻ髱｢縺ｸ驕ｷ遘ｻ');
-            // API謗･邯壽・蜉滓凾縺ｯ逶ｴ謗･繝｡繧､繝ｳ蛻晄悄蛹・
+            console.log('バックグラウンドAPI接続成功、メイン画面へ遷移');
+            // API接続成功時は直接メイン初期化
             await this.initializeMainApp();
             
-            // 驕手ｲ闕ｷ迥ｶ諷九・蝣ｴ蜷医・霑ｽ蜉繝｡繝・そ繝ｼ繧ｸ繧定｡ｨ遉ｺ
+            // 過負荷状態の場合は追加メッセージを表示
             if (apiCheckResult.overloaded) {
-                // 5蛻・ｾ後↓蜀榊ｺｦ繝√ぉ繝・け縺吶ｋ繧ｿ繧､繝槭・繧定ｨｭ螳・
+                // 5分後に再度チェックするタイマーを設定
                 setTimeout(() => {
-                    this.showToast('庁 Gemini API縺ｮ迥ｶ諷九ｒ蜀阪メ繧ｧ繝・け荳ｭ...', 'info');
+                    this.showToast('💡 Gemini APIの状態を再チェック中...', 'info');
                     this.recheckGeminiAPI();
-                }, 5 * 60 * 1000); // 5蛻・ｾ・
+                }, 5 * 60 * 1000); // 5分後
             }
         } else {
-            console.log('API譛ｪ險ｭ螳壹∪縺溘・謗･邯壼､ｱ謨励∝・譛溯ｨｭ螳夂判髱｢繧定｡ｨ遉ｺ');
+            console.log('API未設定または接続失敗、初期設定画面を表示');
             
-            // 503繧ｨ繝ｩ繝ｼ縺ｮ蝣ｴ蜷医・迚ｹ蛻･縺ｪ繝｡繝・そ繝ｼ繧ｸ
+            // 503エラーの場合は特別なメッセージ
             if (apiCheckResult.error && (
                 apiCheckResult.error.message.includes('503') || 
-                apiCheckResult.error.message.includes('驕手ｲ闕ｷ') ||
+                apiCheckResult.error.message.includes('過負荷') ||
                 apiCheckResult.error.message.includes('overloaded')
             )) {
-                this.showToast('笞・・Gemini API縺御ｸ譎ら噪縺ｫ驕手ｲ闕ｷ荳ｭ縺ｧ縺吶・PI繧ｭ繝ｼ縺ｯ菫晏ｭ倥＆繧後※縺・ｋ縺ｮ縺ｧ縲∝ｾ後⊇縺ｩ閾ｪ蜍慕噪縺ｫ蛻ｩ逕ｨ蜿ｯ閭ｽ縺ｫ縺ｪ繧翫∪縺吶・, 'warning');
-                // 驕手ｲ闕ｷ縺ｮ蝣ｴ蜷医〒繧ゅい繝励Μ縺ｯ襍ｷ蜍輔☆繧・
+                this.showToast('⚠️ Gemini APIが一時的に過負荷中です。APIキーは保存されているので、後ほど自動的に利用可能になります。', 'warning');
+                // 過負荷の場合でもアプリは起動する
                 await this.initializeMainApp();
             } else {
-                // API譛ｪ險ｭ螳壹∪縺溘・謗･邯壼､ｱ謨玲凾縺ｯ蛻晄悄險ｭ螳夂判髱｢繧定｡ｨ遉ｺ
+                // API未設定または接続失敗時は初期設定画面を表示
                 this.showInitialAPISetupModal();
                 this.setupInitialAPIModalListeners();
             }
@@ -103,7 +103,7 @@ class App {
         console.log('App initialized successfully');
     }
     
-    // 繝・・繝樒ｮ｡逅・
+    // テーマ管理
     initTheme() {
         this.applyTheme(this.currentTheme);
         
@@ -123,9 +123,9 @@ class App {
         
         if (theme === 'light') {
             root.setAttribute('data-theme', 'light');
-            if (themeBtn) themeBtn.textContent = '笘・・;
+            if (themeBtn) themeBtn.textContent = '☀️';
             
-            // 繝ｩ繧､繝医Δ繝ｼ繝峨・繧ｹ繧ｿ繧､繝ｫ
+            // ライトモードのスタイル
             root.style.setProperty('--bg-primary', '#ffffff');
             root.style.setProperty('--bg-secondary', '#f5f5f5');
             root.style.setProperty('--bg-card', '#ffffff');
@@ -136,9 +136,9 @@ class App {
             root.style.setProperty('--accent-secondary', '#0052a3');
         } else {
             root.setAttribute('data-theme', 'dark');
-            if (themeBtn) themeBtn.textContent = '嫌';
+            if (themeBtn) themeBtn.textContent = '🌙';
             
-            // 繝繝ｼ繧ｯ繝｢繝ｼ繝峨・繧ｹ繧ｿ繧､繝ｫ
+            // ダークモードのスタイル
             root.style.setProperty('--bg-primary', '#1a1a2e');
             root.style.setProperty('--bg-secondary', '#16213e');
             root.style.setProperty('--bg-card', '#0f1924');
@@ -150,7 +150,7 @@ class App {
         }
     }
     
-    // 隱崎ｨｼ繝√ぉ繝・け
+    // 認証チェック
     checkAuthentication() {
         const storedUser = sessionStorage.getItem('currentUser');
         const isGuest = sessionStorage.getItem('isGuest');
@@ -160,9 +160,9 @@ class App {
             this.updateUserDisplay(this.currentUser.username);
         } else if (isGuest === 'true') {
             this.isGuest = true;
-            this.updateUserDisplay('繧ｲ繧ｹ繝医Θ繝ｼ繧ｶ繝ｼ', true);
+            this.updateUserDisplay('ゲストユーザー', true);
         } else {
-            // 繝ｭ繧ｰ繧､繝ｳ繝｢繝ｼ繝繝ｫ繧定｡ｨ遉ｺ
+            // ログインモーダルを表示
             this.showLoginModal();
         }
     }
@@ -190,12 +190,12 @@ class App {
         }
         
         if (userTypeIndicator) {
-            userTypeIndicator.textContent = isGuest ? '繧ｲ繧ｹ繝・ : '繝ｦ繝ｼ繧ｶ繝ｼ';
+            userTypeIndicator.textContent = isGuest ? 'ゲスト' : 'ユーザー';
             userTypeIndicator.className = isGuest ? 'user-type guest' : 'user-type registered';
         }
     }
     
-    // 縺吶∋縺ｦ縺ｮ繝｢繝ｼ繝繝ｫ繧帝撼陦ｨ遉ｺ
+    // すべてのモーダルを非表示
     hideAllModals() {
         const modals = [
             'login-modal',
@@ -212,10 +212,10 @@ class App {
         });
     }
 
-    // 邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺ｮ蛻晄悄蛹門ｮ御ｺ・ｒ蠕・▽
+    // 統一APIマネージャーの初期化完了を待つ
     async waitForUnifiedAPIManager() {
         let attempts = 0;
-        const maxAttempts = 50; // 5遘貞ｾ・ｩ・
+        const maxAttempts = 50; // 5秒待機
         
         while (!window.unifiedApiManager && attempts < maxAttempts) {
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -223,46 +223,46 @@ class App {
         }
         
         if (!window.unifiedApiManager) {
-            console.error('邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺ｮ蛻晄悄蛹悶↓螟ｱ謨・);
-            throw new Error('邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ');
+            console.error('統一APIマネージャーの初期化に失敗');
+            throw new Error('統一APIマネージャーが利用できません');
         }
         
-        console.log('邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ蛻晄悄蛹門ｮ御ｺ・);
+        console.log('統一APIマネージャー初期化完了');
     }
 
-    // 繝舌ャ繧ｯ繧ｰ繝ｩ繧ｦ繝ｳ繝峨〒API險ｭ螳壹ｒ繝√ぉ繝・け
+    // バックグラウンドでAPI設定をチェック
     async performBackgroundAPICheck() {
         try {
             if (!window.unifiedApiManager) {
                 return { success: false, reason: 'manager_unavailable' };
             }
             
-            // 菫晏ｭ俶ｸ医∩API繧ｭ繝ｼ縺後≠繧九°繝√ぉ繝・け
+            // 保存済みAPIキーがあるかチェック
             const hasStoredKey = window.unifiedApiManager.isConfigured();
             
             if (!hasStoredKey) {
-                console.log('API繧ｭ繝ｼ縺御ｿ晏ｭ倥＆繧後※縺・∪縺帙ｓ');
+                console.log('APIキーが保存されていません');
                 return { success: false, reason: 'no_api_key' };
             }
             
-            console.log('菫晏ｭ俶ｸ医∩API繧ｭ繝ｼ繧堤匱隕九√ヰ繝・け繧ｰ繝ｩ繧ｦ繝ｳ繝峨〒謗･邯壹ユ繧ｹ繝井ｸｭ...');
+            console.log('保存済みAPIキーを発見、バックグラウンドで接続テスト中...');
             
-            // 繝舌ャ繧ｯ繧ｰ繝ｩ繧ｦ繝ｳ繝峨〒謗･邯壹ユ繧ｹ繝医ｒ螳溯｡・
+            // バックグラウンドで接続テストを実行
             const result = await window.unifiedApiManager.validateAPIKey();
             
-            console.log('繝舌ャ繧ｯ繧ｰ繝ｩ繧ｦ繝ｳ繝画磁邯壹ユ繧ｹ繝域・蜉・', result);
+            console.log('バックグラウンド接続テスト成功:', result);
             this.syncAPIKeyInputs();
             
             return { success: true, result: result };
             
         } catch (error) {
-            console.warn('繝舌ャ繧ｯ繧ｰ繝ｩ繧ｦ繝ｳ繝画磁邯壹ユ繧ｹ繝医↓螟ｱ謨・', error);
+            console.warn('バックグラウンド接続テストに失敗:', error);
             
-            // 503繧ｨ繝ｩ繝ｼ・医し繝ｼ繝舌・驕手ｲ闕ｷ・峨・蝣ｴ蜷医・縲∝・譛溯ｨｭ螳壹Δ繝ｼ繝繝ｫ繧定｡ｨ遉ｺ縺帙★縺ｫ
-            // API繧ｭ繝ｼ縺瑚ｨｭ螳壽ｸ医∩縺ｨ縺励※繧｢繝励Μ繧定ｵｷ蜍輔☆繧・
+            // 503エラー（サーバー過負荷）の場合は、初期設定モーダルを表示せずに
+            // APIキーが設定済みとしてアプリを起動する
             if (error.message && (error.message.includes('overloaded') || error.message.includes('503'))) {
-                console.log('Gemini API繧ｵ繝ｼ繝舌・縺碁℃雋闕ｷ荳ｭ縺ｧ縺吶′縲、PI繧ｭ繝ｼ縺ｯ險ｭ螳壽ｸ医∩縺ｮ縺溘ａ繧｢繝励Μ繧定ｵｷ蜍輔＠縺ｾ縺・);
-                this.showToast('笞・・Gemini API縺御ｸ譎ら噪縺ｫ驕手ｲ闕ｷ荳ｭ縺ｧ縺吶・I讖溯・縺ｯ蠕後⊇縺ｩ蛻ｩ逕ｨ蜿ｯ閭ｽ縺ｫ縺ｪ繧翫∪縺吶・, 'warning');
+                console.log('Gemini APIサーバーが過負荷中ですが、APIキーは設定済みのためアプリを起動します');
+                this.showToast('⚠️ Gemini APIが一時的に過負荷中です。AI機能は後ほど利用可能になります。', 'warning');
                 this.syncAPIKeyInputs();
                 return { success: true, overloaded: true };
             }
@@ -275,82 +275,82 @@ class App {
         }
     }
 
-    // 繝｡繧､繝ｳ繧｢繝励Μ繧貞・譛溷喧・・PI謗･邯壽・蜉滓凾・・
+    // メインアプリを初期化（API接続成功時）
     async initializeMainApp() {
-        // 邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺九ｉGeminiService縺ｸ縺ｮAPI繧ｭ繝ｼ蜷梧悄繧堤｢ｺ菫・
+        // 統一APIマネージャーからGeminiServiceへのAPIキー同期を確保
         if (window.unifiedApiManager && window.unifiedApiManager.isConfigured()) {
             window.unifiedApiManager.updateLegacyAPIKeys();
         }
         
-        // 繝ｭ繧ｰ繧､繝ｳ繝√ぉ繝・け
+        // ログインチェック
         this.checkAuthentication();
         
-        // 谿九ｊ縺ｮ蛻晄悄蛹悶ｒ螳溯｡・
+        // 残りの初期化を実行
         this.continueInitialization();
         
-        // 繧ｲ繝ｼ繝驕ｸ謚槭→繝繝・す繝･繝懊・繝画ｩ溯・縺ｮ蛻晄悄蛹・
+        // ゲーム選択とダッシュボード機能の初期化
         this.initGameSelection();
         this.initDashboardGoals();
         
-        // 縺昴・莉悶・繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ讖溯・
+        // その他のナビゲーション機能
         this.initNavigationHelpers();
         
-        // AI繧ｳ繝ｼ繝√Φ繧ｰ讖溯・縺ｮ蛻晄悄蛹厄ｼ亥ｰ代＠驕・ｻｶ縺輔○縺ｦAPI險ｭ螳壹′遒ｺ螳溘↓螳御ｺ・☆繧九・繧貞ｾ・▽・・
+        // AIコーチング機能の初期化（少し遅延させてAPI設定が確実に完了するのを待つ）
         setTimeout(() => {
             this.initAICoaching();
         }, 500);
         
-        // 蛻晄悄繝壹・繧ｸ縺ｮ陦ｨ遉ｺ
+        // 初期ページの表示
         this.showPage(this.currentPage);
         
-        // 繝√Ε繝ｼ繝医・蛻晄悄蛹・
+        // チャートの初期化
         this.initCharts();
         
-        // 繝・・繧ｿ縺ｮ繝ｭ繝ｼ繝・
+        // データのロード
         this.loadUserData();
         
-        // 繝ｭ繧ｰ繧､繝ｳ逕ｻ髱｢繧定｡ｨ遉ｺ
+        // ログイン画面を表示
         setTimeout(() => {
             this.showLoginModal();
         }, 100);
     }
 
-    // API險ｭ螳壹メ繧ｧ繝・け縺ｨ蛻晄悄蛹厄ｼ亥ｾ捺擂縺ｮ繝｡繧ｽ繝・ラ縲∽ｺ呈鋤諤ｧ縺ｮ縺溘ａ谿九☆・・
+    // API設定チェックと初期化（従来のメソッド、互換性のため残す）
     async checkAndInitializeAPI() {
-        // 譁ｰ縺励＞繝輔Ο繝ｼ縺ｫ鄂ｮ縺肴鋤縺医ｉ繧後◆縺溘ａ縲∽ｽ輔ｂ縺励↑縺・
-        console.log('checkAndInitializeAPI縺ｯ譁ｰ縺励＞繝輔Ο繝ｼ縺ｫ鄂ｮ縺肴鋤縺医ｉ繧後∪縺励◆');
+        // 新しいフローに置き換えられたため、何もしない
+        console.log('checkAndInitializeAPIは新しいフローに置き換えられました');
     }
     
-    // 蛻晄悄蛹悶・邯夊｡鯉ｼ・PI繧ｭ繝ｼ險ｭ螳壼ｾ鯉ｼ・
+    // 初期化の続行（APIキー設定後）
     continueInitialization() {
-        // API繧ｭ繝ｼ蛻晄悄險ｭ螳壹′蠢・ｦ√↑蝣ｴ蜷医・繧ｹ繧ｭ繝・・
+        // APIキー初期設定が必要な場合はスキップ
         if (window.unifiedApiManager?.needsInitialSetup()) {
             return;
         }
         
-        // 繧､繝吶Φ繝医Μ繧ｹ繝翫・縺ｮ險ｭ螳・
+        // イベントリスナーの設定
         this.setupEventListeners();
         
-        // 繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ縺ｮ蛻晄悄蛹・
+        // ナビゲーションの初期化
         this.initNavigation();
         
-        // 繝√Ε繝・ヨ讖溯・縺ｮ蛻晄悄蛹・
+        // チャット機能の初期化
         this.initChat();
         
-        // 繝｡繝・ぅ繧｢隗｣譫先ｩ溯・縺ｮ蛻晄悄蛹・
+        // メディア解析機能の初期化
         this.initMediaAnalysis();
     }
     
-    // 蛻晄悄API繧ｻ繝・ヨ繧｢繝・・繝｢繝ｼ繝繝ｫ繧定｡ｨ遉ｺ
+    // 初期APIセットアップモーダルを表示
     showInitialAPISetupModal() {
         const modal = document.getElementById('api-initial-setup-modal');
         if (modal) {
             modal.classList.remove('hidden');
-            modal.style.display = 'flex'; // 遒ｺ螳溘↓陦ｨ遉ｺ
+            modal.style.display = 'flex'; // 確実に表示
             
-            console.log('蛻晄悄API險ｭ螳壹Δ繝ｼ繝繝ｫ繧定｡ｨ遉ｺ');
+            console.log('初期API設定モーダルを表示');
             
-            // 蜈･蜉帙ヵ繧｣繝ｼ繝ｫ繝峨・蛻晄悄迥ｶ諷九ｒ繝√ぉ繝・け
+            // 入力フィールドの初期状態をチェック
             setTimeout(() => {
                 const apiKeyInput = document.getElementById('initial-api-key');
                 if (apiKeyInput) {
@@ -360,17 +360,17 @@ class App {
         }
     }
     
-    // 蛻晄悄API繧ｻ繝・ヨ繧｢繝・・繝｢繝ｼ繝繝ｫ縺ｮ繧､繝吶Φ繝医Μ繧ｹ繝翫・險ｭ螳・
+    // 初期APIセットアップモーダルのイベントリスナー設定
     setupInitialAPIModalListeners() {
-        // 驥崎､・匳骭ｲ繧帝亟縺・
+        // 重複登録を防ぐ
         if (window.apiModalListenersSet) {
-            console.log('API繝｢繝ｼ繝繝ｫ繝ｪ繧ｹ繝翫・縺ｯ譌｢縺ｫ險ｭ螳壽ｸ医∩');
+            console.log('APIモーダルリスナーは既に設定済み');
             return;
         }
         
-        console.log('API繝｢繝ｼ繝繝ｫ繝ｪ繧ｹ繝翫・繧定ｨｭ螳壻ｸｭ...');
+        console.log('APIモーダルリスナーを設定中...');
         
-        // 繧､繝吶Φ繝亥ｧ碑ｭｲ繧剃ｽｿ逕ｨ縺励※document繝ｬ繝吶Ν縺ｧ繧､繝吶Φ繝医ｒ繧ｭ繝｣繝・メ
+        // イベント委譲を使用してdocumentレベルでイベントをキャッチ
         document.addEventListener('click', (e) => {
             if (e.target.id === 'test-initial-api') {
                 e.preventDefault();
@@ -387,7 +387,7 @@ class App {
             }
         });
         
-        // 蜈･蜉帙ヵ繧｣繝ｼ繝ｫ繝峨・繧､繝吶Φ繝医ｂ險ｭ螳・
+        // 入力フィールドのイベントも設定
         const apiKeyInput = document.getElementById('initial-api-key');
         if (apiKeyInput && !apiKeyInput.hasAttribute('data-listeners-added')) {
             apiKeyInput.addEventListener('input', (e) => {
@@ -404,12 +404,12 @@ class App {
             apiKeyInput.setAttribute('data-listeners-added', 'true');
         }
         
-        // 驥崎､・ｨｭ螳夐亟豁｢繝輔Λ繧ｰ繧定ｨｭ螳・
+        // 重複設定防止フラグを設定
         window.apiModalListenersSet = true;
-        console.log('API繝｢繝ｼ繝繝ｫ繝ｪ繧ｹ繝翫・險ｭ螳壼ｮ御ｺ・);
+        console.log('APIモーダルリスナー設定完了');
     }
     
-    // API繧ｭ繝ｼ陦ｨ遉ｺ/髱櫁｡ｨ遉ｺ蛻・ｊ譖ｿ縺・
+    // APIキー表示/非表示切り替え
     toggleInitialAPIKeyVisibility() {
         const apiKeyInput = document.getElementById('initial-api-key');
         const toggleBtn = document.getElementById('toggle-initial-key');
@@ -417,11 +417,11 @@ class App {
         if (apiKeyInput && toggleBtn) {
             const isPassword = apiKeyInput.type === 'password';
             apiKeyInput.type = isPassword ? 'text' : 'password';
-            toggleBtn.textContent = isPassword ? '刪' : '早・・;
+            toggleBtn.textContent = isPassword ? '🙈' : '👁️';
         }
     }
     
-    // 蛻晄悄API繧ｭ繝ｼ蜈･蜉帙・讀懆ｨｼ
+    // 初期APIキー入力の検証
     validateInitialAPIKeyInput(apiKey) {
         const testBtn = document.getElementById('test-initial-api');
         const saveBtn = document.getElementById('save-initial-api');
@@ -431,11 +431,11 @@ class App {
         const validation = window.unifiedApiManager.validateAPIKeyStrength(apiKey);
         const isValid = validation.valid;
         
-        // 繝懊ち繝ｳ縺ｮ譛牙柑蛹・辟｡蜉ｹ蛹・
+        // ボタンの有効化/無効化
         if (testBtn) testBtn.disabled = !isValid;
         if (saveBtn) saveBtn.disabled = !isValid;
         
-        // 隕冶ｦ夂噪繝輔ぅ繝ｼ繝峨ヰ繝・け
+        // 視覚的フィードバック
         const inputWrapper = document.querySelector('#initial-api-key').parentNode;
         if (inputWrapper) {
             inputWrapper.classList.remove('input-valid', 'input-invalid');
@@ -451,57 +451,57 @@ class App {
     
     
     
-    // 蛻晄悄API謗･邯壹ユ繧ｹ繝・
+    // 初期API接続テスト
     async testInitialAPIConnection() {
         const apiKeyInput = document.getElementById('initial-api-key');
         const testBtn = document.getElementById('test-initial-api');
         
         if (!apiKeyInput) {
-            console.error('API繧ｭ繝ｼ蜈･蜉帙ヵ繧｣繝ｼ繝ｫ繝峨′隕九▽縺九ｊ縺ｾ縺帙ｓ');
+            console.error('APIキー入力フィールドが見つかりません');
             return;
         }
         
         if (!window.unifiedApiManager) {
-            console.error('邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ');
-            this.showToast('API繝槭ロ繝ｼ繧ｸ繝｣縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ', 'error');
+            console.error('統一APIマネージャが利用できません');
+            this.showToast('APIマネージャが利用できません', 'error');
             return;
         }
         
         const apiKey = apiKeyInput.value;
         if (!apiKey) {
-            this.showToast('API繧ｭ繝ｼ繧貞・蜉帙＠縺ｦ縺上□縺輔＞', 'warning');
+            this.showToast('APIキーを入力してください', 'warning');
             return;
         }
         
-        // API繧ｭ繝ｼ縺ｮ蠑ｷ蠎ｦ繝√ぉ繝・け
+        // APIキーの強度チェック
         const validation = window.unifiedApiManager.validateAPIKeyStrength(apiKey);
         if (!validation.valid) {
-            this.showToast(`API繧ｭ繝ｼ繧ｨ繝ｩ繝ｼ: ${validation.issues[0]}`, 'error');
+            this.showToast(`APIキーエラー: ${validation.issues[0]}`, 'error');
             return;
         }
         
         const originalText = testBtn.textContent;
         testBtn.disabled = true;
-        testBtn.textContent = '繝・せ繝井ｸｭ...';
+        testBtn.textContent = 'テスト中...';
         
         try {
-            // 荳譎ら噪縺ｫAPI繧ｭ繝ｼ繧定ｨｭ螳・
+            // 一時的にAPIキーを設定
             const originalApiKey = window.unifiedApiManager.getAPIKey();
             await window.unifiedApiManager.setAPIKey(apiKey);
             
-            // 謗･邯壹ユ繧ｹ繝医ｒ螳溯｡・
+            // 接続テストを実行
             await window.unifiedApiManager.validateAPIKey();
             
-            this.showToast('謗･邯壹ユ繧ｹ繝医↓謌仙粥縺励∪縺励◆・・, 'success');
+            this.showToast('接続テストに成功しました！', 'success');
             
-            // 繝・せ繝域・蜉滓凾縺ｫ蜈･蜉帶ｬ・ｒ邱題牡縺ｫ
+            // テスト成功時に入力欄を緑色に
             const inputWrapper = apiKeyInput.parentNode;
             if (inputWrapper) {
                 inputWrapper.classList.remove('input-invalid');
                 inputWrapper.classList.add('input-valid');
             }
             
-            // 蜈・・API繧ｭ繝ｼ繧貞ｾｩ蜈・ｼ医ユ繧ｹ繝医□縺代↑縺ｮ縺ｧ・・
+            // 元のAPIキーを復元（テストだけなので）
             if (originalApiKey) {
                 await window.unifiedApiManager.setAPIKey(originalApiKey);
             } else {
@@ -509,10 +509,10 @@ class App {
             }
             
         } catch (error) {
-            console.error('API謗･邯壹ユ繧ｹ繝医↓螟ｱ謨・', error);
-            this.showToast(`謗･邯壹ユ繧ｹ繝医↓螟ｱ謨励＠縺ｾ縺励◆: ${error.message}`, 'error');
+            console.error('API接続テストに失敗:', error);
+            this.showToast(`接続テストに失敗しました: ${error.message}`, 'error');
             
-            // 繝・せ繝亥､ｱ謨玲凾縺ｫ蜈･蜉帶ｬ・ｒ襍､濶ｲ縺ｫ
+            // テスト失敗時に入力欄を赤色に
             const inputWrapper = apiKeyInput.parentNode;
             if (inputWrapper) {
                 inputWrapper.classList.remove('input-valid');
@@ -524,122 +524,122 @@ class App {
         }
     }
     
-    // 蛻晄悄繝｢繝ｼ繝繝ｫ縺九ｉAPI繧ｭ繝ｼ繧剃ｿ晏ｭ・
+    // 初期モーダルからAPIキーを保存
     async saveInitialAPIKeyFromModal() {
         const apiKeyInput = document.getElementById('initial-api-key');
         const saveBtn = document.getElementById('save-initial-api');
         
         if (!apiKeyInput) {
-            console.error('API繧ｭ繝ｼ蜈･蜉帙ヵ繧｣繝ｼ繝ｫ繝峨′隕九▽縺九ｊ縺ｾ縺帙ｓ');
+            console.error('APIキー入力フィールドが見つかりません');
             return;
         }
         
         if (!window.unifiedApiManager) {
-            console.error('邨ｱ蜷・PI繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ');
-            this.showToast('API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ', 'error');
+            console.error('統合APIマネージャーが利用できません');
+            this.showToast('APIマネージャーが利用できません', 'error');
             return;
         }
         
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) {
-            this.showToast('API繧ｭ繝ｼ繧貞・蜉帙＠縺ｦ縺上□縺輔＞', 'warning');
+            this.showToast('APIキーを入力してください', 'warning');
             return;
         }
         
-        // API繧ｭ繝ｼ縺ｮ蠖｢蠑上メ繧ｧ繝・け
+        // APIキーの形式チェック
         const validation = window.unifiedApiManager.validateAPIKeyStrength(apiKey);
         if (!validation.valid) {
-            this.showToast(`API繧ｭ繝ｼ縺檎┌蜉ｹ縺ｧ縺・ ${validation.issues.join(', ')}`, 'error');
+            this.showToast(`APIキーが無効です: ${validation.issues.join(', ')}`, 'error');
             return;
         }
         
         const originalText = saveBtn.textContent;
         saveBtn.disabled = true;
-        saveBtn.textContent = '菫晏ｭ倅ｸｭ...';
+        saveBtn.textContent = '保存中...';
         
         try {
-            // API繧ｭ繝ｼ繧堤ｵｱ蜷医・繝阪・繧ｸ繝｣繝ｼ縺ｫ菫晏ｭ・
+            // APIキーを統合マネージャーに保存
             window.unifiedApiManager.setAPIKey(apiKey);
             
-            // 譌｢蟄倥・蜈･蜉帙ヵ繧｣繝ｼ繝ｫ繝峨ｂ蜷梧悄
+            // 既存の入力フィールドも同期
             this.syncAPIKeyInputs();
             
-            this.showToast('API繧ｭ繝ｼ繧剃ｿ晏ｭ倥＠縺ｾ縺励◆', 'success');
+            this.showToast('APIキーを保存しました', 'success');
             this.closeInitialAPISetupModal();
             
-            // API繧ｭ繝ｼ險ｭ螳壼ｮ御ｺ・ｾ後√Γ繧､繝ｳ繧｢繝励Μ繧貞・譛溷喧
+            // APIキー設定完了後、メインアプリを初期化
             setTimeout(async () => {
                 await this.initializeMainApp();
             }, 500);
             
         } catch (error) {
-            console.error('API繧ｭ繝ｼ菫晏ｭ倥↓螟ｱ謨・', error);
-            this.showToast(`菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆: ${error.message}`, 'error');
+            console.error('APIキー保存に失敗:', error);
+            this.showToast(`保存に失敗しました: ${error.message}`, 'error');
         } finally {
             saveBtn.disabled = false;
             saveBtn.textContent = originalText;
         }
     }
     
-    // 閾ｪ蜍墓磁邯壹ユ繧ｹ繝亥ｮ溯｡・
+    // 自動接続テスト実行
     async performAutoConnectionTest() {
         if (!window.unifiedApiManager) {
-            throw new Error('邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ');
+            throw new Error('統一APIマネージャーが利用できません');
         }
 
         if (!window.unifiedApiManager.isConfigured()) {
-            throw new Error('API繧ｭ繝ｼ縺瑚ｨｭ螳壹＆繧後※縺・∪縺帙ｓ');
+            throw new Error('APIキーが設定されていません');
         }
 
         try {
-            // 繝ｭ繝ｼ繝・ぅ繝ｳ繧ｰ迥ｶ諷九ｒ陦ｨ遉ｺ・・PI繝｢繝ｼ繝繝ｫ縺碁撼陦ｨ遉ｺ縺ｮ蝣ｴ蜷医・繝医・繧ｹ繝郁｡ｨ遉ｺ・・
+            // ローディング状態を表示（APIモーダルが非表示の場合はトースト表示）
             const apiModal = document.getElementById('api-initial-setup-modal');
             if (!apiModal || apiModal.classList.contains('hidden')) {
-                this.showToast('菫晏ｭ俶ｸ医∩API繧ｭ繝ｼ縺ｧ謗･邯壹ユ繧ｹ繝井ｸｭ...', 'info');
+                this.showToast('保存済みAPIキーで接続テスト中...', 'info');
             }
 
-            // 邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ繧剃ｽｿ縺｣縺ｦ謗･邯壹ユ繧ｹ繝・
+            // 統一APIマネージャーを使って接続テスト
             const result = await window.unifiedApiManager.validateAPIKey();
             
-            console.log('閾ｪ蜍墓磁邯壹ユ繧ｹ繝域・蜉・', result);
+            console.log('自動接続テスト成功:', result);
             return result;
             
         } catch (error) {
-            console.error('閾ｪ蜍墓磁邯壹ユ繧ｹ繝亥､ｱ謨・', error);
+            console.error('自動接続テスト失敗:', error);
             throw error;
         }
     }
 
-    // 閾ｪ蜍墓磁邯壹ユ繧ｹ繝亥､ｱ謨玲凾縺ｮ繝上Φ繝峨Μ繝ｳ繧ｰ
+    // 自動接続テスト失敗時のハンドリング
     handleAutoConnectionTestFailure(error) {
         let errorMessage = '';
         let shouldShowModal = true;
         
-        // 繧ｨ繝ｩ繝ｼ繧ｿ繧､繝怜挨縺ｮ繝｡繝・そ繝ｼ繧ｸ險ｭ螳・
+        // エラータイプ別のメッセージ設定
         if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-            errorMessage = '菫晏ｭ倥＆繧後◆API繧ｭ繝ｼ縺檎┌蜉ｹ縺ｧ縺吶よ眠縺励＞API繧ｭ繝ｼ繧定ｨｭ螳壹＠縺ｦ縺上□縺輔＞縲・;
+            errorMessage = '保存されたAPIキーが無効です。新しいAPIキーを設定してください。';
         } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
-            errorMessage = 'API繧ｭ繝ｼ縺ｮ讓ｩ髯舌′荳崎ｶｳ縺励※縺・∪縺吶・emini API 縺ｮ譛牙柑縺ｪ繧ｭ繝ｼ繧剃ｽｿ逕ｨ縺励※縺上□縺輔＞縲・;
+            errorMessage = 'APIキーの権限が不足しています。Gemini API の有効なキーを使用してください。';
         } else if (error.message.includes('404') || error.message.includes('Not Found')) {
-            errorMessage = 'API繧ｨ繝ｳ繝峨・繧､繝ｳ繝医′隕九▽縺九ｊ縺ｾ縺帙ｓ縲ゅ＠縺ｰ繧峨￥蠕後↓蜀崎ｩｦ陦後＠縺ｦ縺上□縺輔＞縲・;
+            errorMessage = 'APIエンドポイントが見つかりません。しばらく後に再試行してください。';
         } else if (error.message.includes('429') || error.message.includes('Rate limit')) {
-            errorMessage = 'API縺ｮ蛻ｩ逕ｨ蛻ｶ髯舌↓驕斐＠縺ｾ縺励◆縲ゅ＠縺ｰ繧峨￥蠕後↓蜀崎ｩｦ陦後＠縺ｦ縺上□縺輔＞縲・;
+            errorMessage = 'APIの利用制限に達しました。しばらく後に再試行してください。';
         } else if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
-            errorMessage = 'Gemini API繧ｵ繝ｼ繝舌・縺ｫ蝠城｡後′逋ｺ逕溘＠縺ｦ縺・∪縺吶ゅ＠縺ｰ繧峨￥蠕後↓蜀崎ｩｦ陦後＠縺ｦ縺上□縺輔＞縲・;
+            errorMessage = 'Gemini APIサーバーに問題が発生しています。しばらく後に再試行してください。';
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
-            errorMessage = '繝阪ャ繝医Ρ繝ｼ繧ｯ謗･邯壹↓蝠城｡後′縺ゅｊ縺ｾ縺吶ゅう繝ｳ繧ｿ繝ｼ繝阪ャ繝域磁邯壹ｒ遒ｺ隱阪＠縺ｦ縺上□縺輔＞縲・;
+            errorMessage = 'ネットワーク接続に問題があります。インターネット接続を確認してください。';
         } else {
-            errorMessage = `菫晏ｭ倥＆繧後◆API繧ｭ繝ｼ縺ｧ縺ｮ謗･邯壹↓螟ｱ謨励＠縺ｾ縺励◆: ${error.message}`;
+            errorMessage = `保存されたAPIキーでの接続に失敗しました: ${error.message}`;
         }
         
-        // 繧ｨ繝ｩ繝ｼ繝医・繧ｹ繝医ｒ陦ｨ遉ｺ
+        // エラートーストを表示
         this.showToast(errorMessage, 'warning');
         
-        // 蛻晄悄險ｭ螳夂判髱｢繧定｡ｨ遉ｺ
+        // 初期設定画面を表示
         setTimeout(() => {
             this.showInitialAPISetupModal();
             
-            // 蛻晄悄險ｭ螳夂判髱｢蜀・〒繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧偵ワ繧､繝ｩ繧､繝・
+            // 初期設定画面内でエラーメッセージをハイライト
             const errorHelp = document.querySelector('#api-initial-setup-modal .error-help');
             if (errorHelp) {
                 errorHelp.textContent = errorMessage;
@@ -648,27 +648,27 @@ class App {
         }, 1000);
     }
 
-    // 蛻晄悄API繧ｻ繝・ヨ繧｢繝・・繧偵せ繧ｭ繝・・
+    // 初期APIセットアップをスキップ
     skipInitialAPISetup() {
-        this.showToast('API險ｭ螳壹ｒ繧ｹ繧ｭ繝・・縺励∪縺励◆縲ゆｸ驛ｨ讖溯・縺悟宛髯舌＆繧後∪縺吶・, 'info');
+        this.showToast('API設定をスキップしました。一部機能が制限されます。', 'info');
         this.closeInitialAPISetupModal();
         
-        // 繧ｹ繧ｭ繝・・蠕後ｂ繝｡繧､繝ｳ繧｢繝励Μ繧貞・譛溷喧
+        // スキップ後もメインアプリを初期化
         setTimeout(async () => {
             await this.initializeMainApp();
         }, 500);
     }
     
-    // 蛻晄悄API繧ｻ繝・ヨ繧｢繝・・繝｢繝ｼ繝繝ｫ繧帝哩縺倥ｋ
+    // 初期APIセットアップモーダルを閉じる
     closeInitialAPISetupModal() {
         const modal = document.getElementById('api-initial-setup-modal');
         if (modal) {
             modal.classList.add('hidden');
-            modal.style.display = 'none'; // 遒ｺ螳溘↓髱櫁｡ｨ遉ｺ縺ｫ縺吶ｋ
+            modal.style.display = 'none'; // 確実に非表示にする
         }
     }
     
-    // API繧ｻ繝・ヨ繧｢繝・・繝｢繝ｼ繝繝ｫ繧帝哩縺倥ｋ
+    // APIセットアップモーダルを閉じる
     closeAPISetupModal() {
         const modal = document.getElementById('api-setup-modal');
         if (modal) {
@@ -676,7 +676,7 @@ class App {
         }
     }
     
-    // API繧ｭ繝ｼ蜈･蜉帙ヵ繧｣繝ｼ繝ｫ繝峨・蜷梧悄
+    // APIキー入力フィールドの同期
     syncAPIKeyInputs() {
         if (!window.unifiedApiManager) return;
         
@@ -694,7 +694,7 @@ class App {
         });
     }
     
-    // 繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ
+    // ナビゲーション
     initNavigation() {
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
@@ -703,7 +703,7 @@ class App {
                 if (page) {
                     this.showPage(page);
                     
-                    // 繧｢繧ｯ繝・ぅ繝悶け繝ｩ繧ｹ縺ｮ譖ｴ譁ｰ
+                    // アクティブクラスの更新
                     navBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                 }
@@ -714,19 +714,19 @@ class App {
     showPage(pageId) {
         console.log('Showing page:', pageId);
         
-        // 縺吶∋縺ｦ縺ｮ繝壹・繧ｸ繧帝撼陦ｨ遉ｺ
+        // すべてのページを非表示
         const pages = document.querySelectorAll('.page');
         pages.forEach(page => {
             page.classList.remove('active');
         });
         
-        // 謖・ｮ壹＆繧後◆繝壹・繧ｸ繧定｡ｨ遉ｺ
+        // 指定されたページを表示
         const targetPage = document.getElementById(pageId);
         if (targetPage) {
             targetPage.classList.add('active');
             this.currentPage = pageId;
             
-            // 繝壹・繧ｸ蝗ｺ譛峨・蛻晄悄蛹・
+            // ページ固有の初期化
             this.initPageContent(pageId);
         }
     }
@@ -748,9 +748,9 @@ class App {
         }
     }
     
-    // 繧､繝吶Φ繝医Μ繧ｹ繝翫・險ｭ螳・
+    // イベントリスナー設定
     setupEventListeners() {
-        // 繝ｭ繧ｰ繧､繝ｳ/逋ｻ骭ｲ繧ｿ繝門・繧頑崛縺・
+        // ログイン/登録タブ切り替え
         const tabBtns = document.querySelectorAll('.tab-btn');
         tabBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -759,7 +759,7 @@ class App {
             });
         });
         
-        // 繝ｭ繧ｰ繧､繝ｳ繝輔か繝ｼ繝
+        // ログインフォーム
         const loginForm = document.getElementById('login-form');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => {
@@ -768,7 +768,7 @@ class App {
             });
         }
         
-        // 逋ｻ骭ｲ繝輔か繝ｼ繝
+        // 登録フォーム
         const registerForm = document.getElementById('register-form');
         if (registerForm) {
             registerForm.addEventListener('submit', (e) => {
@@ -777,7 +777,7 @@ class App {
             });
         }
         
-        // 繧ｲ繧ｹ繝医・繧ｿ繝ｳ
+        // ゲストボタン
         const guestBtn = document.getElementById('guest-btn');
         if (guestBtn) {
             guestBtn.addEventListener('click', () => {
@@ -785,7 +785,7 @@ class App {
             });
         }
         
-        // 繝ｭ繧ｰ繧｢繧ｦ繝医・繧ｿ繝ｳ
+        // ログアウトボタン
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
@@ -793,7 +793,7 @@ class App {
             });
         }
         
-        // 隧ｦ蜷医ョ繝ｼ繧ｿ繝輔か繝ｼ繝
+        // 試合データフォーム
         const matchForm = document.getElementById('match-form');
         if (matchForm) {
             matchForm.addEventListener('submit', (e) => {
@@ -802,7 +802,7 @@ class App {
             });
         }
         
-        // 逶ｮ讓吶ヵ繧ｩ繝ｼ繝
+        // 目標フォーム
         const goalForm = document.getElementById('goal-form');
         if (goalForm) {
             goalForm.addEventListener('submit', (e) => {
@@ -811,7 +811,7 @@ class App {
             });
         }
         
-        // API險ｭ螳壹ヵ繧ｩ繝ｼ繝
+        // API設定フォーム
         const apiForm = document.getElementById('api-form');
         if (apiForm) {
             apiForm.addEventListener('submit', (e) => {
@@ -820,19 +820,19 @@ class App {
             });
         }
         
-        // API繧ｭ繝ｼ陦ｨ遉ｺ繝医げ繝ｫ
+        // APIキー表示トグル
         const toggleApiKey = document.getElementById('toggle-api-key');
         if (toggleApiKey) {
             toggleApiKey.addEventListener('click', () => {
                 const apiKeyInput = document.getElementById('api-key');
                 if (apiKeyInput) {
                     apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
-                    toggleApiKey.textContent = apiKeyInput.type === 'password' ? '早・・ : '早・鞘昨泓ｨ・・;
+                    toggleApiKey.textContent = apiKeyInput.type === 'password' ? '👁️' : '👁️‍🗨️';
                 }
             });
         }
         
-        // API繝・せ繝医・繧ｿ繝ｳ
+        // APIテストボタン
         const testApiBtn = document.getElementById('test-api-btn');
         if (testApiBtn) {
             testApiBtn.addEventListener('click', () => {
@@ -840,7 +840,7 @@ class App {
             });
         }
         
-        // API繧ｯ繝ｪ繧｢繝懊ち繝ｳ
+        // APIクリアボタン
         const clearApiBtn = document.getElementById('clear-api-btn');
         if (clearApiBtn) {
             clearApiBtn.addEventListener('click', () => {
@@ -848,7 +848,7 @@ class App {
             });
         }
         
-        // AI譖ｴ譁ｰ繝懊ち繝ｳ
+        // AI更新ボタン
         const refreshAiBtn = document.getElementById('refresh-ai-btn');
         if (refreshAiBtn) {
             refreshAiBtn.addEventListener('click', () => {
@@ -856,7 +856,7 @@ class App {
             });
         }
         
-        // 繧ｲ繝ｼ繝螟画峩繝懊ち繝ｳ
+        // ゲーム変更ボタン
         const changeGameBtn = document.getElementById('change-game-btn');
         if (changeGameBtn) {
             changeGameBtn.addEventListener('click', () => {
@@ -864,7 +864,7 @@ class App {
             });
         }
         
-        // 繧ｲ繝ｼ繝驕ｸ謚樒｢ｺ螳壹・繧ｿ繝ｳ
+        // ゲーム選択確定ボタン
         const confirmGameBtn = document.getElementById('confirm-game-btn');
         if (confirmGameBtn) {
             confirmGameBtn.addEventListener('click', () => {
@@ -872,7 +872,7 @@ class App {
             });
         }
         
-        // 繧ｲ繝ｼ繝驕ｸ謚槭く繝｣繝ｳ繧ｻ繝ｫ繝懊ち繝ｳ
+        // ゲーム選択キャンセルボタン
         const cancelGameBtn = document.getElementById('cancel-game-btn');
         if (cancelGameBtn) {
             cancelGameBtn.addEventListener('click', () => {
@@ -880,7 +880,7 @@ class App {
             });
         }
 
-        // 繧｢繝励Μ蛻晄悄蛹悶・繧ｿ繝ｳ
+        // アプリ初期化ボタン
         const resetBtn = document.getElementById('reset-app-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
@@ -889,7 +889,7 @@ class App {
         }
     }
     
-    // 繧ｿ繝門・繧頑崛縺・
+    // タブ切り替え
     switchTab(tabName) {
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -911,7 +911,7 @@ class App {
         });
     }
     
-    // 繝ｭ繧ｰ繧､繝ｳ蜃ｦ逅・
+    // ログイン処理
     handleLogin() {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
@@ -923,21 +923,21 @@ class App {
                 this.updateUserDisplay(username);
                 this.hideLoginModal();
                 this.loadUserData();
-                this.showToast('繝ｭ繧ｰ繧､繝ｳ縺励∪縺励◆', 'success');
+                this.showToast('ログインしました', 'success');
             } else {
                 this.showToast(result.message, 'error');
             }
         } else {
-            // 繝｢繝・け繝ｭ繧ｰ繧､繝ｳ
+            // モックログイン
             this.currentUser = { username: username };
             sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
             this.updateUserDisplay(username);
             this.hideLoginModal();
-            this.showToast('繝ｭ繧ｰ繧､繝ｳ縺励∪縺励◆', 'success');
+            this.showToast('ログインしました', 'success');
         }
     }
     
-    // 逋ｻ骭ｲ蜃ｦ逅・
+    // 登録処理
     handleRegister() {
         const username = document.getElementById('register-username').value;
         const email = document.getElementById('register-email').value;
@@ -945,45 +945,45 @@ class App {
         const passwordConfirm = document.getElementById('register-password-confirm').value;
         
         if (password !== passwordConfirm) {
-            this.showToast('繝代せ繝ｯ繝ｼ繝峨′荳閾ｴ縺励∪縺帙ｓ', 'error');
+            this.showToast('パスワードが一致しません', 'error');
             return;
         }
         
         if (this.authService) {
             const result = this.authService.register(username, password, email);
             if (result.success) {
-                this.showToast('逋ｻ骭ｲ縺悟ｮ御ｺ・＠縺ｾ縺励◆縲ゅΟ繧ｰ繧､繝ｳ縺励※縺上□縺輔＞縲・, 'success');
+                this.showToast('登録が完了しました。ログインしてください。', 'success');
                 this.switchTab('login');
             } else {
                 this.showToast(result.message, 'error');
             }
         } else {
-            // 繝｢繝・け逋ｻ骭ｲ
-            this.showToast('逋ｻ骭ｲ縺悟ｮ御ｺ・＠縺ｾ縺励◆', 'success');
+            // モック登録
+            this.showToast('登録が完了しました', 'success');
             this.switchTab('login');
         }
     }
     
-    // 繧ｲ繧ｹ繝医い繧ｯ繧ｻ繧ｹ
+    // ゲストアクセス
     handleGuestAccess() {
         this.isGuest = true;
         sessionStorage.setItem('isGuest', 'true');
-        this.updateUserDisplay('繧ｲ繧ｹ繝医Θ繝ｼ繧ｶ繝ｼ', true);
+        this.updateUserDisplay('ゲストユーザー', true);
         this.hideLoginModal();
-        this.showToast('繧ｲ繧ｹ繝医→縺励※繝ｭ繧ｰ繧､繝ｳ縺励∪縺励◆', 'info');
+        this.showToast('ゲストとしてログインしました', 'info');
     }
     
-    // 繝ｭ繧ｰ繧｢繧ｦ繝・
+    // ログアウト
     handleLogout() {
         this.currentUser = null;
         this.isGuest = false;
         sessionStorage.removeItem('currentUser');
         sessionStorage.removeItem('isGuest');
         this.showLoginModal();
-        this.showToast('繝ｭ繧ｰ繧｢繧ｦ繝医＠縺ｾ縺励◆', 'info');
+        this.showToast('ログアウトしました', 'info');
     }
     
-    // 隧ｦ蜷医ョ繝ｼ繧ｿ騾∽ｿ｡
+    // 試合データ送信
     handleMatchSubmit() {
         const matchData = {
             result: document.getElementById('match-result').value,
@@ -994,19 +994,19 @@ class App {
             duration: parseInt(document.getElementById('match-duration').value)
         };
         
-        // 1) 蛻・梵邨先棡縺ｮ陦ｨ遉ｺ
+        // 1) 分析結果の表示
         this.analyzeMatch(matchData);
 
-        // 2) 隧ｦ蜷医ｒ菫晏ｭ倥＠縲√ム繝・す繝･繝懊・繝臥ｵｱ險医ｒ譖ｴ譁ｰ・磯｣蜍包ｼ・
+        // 2) 試合を保存し、ダッシュボード統計を更新（連動）
         this.storeMatchAndRefresh(matchData);
         document.getElementById('match-form').reset();
-        this.showToast('蛻・梵繧貞ｮ溯｡後＠縺ｦ縺・∪縺・..', 'info');
+        this.showToast('分析を実行しています...', 'info');
     }
 
-    // 蛻・梵繝壹・繧ｸ縺ｮ蜈･蜉帙ｒ繝ｭ繝ｼ繧ｫ繝ｫ縺ｫ菫晏ｭ倥＠縲√ム繝・す繝･繝懊・繝峨ｒ譖ｴ譁ｰ
+    // 分析ページの入力をローカルに保存し、ダッシュボードを更新
     storeMatchAndRefresh(matchData) {
         try {
-            // 菫晏ｭ倥ヵ繧ｩ繝ｼ繝槭ャ繝医∈謨ｴ蠖｢
+            // 保存フォーマットへ整形
             const newMatch = {
                 id: Date.now(),
                 result: matchData.result || 'WIN',
@@ -1020,13 +1020,13 @@ class App {
                 gameMode: 'Custom'
             };
 
-            // 逶ｴ霑題ｩｦ蜷医∈霑ｽ蜉・域怙螟ｧ50莉ｶ・・
+            // 直近試合へ追加（最大50件）
             const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
             matches.unshift(newMatch);
             if (matches.length > 50) matches.length = 50;
             localStorage.setItem('recentMatches', JSON.stringify(matches));
 
-            // 髮・ｨ医＠縺ｦ繝励Ξ繧､繝､繝ｼ邨ｱ險医ｒ譖ｴ譁ｰ
+            // 集計してプレイヤー統計を更新
             const totalMatches = matches.length;
             const wins = matches.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
             const totals = matches.reduce((acc, m) => {
@@ -1051,13 +1051,13 @@ class App {
 
             if (this.playerStatsManager) {
                 this.playerStatsManager.savePlayerStats(updatedStats);
-                // UI繧貞叉譎よ峩譁ｰ
+                // UIを即時更新
                 this.playerStatsManager.loadStatsToUI();
                 this.playerStatsManager.loadRecentMatches();
             } else {
                 localStorage.setItem('playerStats', JSON.stringify(updatedStats));
                 this.loadRecentMatches();
-                // 謇句虚縺ｧUI縺ｸ蜿肴丐
+                // 手動でUIへ反映
                 const mapping = {
                     'win-rate': `${winRate}%`,
                     'avg-kda': `${avgKDA}`,
@@ -1074,7 +1074,7 @@ class App {
         }
     }
     
-    // 逶ｮ讓呵ｿｽ蜉
+    // 目標追加
     handleGoalSubmit() {
         const goalData = {
             title: document.getElementById('goal-title').value,
@@ -1086,10 +1086,10 @@ class App {
         
         this.addGoal(goalData);
         document.getElementById('goal-form').reset();
-        this.showToast('逶ｮ讓吶ｒ霑ｽ蜉縺励∪縺励◆', 'success');
+        this.showToast('目標を追加しました', 'success');
     }
     
-    // API險ｭ螳壻ｿ晏ｭ・
+    // API設定保存
     handleApiSave() {
         const provider = document.getElementById('api-provider').value;
         const apiKey = document.getElementById('api-key').value;
@@ -1104,24 +1104,24 @@ class App {
         }
         
         this.updateApiStatus(true);
-        this.showToast('API險ｭ螳壹ｒ菫晏ｭ倥＠縺ｾ縺励◆', 'success');
+        this.showToast('API設定を保存しました', 'success');
     }
     
-    // API謗･邯壹ユ繧ｹ繝・
+    // API接続テスト
     async testApiConnection() {
         this.showLoading();
         
         setTimeout(() => {
             this.hideLoading();
             if (Math.random() > 0.5) {
-                this.showToast('API謗･邯壽・蜉・, 'success');
+                this.showToast('API接続成功', 'success');
             } else {
-                this.showToast('API謗･邯壼､ｱ謨・ 繧ｭ繝ｼ繧堤｢ｺ隱阪＠縺ｦ縺上□縺輔＞', 'error');
+                this.showToast('API接続失敗: キーを確認してください', 'error');
             }
         }, 1000);
     }
     
-    // API險ｭ螳壹け繝ｪ繧｢
+    // API設定クリア
     clearApiSettings() {
         if (this.aiService) {
             this.aiService.clearConfiguration();
@@ -1133,10 +1133,10 @@ class App {
         
         document.getElementById('api-key').value = '';
         this.updateApiStatus(false);
-        this.showToast('API險ｭ螳壹ｒ繧ｯ繝ｪ繧｢縺励∪縺励◆', 'info');
+        this.showToast('API設定をクリアしました', 'info');
     }
     
-    // API迥ｶ諷区峩譁ｰ
+    // API状態更新
     updateApiStatus(isConfigured) {
         const statusIndicator = document.querySelector('.status-indicator');
         const statusText = document.querySelector('.status-text');
@@ -1145,22 +1145,22 @@ class App {
             if (isConfigured) {
                 statusIndicator.classList.remove('offline');
                 statusIndicator.classList.add('online');
-                statusText.textContent = 'API險ｭ螳壽ｸ医∩';
+                statusText.textContent = 'API設定済み';
             } else {
                 statusIndicator.classList.remove('online');
                 statusIndicator.classList.add('offline');
-                statusText.textContent = 'API譛ｪ險ｭ螳・;
+                statusText.textContent = 'API未設定';
             }
         }
     }
     
-    // 繝√Ε繝ｼ繝亥・譛溷喧
+    // チャート初期化
     initCharts() {
-        // 繝√Ε繝ｼ繝医・螳滄圀縺ｮ繝・・繧ｿ縺悟・蜉帙＆繧後◆譎ゅ・縺ｿ蛻晄悄蛹悶☆繧・
-        // 蛻晄悄迥ｶ諷九〒縺ｯ菴輔ｂ陦ｨ遉ｺ縺励↑縺・
+        // チャートは実際のデータが入力された時のみ初期化する
+        // 初期状態では何も表示しない
     }
     
-    // 繝医・繧ｹ繝郁｡ｨ遉ｺ
+    // トースト表示
     showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -1185,9 +1185,9 @@ class App {
         }, 3000);
     }
     
-    // 繝ｭ繝ｼ繝・ぅ繝ｳ繧ｰ陦ｨ遉ｺ・井ｻｻ諢上Γ繝・そ繝ｼ繧ｸ蟇ｾ蠢懶ｼ・
-    showLoading(message = '繝ｭ繝ｼ繝我ｸｭ...') {
-        // 繝・く繧ｹ繝医ｒ譖ｴ譁ｰ・磯㍾隍⑩D縺ｫ蟇ｾ蠢懊＠縺ｦ蜈ｨ縺ｦ譖ｴ譁ｰ・・
+    // ローディング表示（任意メッセージ対応）
+    showLoading(message = 'ロード中...') {
+        // テキストを更新（重複IDに対応して全て更新）
         try {
             const msgNodes = document.querySelectorAll('#loading .loading-content p');
             if (msgNodes && msgNodes.length > 0) {
@@ -1210,24 +1210,24 @@ class App {
         }
     }
     
-    // 蜷・・繝ｼ繧ｸ縺ｮ繝ｭ繝ｼ繝牙・逅・
+    // 各ページのロード処理
     loadDashboard() {
-        // 譁ｰ縺励＞邨ｱ險医す繧ｹ繝・Β繧剃ｽｿ逕ｨ
+        // 新しい統計システムを使用
         if (this.playerStatsManager) {
             this.playerStatsManager.loadRecentMatches();
         } else {
             this.loadRecentMatches();
         }
-        // 譁ｰ縺励＞AI繧ｳ繝ｼ繝√Φ繧ｰ讖溯・繧剃ｽｿ逕ｨ
+        // 新しいAIコーチング機能を使用
         this.loadAIRecommendations();
-        // 譁ｰ縺励＞邨ｱ險医す繧ｹ繝・Β繧剃ｽｿ逕ｨ
+        // 新しい統計システムを使用
         if (this.playerStatsManager) {
             this.playerStatsManager.loadStatsToUI();
         }
     }
     
     loadAnalysis() {
-        // 蛻・梵繝壹・繧ｸ縺ｮ蛻晄悄蛹・
+        // 分析ページの初期化
     }
     
     loadGoals() {
@@ -1239,11 +1239,11 @@ class App {
         this.loadApiSettings();
     }
     
-    // 繝・・繧ｿ繝ｭ繝ｼ繝牙・逅・
+    // データロード処理
     loadUserData() {
-        // 繝ｦ繝ｼ繧ｶ繝ｼ繝・・繧ｿ縺ｮ繝ｭ繝ｼ繝・
+        // ユーザーデータのロード
         if (!this.isGuest && this.currentUser) {
-            // 菫晏ｭ倥＆繧後◆繝・・繧ｿ繧偵Ο繝ｼ繝・
+            // 保存されたデータをロード
         }
     }
     
@@ -1251,11 +1251,11 @@ class App {
         const container = document.getElementById('recent-matches');
         if (!container) return;
         
-        // 螳滄圀縺ｮ隧ｦ蜷医ョ繝ｼ繧ｿ繧偵Ο繝ｼ繧ｫ繝ｫ繧ｹ繝医Ξ繝ｼ繧ｸ縺九ｉ蜿門ｾ・
+        // 実際の試合データをローカルストレージから取得
         const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
         if (matches.length === 0) {
-            container.innerHTML = '<p class="no-data">隧ｦ蜷郁ｨ倬鹸縺後∪縺縺ゅｊ縺ｾ縺帙ｓ</p>';
+            container.innerHTML = '<p class="no-data">試合記録がまだありません</p>';
             return;
         }
         
@@ -1269,15 +1269,15 @@ class App {
     }
     
     loadAiRecommendations() {
-        // 縺薙・髢｢謨ｰ縺ｯ髱樊耳螂ｨ - 譁ｰ縺励＞AI繧ｳ繝ｼ繝√Φ繧ｰ讖溯・繧剃ｽｿ逕ｨ
-        console.log('圷 Deprecated loadAiRecommendations called - redirecting to new AI coaching');
+        // この関数は非推奨 - 新しいAIコーチング機能を使用
+        console.log('🚨 Deprecated loadAiRecommendations called - redirecting to new AI coaching');
         this.loadAIRecommendations();
     }
     
     refreshAiRecommendations() {
-        // 譁ｰ縺励＞AI繧ｳ繝ｼ繝√Φ繧ｰ讖溯・繧剃ｽｿ逕ｨ
+        // 新しいAIコーチング機能を使用
         this.generateAIRecommendations();
-        this.showToast('謗ｨ螂ｨ莠矩・ｒ譖ｴ譁ｰ縺励∪縺励◆', 'success');
+        this.showToast('推奨事項を更新しました', 'success');
     }
     
     loadGoalsList() {
@@ -1287,7 +1287,7 @@ class App {
         const goals = JSON.parse(localStorage.getItem('goals') || '[]');
         
         if (goals.length === 0) {
-            container.innerHTML = '<p class="no-data">逶ｮ讓吶′縺ｾ縺險ｭ螳壹＆繧後※縺・∪縺帙ｓ</p>';
+            container.innerHTML = '<p class="no-data">目標がまだ設定されていません</p>';
             return;
         }
         
@@ -1323,21 +1323,21 @@ class App {
         if (resultsContainer) {
             resultsContainer.innerHTML = `
                 <div class="card">
-                    <h3>蛻・梵邨先棡</h3>
+                    <h3>分析結果</h3>
                     <div class="analysis-stats">
                         <div class="stat-box">
                             <span class="stat-label">KDA</span>
                             <span class="stat-value">${kda}</span>
                         </div>
                         <div class="stat-box">
-                            <span class="stat-label">CS/蛻・/span>
+                            <span class="stat-label">CS/分</span>
                             <span class="stat-value">${csPerMin}</span>
                         </div>
                     </div>
                     <div class="analysis-feedback">
-                        <h4>繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ隧穂ｾ｡</h4>
-                        <p>${kda >= 3 ? '蜆ｪ繧後◆KDA縺ｧ縺呻ｼ・ : 'KDA縺ｮ謾ｹ蝟・ｽ吝慍縺後≠繧翫∪縺吶・}</p>
-                        <p>${csPerMin >= 7 ? 'CS邊ｾ蠎ｦ縺ｯ濶ｯ螂ｽ縺ｧ縺吶・ : 'CS縺ｮ邊ｾ蠎ｦ繧貞髄荳翫＆縺帙∪縺励ｇ縺・・}</p>
+                        <h4>パフォーマンス評価</h4>
+                        <p>${kda >= 3 ? '優れたKDAです！' : 'KDAの改善余地があります。'}</p>
+                        <p>${csPerMin >= 7 ? 'CS精度は良好です。' : 'CSの精度を向上させましょう。'}</p>
                     </div>
                 </div>
             `;
@@ -1374,7 +1374,7 @@ class App {
         
         container.innerHTML = html;
         
-        // 繧ｲ繝ｼ繝驕ｸ謚槭き繝ｼ繝峨・繧ｯ繝ｪ繝・け繧､繝吶Φ繝医ｒ險ｭ螳・
+        // ゲーム選択カードのクリックイベントを設定
         this.setupGameCards();
     }
     
@@ -1409,7 +1409,7 @@ class App {
             
             localStorage.setItem('selectedGame', gameId);
             this.hideGameSelector();
-            this.showToast(`繧ｲ繝ｼ繝繧・{gameName}縺ｫ螟画峩縺励∪縺励◆`, 'success');
+            this.showToast(`ゲームを${gameName}に変更しました`, 'success');
         }
     }
     
@@ -1430,22 +1430,22 @@ class App {
         this.updateApiStatus(!!hasKey);
     }
 
-    // === 繝√Ε繝・ヨ讖溯・ ===
+    // === チャット機能 ===
     initChat() {
         console.log('Initializing chat...');
         
-        // API險ｭ螳夐未騾｣
+        // API設定関連
         this.setupChatApiSettings();
         
-        // 繝√Ε繝・ヨ蜈･蜉幃未騾｣
+        // チャット入力関連
         this.setupChatInput();
         
-        // 繝｡繝・そ繝ｼ繧ｸ螻･豁ｴ繧貞ｾｩ蜈・
+        // メッセージ履歴を復元
         this.loadChatHistory();
     }
     
     setupChatApiSettings() {
-        // API繧ｭ繝ｼ險ｭ螳・
+        // APIキー設定
         const saveKeyBtn = document.getElementById('save-gemini-key');
         const testConnectionBtn = document.getElementById('test-gemini-connection');
         const toggleKeyBtn = document.getElementById('toggle-gemini-key');
@@ -1463,11 +1463,11 @@ class App {
             toggleKeyBtn.addEventListener('click', () => {
                 const isPassword = apiKeyInput.type === 'password';
                 apiKeyInput.type = isPassword ? 'text' : 'password';
-                toggleKeyBtn.textContent = isPassword ? '刪' : '早・・;
+                toggleKeyBtn.textContent = isPassword ? '🙈' : '👁️';
             });
         }
         
-        // 譌｢蟄倥・API繧ｭ繝ｼ繧定ｪｭ縺ｿ霎ｼ縺ｿ
+        // 既存のAPIキーを読み込み
         if (apiKeyInput && this.geminiService) {
             apiKeyInput.value = this.geminiService.getApiKey();
         }
@@ -1479,18 +1479,18 @@ class App {
         const clearBtn = document.getElementById('clear-chat');
         
         if (chatInput) {
-            // 閾ｪ蜍輔Μ繧ｵ繧､繧ｺ
+            // 自動リサイズ
             chatInput.addEventListener('input', () => {
                 chatInput.style.height = 'auto';
                 chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
                 
-                // 騾∽ｿ｡繝懊ち繝ｳ縺ｮ譛牙柑/辟｡蜉ｹ
+                // 送信ボタンの有効/無効
                 if (sendBtn) {
                     sendBtn.disabled = !chatInput.value.trim();
                 }
             });
             
-            // Enter 繧ｭ繝ｼ縺ｧ騾∽ｿ｡
+            // Enter キーで送信
             chatInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -1514,53 +1514,53 @@ class App {
         
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) {
-            this.showToast('API繧ｭ繝ｼ繧貞・蜉帙＠縺ｦ縺上□縺輔＞', 'warning');
+            this.showToast('APIキーを入力してください', 'warning');
             return;
         }
         
         try {
-            // 邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ繧剃ｽｿ逕ｨ
+            // 統一APIマネージャーを使用
             if (window.unifiedApiManager) {
                 await window.unifiedApiManager.setAPIKey(apiKey);
-                // 莉悶・蜈･蜉帙ヵ繧｣繝ｼ繝ｫ繝峨ｂ蜷梧悄
+                // 他の入力フィールドも同期
                 this.syncAPIKeyInputs();
-                this.showToast('API繧ｭ繝ｼ繧剃ｿ晏ｭ倥＠縺ｾ縺励◆', 'success');
-                // 繧ｳ繝ｼ繝√Φ繧ｰ繧偵が繝ｳ繝ｩ繧､繝ｳ縺ｧ蜀咲函謌・
+                this.showToast('APIキーを保存しました', 'success');
+                // コーチングをオンラインで再生成
                 try { this.generateAIRecommendations(); } catch {}
             } else if (this.geminiService) {
-                // 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
+                // フォールバック
                 this.geminiService.setApiKey(apiKey);
-                this.showToast('Gemini API繧ｭ繝ｼ繧剃ｿ晏ｭ倥＠縺ｾ縺励◆', 'success');
+                this.showToast('Gemini APIキーを保存しました', 'success');
                 try { this.generateAIRecommendations(); } catch {}
             } else {
-                this.showToast('API繧ｵ繝ｼ繝薙せ縺悟・譛溷喧縺輔ｌ縺ｦ縺・∪縺帙ｓ', 'error');
+                this.showToast('APIサービスが初期化されていません', 'error');
             }
         } catch (error) {
-            this.showToast(`API繧ｭ繝ｼ菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆: ${error.message}`, 'error');
+            this.showToast(`APIキー保存に失敗しました: ${error.message}`, 'error');
         }
     }
     
     async testGeminiConnection() {
         if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
-            this.showToast('Gemini API繧ｭ繝ｼ縺瑚ｨｭ螳壹＆繧後※縺・∪縺帙ｓ', 'error');
+            this.showToast('Gemini APIキーが設定されていません', 'error');
             return;
         }
         
         const testBtn = document.getElementById('test-gemini-connection');
         if (testBtn) {
             testBtn.disabled = true;
-            testBtn.textContent = '繝・せ繝井ｸｭ...';
+            testBtn.textContent = 'テスト中...';
         }
         
         try {
             await window.unifiedApiManager.validateAPIKey();
-            this.showToast('謗･邯壹ユ繧ｹ繝医↓謌仙粥縺励∪縺励◆', 'success');
+            this.showToast('接続テストに成功しました', 'success');
         } catch (error) {
-            this.showToast(`謗･邯壹ユ繧ｹ繝医↓螟ｱ謨・ ${error.message}`, 'error');
+            this.showToast(`接続テストに失敗: ${error.message}`, 'error');
         } finally {
             if (testBtn) {
                 testBtn.disabled = false;
-                testBtn.textContent = '謗･邯壹ユ繧ｹ繝・;
+                testBtn.textContent = '接続テスト';
             }
         }
     }
@@ -1571,47 +1571,47 @@ class App {
         
         if (!chatInput) return;
         
-        // API縺瑚ｨｭ螳壹＆繧後※縺・ｋ縺狗｢ｺ隱・
+        // APIが設定されているか確認
         if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
-            this.showToast('Gemini API繧ｭ繝ｼ縺瑚ｨｭ螳壹＆繧後※縺・∪縺帙ｓ', 'warning');
+            this.showToast('Gemini APIキーが設定されていません', 'warning');
             return;
         }
         
         const message = chatInput.value.trim();
         if (!message) return;
         
-        // UI繧堤┌蜉ｹ蛹・
+        // UIを無効化
         chatInput.disabled = true;
         if (sendBtn) sendBtn.disabled = true;
         
         try {
-            // 繝ｦ繝ｼ繧ｶ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧定｡ｨ遉ｺ
+            // ユーザーメッセージを表示
             this.addChatMessage(message, 'user');
             
-            // 蜈･蜉帙ヵ繧｣繝ｼ繝ｫ繝峨ｒ繧ｯ繝ｪ繧｢
+            // 入力フィールドをクリア
             chatInput.value = '';
             chatInput.style.height = 'auto';
             
-            // 繧ｿ繧､繝斐Φ繧ｰ繧､繝ｳ繧ｸ繧ｱ繝ｼ繧ｿ繝ｼ陦ｨ遉ｺ
+            // タイピングインジケーター表示
             this.showTypingIndicator();
             
-            // API縺ｫ騾∽ｿ｡
+            // APIに送信
             const response = await this.geminiService.sendChatMessage(message);
             
-            // 繧ｿ繧､繝斐Φ繧ｰ繧､繝ｳ繧ｸ繧ｱ繝ｼ繧ｿ繝ｼ髱櫁｡ｨ遉ｺ
+            // タイピングインジケーター非表示
             this.hideTypingIndicator();
             
-            // AI縺ｮ蠢懃ｭ斐ｒ陦ｨ遉ｺ
+            // AIの応答を表示
             this.addChatMessage(response.response, 'ai');
             
-            // 螻･豁ｴ繧剃ｿ晏ｭ・
+            // 履歴を保存
             this.saveChatHistory();
             
         } catch (error) {
             this.hideTypingIndicator();
-            this.showToast(`繝｡繝・そ繝ｼ繧ｸ騾∽ｿ｡繧ｨ繝ｩ繝ｼ: ${error.message}`, 'error');
+            this.showToast(`メッセージ送信エラー: ${error.message}`, 'error');
         } finally {
-            // UI繧貞・譛牙柑蛹・
+            // UIを再有効化
             chatInput.disabled = false;
             if (sendBtn) sendBtn.disabled = false;
         }
@@ -1626,7 +1626,7 @@ class App {
         
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
-        avatar.textContent = type === 'user' ? '側' : '､・;
+        avatar.textContent = type === 'user' ? '👤' : '🤖';
         
         const content = document.createElement('div');
         content.className = 'message-content';
@@ -1649,10 +1649,10 @@ class App {
         
         messagesContainer.appendChild(messageDiv);
         
-        // 繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ
+        // スクロール
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         
-        // 繝｡繝・そ繝ｼ繧ｸ繧帝・蛻励↓霑ｽ蜉
+        // メッセージを配列に追加
         this.chatMessages.push({
             text: text,
             type: type,
@@ -1669,10 +1669,10 @@ class App {
         indicator.id = 'typing-indicator';
         
         indicator.innerHTML = `
-            <div class="message-avatar">､・/div>
+            <div class="message-avatar">🤖</div>
             <div class="message-content">
                 <div class="message-text">
-                    <span>AI 縺悟・蜉帑ｸｭ</span>
+                    <span>AI が入力中</span>
                     <div class="typing-dots">
                         <div class="typing-dot"></div>
                         <div class="typing-dot"></div>
@@ -1697,20 +1697,20 @@ class App {
         const messagesContainer = document.getElementById('chat-messages');
         if (!messagesContainer) return;
         
-        // 譛蛻昴・AI繝｡繝・そ繝ｼ繧ｸ莉･螟悶ｒ蜑企勁
+        // 最初のAIメッセージ以外を削除
         const messages = messagesContainer.querySelectorAll('.chat-message');
         messages.forEach((msg, index) => {
             if (index > 0) msg.remove();
         });
         
-        // 繝・・繧ｿ繧偵け繝ｪ繧｢
+        // データをクリア
         this.chatMessages = [];
         if (this.geminiService) {
             this.geminiService.clearChatHistory();
         }
         
         this.saveChatHistory();
-        this.showToast('繝√Ε繝・ヨ螻･豁ｴ繧偵け繝ｪ繧｢縺励∪縺励◆', 'success');
+        this.showToast('チャット履歴をクリアしました', 'success');
     }
     
     saveChatHistory() {
@@ -1722,7 +1722,7 @@ class App {
             const history = localStorage.getItem('chat-history');
             if (history) {
                 this.chatMessages = JSON.parse(history);
-                // UI縺ｯ蠕ｩ蜈・＠縺ｪ縺・ｼ域眠縺励＞繧ｻ繝・す繝ｧ繝ｳ縺ｨ縺励※髢句ｧ具ｼ・
+                // UIは復元しない（新しいセッションとして開始）
             }
         } catch (error) {
             console.warn('Failed to load chat history:', error);
@@ -1730,17 +1730,17 @@ class App {
         }
     }
 
-    // === 繝｡繝・ぅ繧｢隗｣譫先ｩ溯・ ===
+    // === メディア解析機能 ===
     initMediaAnalysis() {
         console.log('Initializing media analysis...');
         
-        // API險ｭ螳・
+        // API設定
         this.setupMediaApiSettings();
         
-        // 繝輔ぃ繧､繝ｫ繧｢繝・・繝ｭ繝ｼ繝・
+        // ファイルアップロード
         this.setupFileUpload();
         
-        // 譌｢蟄倥・繝輔ぃ繧､繝ｫ繝励Ξ繝薙Η繝ｼ繧偵け繝ｪ繧｢
+        // 既存のファイルプレビューをクリア
         this.uploadedFiles = [];
     }
     
@@ -1762,11 +1762,11 @@ class App {
             toggleKeyBtn.addEventListener('click', () => {
                 const isPassword = apiKeyInput.type === 'password';
                 apiKeyInput.type = isPassword ? 'text' : 'password';
-                toggleKeyBtn.textContent = isPassword ? '刪' : '早・・;
+                toggleKeyBtn.textContent = isPassword ? '🙈' : '👁️';
             });
         }
         
-        // 譌｢蟄倥・API繧ｭ繝ｼ繧定ｪｭ縺ｿ霎ｼ縺ｿ・医メ繝｣繝・ヨ縺ｨ蜷後§繧ｭ繝ｼ繧剃ｽｿ逕ｨ・・
+        // 既存のAPIキーを読み込み（チャットと同じキーを使用）
         if (apiKeyInput && this.geminiService) {
             apiKeyInput.value = this.geminiService.getApiKey();
         }
@@ -1778,7 +1778,7 @@ class App {
         const fileSelectBtn = document.getElementById('file-select-btn');
         
         if (uploadArea) {
-            // 繝峨Λ繝・げ&繝峨Ο繝・・
+            // ドラッグ&ドロップ
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 uploadArea.classList.add('dragover');
@@ -1818,17 +1818,17 @@ class App {
     }
     
     validateFile(file) {
-        // 繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ繝√ぉ繝・け・・0MB・・
+        // ファイルサイズチェック（20MB）
         const maxSize = 20 * 1024 * 1024;
         if (file.size > maxSize) {
-            this.showToast(`繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ縺悟､ｧ縺阪☆縺弱∪縺・ ${file.name}`, 'error');
+            this.showToast(`ファイルサイズが大きすぎます: ${file.name}`, 'error');
             return false;
         }
         
-        // 繝輔ぃ繧､繝ｫ繧ｿ繧､繝励メ繧ｧ繝・け
+        // ファイルタイプチェック
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
         if (!allowedTypes.includes(file.type)) {
-            this.showToast(`繧ｵ繝昴・繝医＆繧後※縺・↑縺・ヵ繧｡繧､繝ｫ蠖｢蠑・ ${file.name}`, 'error');
+            this.showToast(`サポートされていないファイル形式: ${file.name}`, 'error');
             return false;
         }
         
@@ -1849,7 +1849,7 @@ class App {
         fileCard.className = 'file-card';
         fileCard.dataset.fileName = file.name;
         
-        // 繝輔ぃ繧､繝ｫ繝励Ξ繝薙Η繝ｼ菴懈・
+        // ファイルプレビュー作成
         if (file.type.startsWith('image/')) {
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
@@ -1863,7 +1863,7 @@ class App {
             fileCard.appendChild(video);
         }
         
-        // 繝輔ぃ繧､繝ｫ諠・ｱ
+        // ファイル情報
         const fileName = document.createElement('div');
         fileName.className = 'file-name';
         fileName.textContent = file.name;
@@ -1874,20 +1874,20 @@ class App {
         fileSize.textContent = this.formatFileSize(file.size);
         fileCard.appendChild(fileSize);
         
-        // 謫堺ｽ懊・繧ｿ繝ｳ
+        // 操作ボタン
         const actions = document.createElement('div');
         actions.className = 'file-actions';
         
         const analyzeBtn = document.createElement('button');
         analyzeBtn.className = 'btn-analyze';
-        analyzeBtn.textContent = '蛻・梵';
+        analyzeBtn.textContent = '分析';
         analyzeBtn.onclick = () => this.analyzeFile(file);
         actions.appendChild(analyzeBtn);
         
-        // 蜑企勁繝懊ち繝ｳ
+        // 削除ボタン
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
-        removeBtn.textContent = 'ﾃ・;
+        removeBtn.textContent = '×';
         removeBtn.onclick = () => this.removeFile(file.name);
         fileCard.appendChild(removeBtn);
         
@@ -1897,7 +1897,7 @@ class App {
     
     async analyzeFile(file) {
         if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
-            this.showToast('Gemini API繧ｭ繝ｼ縺瑚ｨｭ螳壹＆繧後※縺・∪縺帙ｓ', 'warning');
+            this.showToast('Gemini APIキーが設定されていません', 'warning');
             return;
         }
         
@@ -1913,10 +1913,10 @@ class App {
             }
             
             this.displayAnalysisResult(result);
-            this.showToast('隗｣譫舌′螳御ｺ・＠縺ｾ縺励◆', 'success');
+            this.showToast('解析が完了しました', 'success');
             
         } catch (error) {
-            this.showToast(`隗｣譫舌お繝ｩ繝ｼ: ${error.message}`, 'error');
+            this.showToast(`解析エラー: ${error.message}`, 'error');
         } finally {
             this.hideLoading();
         }
@@ -1935,7 +1935,7 @@ class App {
         
         let cardHTML = `
             <div class="analysis-header">
-                <div class="analysis-game">${result.gameTitle || '繧ｲ繝ｼ繝隗｣譫・}</div>
+                <div class="analysis-game">${result.gameTitle || 'ゲーム解析'}</div>
                 <div class="analysis-confidence">${result.timestamp || ''}</div>
             </div>
         `;
@@ -1944,7 +1944,7 @@ class App {
             cardHTML += `
                 <div class="analysis-stats">
                     <div class="stat-box">
-                        <div class="stat-label">邱丞粋隧穂ｾ｡</div>
+                        <div class="stat-label">総合評価</div>
                         <div class="stat-value">${result.overallScore}</div>
                     </div>
                 </div>
@@ -1954,7 +1954,7 @@ class App {
         if (result.strengths && result.strengths.length > 0) {
             cardHTML += `
                 <div class="analysis-section">
-                    <h4>笨・濶ｯ縺・・繧､繝ｳ繝・/h4>
+                    <h4>✅ 良いポイント</h4>
                     <ul class="analysis-list strengths">
                         ${result.strengths.map(item => `<li>${item}</li>`).join('')}
                     </ul>
@@ -1965,7 +1965,7 @@ class App {
         if (result.weaknesses && result.weaknesses.length > 0) {
             cardHTML += `
                 <div class="analysis-section">
-                    <h4>笞・・謾ｹ蝟・・繧､繝ｳ繝・/h4>
+                    <h4>⚠️ 改善ポイント</h4>
                     <ul class="analysis-list weaknesses">
                         ${result.weaknesses.map(item => `<li>${item}</li>`).join('')}
                     </ul>
@@ -1976,7 +1976,7 @@ class App {
         if (result.suggestions && result.suggestions.length > 0) {
             cardHTML += `
                 <div class="analysis-section">
-                    <h4>庁 謾ｹ蝟・署譯・/h4>
+                    <h4>💡 改善提案</h4>
                     <ul class="analysis-list suggestions">
                         ${result.suggestions.map(item => `<li>${item}</li>`).join('')}
                     </ul>
@@ -1987,7 +1987,7 @@ class App {
         if (result.summary) {
             cardHTML += `
                 <div class="analysis-section">
-                    <h4>統 邱丞粋隧穂ｾ｡</h4>
+                    <h4>📝 総合評価</h4>
                     <p>${result.summary}</p>
                 </div>
             `;
@@ -1998,16 +1998,16 @@ class App {
     }
     
     removeFile(fileName) {
-        // 驟榊・縺九ｉ蜑企勁
+        // 配列から削除
         this.uploadedFiles = this.uploadedFiles.filter(file => file.name !== fileName);
         
-        // UI縺九ｉ蜑企勁
+        // UIから削除
         const fileCard = document.querySelector(`.file-card[data-file-name="${fileName}"]`);
         if (fileCard) {
             fileCard.remove();
         }
         
-        // 繝励Ξ繝薙Η繝ｼ繧ｨ繝ｪ繧｢繧帝撼陦ｨ遉ｺ縺ｫ縺吶ｋ・医ヵ繧｡繧､繝ｫ縺後↑縺・ｴ蜷茨ｼ・
+        // プレビューエリアを非表示にする（ファイルがない場合）
         if (this.uploadedFiles.length === 0) {
             const preview = document.getElementById('file-preview');
             if (preview) preview.classList.add('hidden');
@@ -2020,15 +2020,15 @@ class App {
         
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) {
-            this.showToast('API繧ｭ繝ｼ繧貞・蜉帙＠縺ｦ縺上□縺輔＞', 'warning');
+            this.showToast('APIキーを入力してください', 'warning');
             return;
         }
         
         if (this.geminiService) {
             this.geminiService.setApiKey(apiKey);
-            this.showToast('API繧ｭ繝ｼ繧剃ｿ晏ｭ倥＠縺ｾ縺励◆', 'success');
+            this.showToast('APIキーを保存しました', 'success');
             
-            // 繝√Ε繝・ヨ蛛ｴ縺ｮ繧ｭ繝ｼ繧ょ酔譛・
+            // チャット側のキーも同期
             const chatKeyInput = document.getElementById('gemini-api-key');
             if (chatKeyInput) {
                 chatKeyInput.value = apiKey;
@@ -2037,7 +2037,7 @@ class App {
     }
     
     async testVisionConnection() {
-        return this.testGeminiConnection(); // 繝√Ε繝・ヨ讖溯・縺ｨ蜷後§繝・せ繝医ｒ菴ｿ逕ｨ
+        return this.testGeminiConnection(); // チャット機能と同じテストを使用
     }
     
     fileToBase64(file) {
@@ -2057,11 +2057,11 @@ class App {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    // === 繧ｲ繝ｼ繝驕ｸ謚槭→繝繝・す繝･繝懊・繝画ｩ溯・ ===
+    // === ゲーム選択とダッシュボード機能 ===
     initGameSelection() {
         console.log('Initializing game selection...');
         
-        // 繧ｲ繝ｼ繝驕ｸ謚櫁ｪ伜ｰ弱・繧ｿ繝ｳ
+        // ゲーム選択誘導ボタン
         const gotoGameSelectionBtn = document.getElementById('goto-game-selection');
         if (gotoGameSelectionBtn) {
             gotoGameSelectionBtn.addEventListener('click', () => {
@@ -2069,22 +2069,22 @@ class App {
             });
         }
         
-        // 繧ｲ繝ｼ繝繧ｫ繝ｼ繝峨・繧ｯ繝ｪ繝・け繧､繝吶Φ繝医ｒ險ｭ螳・
+        // ゲームカードのクリックイベントを設定
         this.setupGameActionButtons();
         
-        // 蛻晄悄迥ｶ諷九・繝√ぉ繝・け
+        // 初期状態のチェック
         this.checkGameSelection();
     }
     
     setupGameCardEvents() {
-        // 繧ｲ繝ｼ繝繧ｫ繝ｼ繝峨・蛻晏屓險ｭ螳・
+        // ゲームカードの初回設定
         this.setupGameCards();
         
-        // 繧ｲ繝ｼ繝繧ｫ繝ｼ繝峨′蜍慕噪逕滓・縺輔ｌ繧句ｴ蜷医・縺溘ａ縺ｮ蜀崎ｩｦ陦梧ｩ滓ｧ・
+        // ゲームカードが動的生成される場合のための再試行機構
         setTimeout(() => this.setupGameCards(), 500);
         setTimeout(() => this.setupGameCards(), 1500);
         
-        // 遒ｺ隱阪・繧ｭ繝｣繝ｳ繧ｻ繝ｫ繝懊ち繝ｳ縺ｮ險ｭ螳・
+        // 確認・キャンセルボタンの設定
         this.setupGameActionButtons();
     }
     
@@ -2093,7 +2093,7 @@ class App {
         console.log(`Found ${gameCards.length} game cards`);
         
         gameCards.forEach((card) => {
-            // 繧ｯ繝ｪ繝・け繧､繝吶Φ繝医Μ繧ｹ繝翫・霑ｽ蜉
+            // クリックイベントリスナー追加
             card.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2101,7 +2101,7 @@ class App {
                 this.selectGame(card);
             });
             
-            // 繧ｭ繝ｼ繝懊・繝峨い繧ｯ繧ｻ繧ｷ繝薙Μ繝・ぅ
+            // キーボードアクセシビリティ
             card.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -2109,7 +2109,7 @@ class App {
                 }
             });
             
-            // 繝槭え繧ｹ繧ｪ繝ｼ繝舌・蜉ｹ譫・
+            // マウスオーバー効果
             card.addEventListener('mouseenter', () => {
                 if (!card.classList.contains('selected')) {
                     card.style.transform = 'scale(1.02)';
@@ -2122,11 +2122,11 @@ class App {
                 }
             });
             
-            // 繧ｯ繝ｪ繝・け蜿ｯ閭ｽ縺ｧ縺ゅｋ縺薙→繧呈・遉ｺ縺吶ｋ繧ｹ繧ｿ繧､繝ｫ
+            // クリック可能であることを明示するスタイル
             card.style.cursor = 'pointer';
         });
         
-        // 迴ｾ蝨ｨ驕ｸ謚槭＆繧後※縺・ｋ繧ｲ繝ｼ繝縺後≠繧後・陦ｨ遉ｺ
+        // 現在選択されているゲームがあれば表示
         this.restoreGameSelection();
     }
     
@@ -2143,7 +2143,7 @@ class App {
     }
     
     generateGameId(gameName) {
-        // 譌･譛ｬ隱槭ご繝ｼ繝蜷阪ｒ闍ｱ隱曵D縺ｫ螟画鋤
+        // 日本語ゲーム名を英語IDに変換
         const gameIdMap = {
             'League of Legends': 'lol',
             'Valorant': 'valorant',
@@ -2173,10 +2173,10 @@ class App {
     }
     
     goToGameSelection() {
-        // 險ｭ螳壹ち繝悶↓遘ｻ蜍・
+        // 設定タブに移動
         this.showPage('settings');
         
-        // 繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ縺ｮ繧｢繧ｯ繝・ぅ繝也憾諷九ｒ譖ｴ譁ｰ
+        // ナビゲーションのアクティブ状態を更新
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
             btn.classList.remove('active');
@@ -2185,7 +2185,7 @@ class App {
             }
         });
         
-        // 繧ｲ繝ｼ繝驕ｸ謚槭お繝ｪ繧｢縺ｾ縺ｧ繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ
+        // ゲーム選択エリアまでスクロール
         setTimeout(() => {
             const gameSelection = document.getElementById('current-game-display');
             if (gameSelection) {
@@ -2195,10 +2195,10 @@ class App {
                 });
             }
             
-            // 繧ｲ繝ｼ繝驕ｸ謚槭ｒ髢九￥
+            // ゲーム選択を開く
             this.showGameSelector();
             
-            // 繝上う繝ｩ繧､繝医い繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ
+            // ハイライトアニメーション
             const gameSelector = document.getElementById('game-selector');
             if (gameSelector) {
                 gameSelector.classList.add('highlight');
@@ -2214,37 +2214,37 @@ class App {
         const selectedGameData = localStorage.getItem('selectedGameData');
         
         if (selectedGame && selectedGameData) {
-            // 繧ｲ繝ｼ繝縺碁∈謚樊ｸ医∩
+            // ゲームが選択済み
             this.updateUIWithGameData(JSON.parse(selectedGameData));
             this.hideGameSelectionGuidance();
         } else {
-            // 繧ｲ繝ｼ繝譛ｪ驕ｸ謚・
+            // ゲーム未選択
             this.showGameSelectionGuidance();
             this.clearGameData();
         }
     }
     
     selectGame(gameCard) {
-        // 莉悶・繧ｫ繝ｼ繝峨・驕ｸ謚槭ｒ隗｣髯､
+        // 他のカードの選択を解除
         const allCards = document.querySelectorAll('.game-option');
         allCards.forEach(card => card.classList.remove('selected'));
         
-        // 驕ｸ謚槭＠縺溘き繝ｼ繝峨ｒ繝上う繝ｩ繧､繝・
+        // 選択したカードをハイライト
         gameCard.classList.add('selected');
     }
     
     confirmGameSelection() {
         const selectedCard = document.querySelector('.game-option.selected');
         if (!selectedCard) {
-            this.showToast('繧ｲ繝ｼ繝繧帝∈謚槭＠縺ｦ縺上□縺輔＞', 'warning');
+            this.showToast('ゲームを選択してください', 'warning');
             return;
         }
         
-        // 繧ｲ繝ｼ繝諠・ｱ繧貞叙蠕・
+        // ゲーム情報を取得
         const gameId = selectedCard.dataset.gameId;
         const gameName = selectedCard.dataset.gameName || selectedCard.querySelector('.game-option-name').textContent;
         const gameIcon = selectedCard.dataset.gameIcon || selectedCard.querySelector('.game-option-icon').textContent;
-        const categoryName = selectedCard.dataset.category || selectedCard.closest('.game-category-section')?.querySelector('.category-title')?.textContent || '縺昴・莉・;
+        const categoryName = selectedCard.dataset.category || selectedCard.closest('.game-category-section')?.querySelector('.category-title')?.textContent || 'その他';
         
         const gameData = {
             id: gameId,
@@ -2253,18 +2253,18 @@ class App {
             category: categoryName
         };
         
-        // LocalStorage縺ｫ菫晏ｭ・
+        // LocalStorageに保存
         localStorage.setItem('selectedGame', gameId);
         localStorage.setItem('selectedGameData', JSON.stringify(gameData));
         
-        // UI繧呈峩譁ｰ
+        // UIを更新
         this.updateUIWithGameData(gameData);
         this.hideGameSelector();
         this.hideGameSelectionGuidance();
         
-        this.showToast(`${gameName} 繧帝∈謚槭＠縺ｾ縺励◆`, 'success');
+        this.showToast(`${gameName} を選択しました`, 'success');
         
-        // 繝繝・す繝･繝懊・繝峨↓謌ｻ繧・
+        // ダッシュボードに戻る
         setTimeout(() => {
             this.showPage('dashboard');
             const navBtns = document.querySelectorAll('.nav-btn');
@@ -2278,7 +2278,7 @@ class App {
     }
     
     updateUIWithGameData(gameData) {
-        // 繝繝・す繝･繝懊・繝画峩譁ｰ
+        // ダッシュボード更新
         const playerGame = document.getElementById('player-game');
         const currentGameName = document.getElementById('current-game-name');
         const currentGameIcon = document.getElementById('current-game-icon');
@@ -2289,18 +2289,18 @@ class App {
         if (currentGameIcon) currentGameIcon.textContent = gameData.icon;
         if (currentGameCategory) currentGameCategory.textContent = gameData.category;
         
-        // 繧ｵ繝ｳ繝励Ν繝・・繧ｿ繧定｡ｨ遉ｺ
+        // サンプルデータを表示
         this.loadSampleGameData(gameData);
     }
     
     loadSampleGameData(gameData) {
-        // 繝励Ξ繧､繝､繝ｼ蜷阪ｒ繧ｫ繧ｹ繧ｿ繝槭う繧ｺ
+        // プレイヤー名をカスタマイズ
         const playerName = document.getElementById('player-name');
         if (playerName) {
-            playerName.textContent = `${gameData.name} 繝励Ξ繧､繝､繝ｼ`;
+            playerName.textContent = `${gameData.name} プレイヤー`;
         }
 
-        // 繝ｩ繝ｳ繧ｯ繧定ｨｭ螳夲ｼ亥崋螳壹・萓九ゅ％縺薙・繝ｩ繝ｳ繝繝縺ｧ縺ｯ縺ｪ縺・◆繧∝ｾ捺擂騾壹ｊ・・
+        // ランクを設定（固定の例。ここはランダムではないため従来通り）
         const playerRank = document.getElementById('player-rank');
         if (playerRank) {
             const ranks = {
@@ -2313,15 +2313,15 @@ class App {
             playerRank.textContent = ranks[gameData.name] || 'Platinum II';
         }
 
-        // 1) 縺ｾ縺壹・菫晏ｭ俶ｸ医∩縺ｮ邨ｱ險医′縺ゅｌ縺ｰ縺昴ｌ繧剃ｽｿ逕ｨ・亥ｮ牙ｮ夊｡ｨ遉ｺ・・
+        // 1) まずは保存済みの統計があればそれを使用（安定表示）
         let stableStats = null;
         if (this.playerStatsManager && this.playerStatsManager.hasValidStats()) {
             stableStats = this.playerStatsManager.getPlayerStats();
         }
 
-        // 2) 菫晏ｭ俶ｸ医∩縺ｮ邨ｱ險医′縺ｪ縺・ｴ蜷医・菴輔ｂ縺励↑縺・ｼ亥・譛溽憾諷九・縲・縲阪・縺ｾ縺ｾ・・
+        // 2) 保存済みの統計がない場合は何もしない（初期状態は「-」のまま）
 
-        // 3) UI 縺ｸ蜿肴丐・亥ｭ伜惠縺励↑縺代ｌ縺ｰ繝上う繝輔Φ縺ｮ縺ｾ縺ｾ・・
+        // 3) UI へ反映（存在しなければハイフンのまま）
         if (stableStats) {
             const mapping = {
                 'win-rate': `${Number(stableStats.winRate).toFixed(0)}%`,
@@ -2333,7 +2333,7 @@ class App {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
             });
-            // 繝√Ε繝ｼ繝亥・譛溷喧・井ｿ晏ｭ倥＠縺ｦ縺・ｋ蝣ｴ蜷医・縺ｿ・・
+            // チャート初期化（保存している場合のみ）
             if (this.playerStatsManager) {
                 this.playerStatsManager.loadStatsToUI();
             }
@@ -2349,10 +2349,10 @@ class App {
         const playerGame = document.getElementById('player-game');
         const currentGameName = document.getElementById('current-game-name');
         
-        if (playerGame) playerGame.textContent = '繧ｲ繝ｼ繝譛ｪ驕ｸ謚・;
-        if (currentGameName) currentGameName.textContent = '繧ｲ繝ｼ繝繧帝∈謚槭＠縺ｦ縺上□縺輔＞';
+        if (playerGame) playerGame.textContent = 'ゲーム未選択';
+        if (currentGameName) currentGameName.textContent = 'ゲームを選択してください';
         
-        // 邨ｱ險医ｒ縲・縲阪↓謌ｻ縺・
+        // 統計を「-」に戻す
         ['win-rate', 'avg-kda', 'cs-per-min', 'games-played'].forEach(id => {
             const element = document.getElementById(id);
             if (element) element.textContent = '-';
@@ -2373,14 +2373,14 @@ class App {
         }
     }
 
-    // 繧｢繝励Μ蜈ｨ菴薙・蛻晄悄蛹厄ｼ医ョ繝ｼ繧ｿ豸亥悉・・
+    // アプリ全体の初期化（データ消去）
     resetAppData() {
-        // 遒ｺ隱阪ム繧､繧｢繝ｭ繧ｰ
-        const ok = confirm('繧｢繝励Μ繧貞・譛溷喧縺励∪縺吶ゆｿ晏ｭ倥＆繧後◆隧ｦ蜷医・逶ｮ讓吶・API繧ｭ繝ｼ縺ｪ縺ｩ縺ｮ繝・・繧ｿ縺悟炎髯､縺輔ｌ縺ｾ縺吶ゅｈ繧阪＠縺・〒縺吶°・・);
+        // 確認ダイアログ
+        const ok = confirm('アプリを初期化します。保存された試合・目標・APIキーなどのデータが削除されます。よろしいですか？');
         if (!ok) return;
 
         try {
-            // localStorage 縺ｮ荳ｻ縺ｪ繧ｭ繝ｼ繧貞炎髯､
+            // localStorage の主なキーを削除
             const localKeys = [
                 'playerStats',
                 'recentMatches',
@@ -2400,11 +2400,11 @@ class App {
             ];
             localKeys.forEach(k => localStorage.removeItem(k));
 
-            // sessionStorage 縺ｮ荳ｻ縺ｪ繧ｭ繝ｼ繧貞炎髯､
+            // sessionStorage の主なキーを削除
             const sessionKeys = ['currentUser', 'isGuest'];
             sessionKeys.forEach(k => sessionStorage.removeItem(k));
 
-            // 蜀・Κ繧ｵ繝ｼ繝薙せ縺ｮ繧ｯ繝ｪ繝ｼ繝ｳ繧｢繝・・
+            // 内部サービスのクリーンアップ
             if (this.geminiService && typeof this.geminiService.clearApiKey === 'function') {
                 try { this.geminiService.clearApiKey(); } catch (e) { console.debug(e); }
             }
@@ -2412,38 +2412,38 @@ class App {
                 try { window.unifiedApiManager.clearAPIKey(); } catch (e) { console.debug(e); }
             }
 
-            // UI 繝ｪ繧ｻ繝・ヨ
+            // UI リセット
             this.clearGameData();
             const statsIds = ['win-rate', 'avg-kda', 'cs-per-min', 'games-played'];
             statsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
             const matchesContainer = document.getElementById('recent-matches');
-            if (matchesContainer) matchesContainer.innerHTML = '<p class="no-data">隧ｦ蜷郁ｨ倬鹸縺後∪縺縺ゅｊ縺ｾ縺帙ｓ</p>';
+            if (matchesContainer) matchesContainer.innerHTML = '<p class="no-data">試合記録がまだありません</p>';
             const goalsList = document.getElementById('goals-list');
-            if (goalsList) goalsList.innerHTML = '<p class="no-data">逶ｮ讓吶′縺ｾ縺險ｭ螳壹＆繧後※縺・∪縺帙ｓ</p>';
+            if (goalsList) goalsList.innerHTML = '<p class="no-data">目標がまだ設定されていません</p>';
             const advice = document.getElementById('ai-recommendations-content');
-            if (advice) advice.innerHTML = '<div class="no-recommendations-message"><p class="message-text">逶ｮ讓吶ｒ險ｭ螳壹＠縺ｦ繝代・繧ｽ繝翫Λ繧､繧ｺ縺輔ｌ縺溘い繝峨ヰ繧､繧ｹ繧貞女縺大叙繧翫∪縺励ｇ縺・/p></div>';
+            if (advice) advice.innerHTML = '<div class="no-recommendations-message"><p class="message-text">目標を設定してパーソナライズされたアドバイスを受け取りましょう</p></div>';
 
-            // AI繧ｳ繝ｼ繝√Φ繧ｰ縺ｮ繧ｭ繝｣繝・す繝･繧ょ炎髯､
+            // AIコーチングのキャッシュも削除
             localStorage.removeItem('cached-coaching-advice');
             localStorage.removeItem('coaching-advice-update-time');
 
-            // 繝・・繝槭ｒ繝・ヵ繧ｩ繝ｫ繝医↓謌ｻ縺・
+            // テーマをデフォルトに戻す
             this.currentTheme = 'dark';
             this.applyTheme(this.currentTheme);
 
-            this.showToast('繧｢繝励Μ繧貞・譛溷喧縺励∪縺励◆縲ゅ・繝ｼ繧ｸ繧貞・隱ｭ縺ｿ霎ｼ縺ｿ縺励∪縺吮ｦ', 'success');
+            this.showToast('アプリを初期化しました。ページを再読み込みします…', 'success');
             setTimeout(() => window.location.reload(), 600);
         } catch (e) {
             console.warn('Failed to reset app:', e);
-            this.showToast('蛻晄悄蛹悶↓螟ｱ謨励＠縺ｾ縺励◆', 'error');
+            this.showToast('初期化に失敗しました', 'error');
         }
     }
 
-    // === 繝繝・す繝･繝懊・繝臥岼讓呵｡ｨ遉ｺ讖溯・ ===
+    // === ダッシュボード目標表示機能 ===
     initDashboardGoals() {
         console.log('Initializing dashboard goals...');
         
-        // 繧､繝吶Φ繝医Μ繧ｹ繝翫・險ｭ螳・
+        // イベントリスナー設定
         const viewAllGoalsBtn = document.getElementById('view-all-goals');
         const addFirstGoalBtn = document.getElementById('add-first-goal');
         
@@ -2461,10 +2461,10 @@ class App {
             });
         }
         
-        // 逶ｮ讓吶ョ繝ｼ繧ｿ繧定ｪｭ縺ｿ霎ｼ縺ｿ
+        // 目標データを読み込み
         this.loadDashboardGoals();
         
-        // LocalStorage縺ｮ螟画峩繧堤屮隕・
+        // LocalStorageの変更を監視
         this.setupGoalsStorageListener();
     }
     
@@ -2485,16 +2485,16 @@ class App {
         if (!goalsList) return;
         
         if (goals.length === 0) {
-            // 逶ｮ讓吶↑縺・
+            // 目標なし
             goalsList.innerHTML = `
                 <div class="no-goals-message">
-                    <h4>逶ｮ讓吶′險ｭ螳壹＆繧後※縺・∪縺帙ｓ</h4>
-                    <p>繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ蜷台ｸ翫・縺溘ａ縺ｮ逶ｮ讓吶ｒ險ｭ螳壹＠縺ｾ縺励ｇ縺・/p>
-                    <button class="add-goal-btn" id="add-first-goal">譛蛻昴・逶ｮ讓吶ｒ霑ｽ蜉</button>
+                    <h4>目標が設定されていません</h4>
+                    <p>パフォーマンス向上のための目標を設定しましょう</p>
+                    <button class="add-goal-btn" id="add-first-goal">最初の目標を追加</button>
                 </div>
             `;
             
-            // 繧､繝吶Φ繝医Μ繧ｹ繝翫・蜀崎ｨｭ螳・
+            // イベントリスナー再設定
             const addFirstGoalBtn = document.getElementById('add-first-goal');
             if (addFirstGoalBtn) {
                 addFirstGoalBtn.addEventListener('click', () => {
@@ -2506,23 +2506,23 @@ class App {
             return;
         }
         
-        // 逶ｮ讓吶ｒ繧ｽ繝ｼ繝茨ｼ域悄髯舌′霑代＞鬆・・ｲ謐励′菴弱＞鬆・ｼ・
+        // 目標をソート（期限が近い順、進捗が低い順）
         const sortedGoals = goals.sort((a, b) => {
             const dateA = new Date(a.deadline);
             const dateB = new Date(b.deadline);
             const progressA = a.progress || 0;
             const progressB = b.progress || 0;
             
-            // 譛滄剞縺瑚ｿ代＞鬆・
+            // 期限が近い順
             if (dateA !== dateB) {
                 return dateA - dateB;
             }
             
-            // 騾ｲ謐励′菴弱＞鬆・
+            // 進捗が低い順
             return progressA - progressB;
         });
         
-        // 譛螟ｧ3莉ｶ陦ｨ遉ｺ
+        // 最大3件表示
         const displayGoals = sortedGoals.slice(0, 3);
         
         goalsList.innerHTML = displayGoals.map(goal => this.renderGoalItem(goal)).join('');
@@ -2538,7 +2538,7 @@ class App {
             <div class="dashboard-goal-item ${urgentClass}">
                 <div class="goal-item-header">
                     <h5 class="goal-item-title">${goal.title}</h5>
-                    <span class="goal-item-deadline">縲・${deadline}</span>
+                    <span class="goal-item-deadline">〜 ${deadline}</span>
                 </div>
                 <div class="goal-progress-container">
                     <div class="goal-progress-bar">
@@ -2554,18 +2554,18 @@ class App {
         const now = new Date();
         const deadlineDate = new Date(deadline);
         const diffDays = (deadlineDate - now) / (1000 * 60 * 60 * 24);
-        return diffDays <= 7; // 7譌･莉･蜀・・邱頑･
+        return diffDays <= 7; // 7日以内は緊急
     }
     
     setupGoalsStorageListener() {
-        // LocalStorage縺ｮ螟画峩繧堤屮隕・
+        // LocalStorageの変更を監視
         window.addEventListener('storage', (e) => {
             if (e.key === 'goals') {
                 this.loadDashboardGoals();
             }
         });
         
-        // 蜷御ｸ繧ｿ繝門・縺ｧ縺ｮ螟画峩繧ら屮隕・
+        // 同一タブ内での変更も監視
         const originalSetItem = localStorage.setItem;
         localStorage.setItem = (key, value) => {
             originalSetItem.call(localStorage, key, value);
@@ -2585,9 +2585,9 @@ class App {
         });
     }
 
-    // === 繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ謾ｯ謠ｴ讖溯・ ===
+    // === ナビゲーション支援機能 ===
     initNavigationHelpers() {
-        // 蛻・梵繧ｿ繝悶∈縺ｮ繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ繝懊ち繝ｳ
+        // 分析タブへのナビゲーションボタン
         const gotoAnalysisBtn = document.getElementById('goto-analysis');
         if (gotoAnalysisBtn) {
             gotoAnalysisBtn.addEventListener('click', () => {
@@ -2596,7 +2596,7 @@ class App {
             });
         }
         
-        // AI逕ｨ逶ｮ讓呵ｨｭ螳壹・繧ｿ繝ｳ
+        // AI用目標設定ボタン
         const gotoGoalsForAIBtn = document.getElementById('goto-goals-for-ai');
         if (gotoGoalsForAIBtn) {
             gotoGoalsForAIBtn.addEventListener('click', () => {
@@ -2606,31 +2606,31 @@ class App {
         }
     }
 
-    // === AI繧ｳ繝ｼ繝√Φ繧ｰ讖溯・ ===
+    // === AIコーチング機能 ===
     initAICoaching() {
         console.log('Initializing AI coaching...');
         
-        // 繝ｪ繝輔Ξ繝・す繝･繝懊ち繝ｳ縺ｮ繧､繝吶Φ繝医Μ繧ｹ繝翫・
+        // リフレッシュボタンのイベントリスナー
         const refreshCoachingBtn = document.getElementById('refresh-coaching');
         if (refreshCoachingBtn) {
             refreshCoachingBtn.addEventListener('click', () => {
-                // 繝ｪ繝輔Ξ繝・す繝･繝懊ち繝ｳ縺梧款縺輔ｌ縺溷ｴ蜷医・繧ｭ繝｣繝・す繝･繧貞ｼｷ蛻ｶ蜑企勁
+                // リフレッシュボタンが押された場合はキャッシュを強制削除
                 localStorage.removeItem('cached-coaching-advice');
                 localStorage.removeItem('coaching-advice-update-time');
                 this.generateAIRecommendations();
             });
         }
         
-        // 蛻晄悄縺ｮAI謗ｨ螂ｨ莠矩・ｒ繝ｭ繝ｼ繝会ｼ磯撼蜷梧悄・・
+        // 初期のAI推奨事項をロード（非同期）
         this.loadAIRecommendations();
         
-        // 逶ｮ讓吶・螟画峩繧堤屮隕悶＠縺ｦAI謗ｨ螂ｨ莠矩・ｒ譖ｴ譁ｰ
+        // 目標の変更を監視してAI推奨事項を更新
         this.setupAICoachingGoalsListener();
     }
     
     async loadAIRecommendations() {
         try {
-            // 邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺ｮ貅門ｙ螳御ｺ・ｒ遒ｺ隱・
+            // 統一APIマネージャーの準備完了を確認
             await this.ensureUnifiedAPIManagerReady();
             
             const goalsData = localStorage.getItem('goals');
@@ -2639,7 +2639,7 @@ class App {
             if (goals.length === 0) {
                 this.showNoRecommendationsMessage();
             } else {
-                // 縺ｾ縺壽里蟄倥・繧｢繝峨ヰ繧､繧ｹ縺後≠繧後・陦ｨ遉ｺ縲√↑縺代ｌ縺ｰ譁ｰ縺励￥逕滓・
+                // まず既存のアドバイスがあれば表示、なければ新しく生成
                 if (!this.loadExistingAdvice()) {
                     this.generateAIRecommendations();
                 }
@@ -2651,45 +2651,45 @@ class App {
     }
     
     async ensureUnifiedAPIManagerReady() {
-        // 邨ｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ縺悟ｭ伜惠縺励↑縺・ｴ蜷医・蟆代＠蠕・▽
+        // 統一APIマネージャーが存在しない場合は少し待つ
         let attempts = 0;
         const maxAttempts = 20;
         
         while (!window.unifiedApiManager && attempts < maxAttempts) {
-            console.log(`竢ｳ Waiting for UnifiedAPIManager... (${attempts + 1}/${maxAttempts})`);
+            console.log(`⏳ Waiting for UnifiedAPIManager... (${attempts + 1}/${maxAttempts})`);
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
         
         if (!window.unifiedApiManager) {
-            console.warn('笞・・UnifiedAPIManager not available after waiting');
+            console.warn('⚠️ UnifiedAPIManager not available after waiting');
             return false;
         }
         
-        // 縺輔ｉ縺ｫ蛻晄悄蛹悶′螳御ｺ・☆繧九∪縺ｧ蠕・▽
+        // さらに初期化が完了するまで待つ
         attempts = 0;
         while ((!window.unifiedApiManager.isInitialized) && attempts < maxAttempts) {
-            console.log(`竢ｳ Waiting for UnifiedAPIManager initialization... (${attempts + 1}/${maxAttempts})`);
+            console.log(`⏳ Waiting for UnifiedAPIManager initialization... (${attempts + 1}/${maxAttempts})`);
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
         
-        console.log('笨・UnifiedAPIManager is ready');
+        console.log('✅ UnifiedAPIManager is ready');
         return true;
     }
 
     loadExistingAdvice() {
-        console.log('剥 loadExistingAdvice() called');
+        console.log('🔍 loadExistingAdvice() called');
         const storedAdvice = localStorage.getItem('cached-coaching-advice');
         const updateTime = localStorage.getItem('coaching-advice-update-time');
         
-        console.log('沈 Cached advice check:', {
+        console.log('💾 Cached advice check:', {
             hasStoredAdvice: !!storedAdvice,
             hasUpdateTime: !!updateTime
         });
         
         if (!storedAdvice || !updateTime) {
-            console.log('笶・No cached advice found, will generate new');
+            console.log('❌ No cached advice found, will generate new');
             return false;
         }
 
@@ -2698,12 +2698,12 @@ class App {
             const lastUpdate = new Date(updateTime);
             const now = new Date();
             
-            // 24譎る俣莉･荳顔ｵ碁℃縺励※縺・ｋ蝣ｴ蜷医・繧ｭ繝｣繝・す繝･繧堤┌蜉ｹ蛹・
+            // 24時間以上経過している場合はキャッシュを無効化
             const hoursElapsed = (now - lastUpdate) / (1000 * 60 * 60);
-            console.log(`竢ｰ Cached advice age: ${hoursElapsed.toFixed(1)} hours`);
+            console.log(`⏰ Cached advice age: ${hoursElapsed.toFixed(1)} hours`);
             
             if (hoursElapsed >= 24) {
-                console.log('卵・・Cache expired (>24h), removing');
+                console.log('🗑️ Cache expired (>24h), removing');
                 localStorage.removeItem('cached-coaching-advice');
                 localStorage.removeItem('coaching-advice-update-time');
                 return false;
@@ -2711,33 +2711,33 @@ class App {
             
             const recommendationsContent = document.getElementById('ai-recommendations-content');
             
-            // API迥ｶ諷九′螟峨ｏ縺｣縺ｦ縺・ｋ蝣ｴ蜷茨ｼ医が繝輔Λ繧､繝ｳ竊偵が繝ｳ繝ｩ繧､繝ｳ縺ｾ縺溘・縺昴・騾・ｼ峨・繧ｭ繝｣繝・す繝･繧堤┌蜉ｹ蛹・
+            // API状態が変わっている場合（オフライン→オンラインまたはその逆）はキャッシュを無効化
             const currentlyOnline = window.unifiedApiManager && window.unifiedApiManager.isConfigured();
             const cachedWasOffline = advice.html && advice.html.includes('offline');
             
-            console.log('売 API state check:', {
+            console.log('🔄 API state check:', {
                 currentlyOnline: currentlyOnline,
                 cachedWasOffline: cachedWasOffline
             });
             
             if (currentlyOnline && cachedWasOffline) {
-                console.log('売 API is now online but cache was offline, regenerating');
+                console.log('🔄 API is now online but cache was offline, regenerating');
                 localStorage.removeItem('cached-coaching-advice');
                 localStorage.removeItem('coaching-advice-update-time');
                 return false;
             }
             
             if (recommendationsContent && advice.html) {
-                // 譌｢蟄倥・HTML繧偵◎縺ｮ縺ｾ縺ｾ陦ｨ遉ｺ・域峩譁ｰ譌･譎ゅ・譌｢縺ｫ蜷ｫ縺ｾ繧後※縺・ｋ・・
-                console.log('笨・Displaying cached advice');
+                // 既存のHTMLをそのまま表示（更新日時は既に含まれている）
+                console.log('✅ Displaying cached advice');
                 recommendationsContent.innerHTML = advice.html;
                 return true;
             } else {
-                console.log('笶・Missing recommendations content element or cached HTML');
+                console.log('❌ Missing recommendations content element or cached HTML');
             }
         } catch (error) {
             console.warn('Failed to load existing advice:', error);
-            // 繧ｨ繝ｩ繝ｼ縺ｮ蝣ｴ蜷医・繧ｭ繝｣繝・す繝･繧偵け繝ｪ繧｢
+            // エラーの場合はキャッシュをクリア
             localStorage.removeItem('cached-coaching-advice');
             localStorage.removeItem('coaching-advice-update-time');
         }
@@ -2750,14 +2750,14 @@ class App {
         if (recommendationsContent) {
             recommendationsContent.innerHTML = `
                 <div class="no-recommendations-message">
-                    <p class="message-text">逶ｮ讓吶ｒ險ｭ螳壹＠縺ｦ繝代・繧ｽ繝翫Λ繧､繧ｺ縺輔ｌ縺溘い繝峨ヰ繧､繧ｹ繧貞女縺大叙繧翫∪縺励ｇ縺・/p>
+                    <p class="message-text">目標を設定してパーソナライズされたアドバイスを受け取りましょう</p>
                     <button class="btn-secondary" id="goto-goals-for-ai">
-                        逶ｮ讓吶ｒ險ｭ螳壹☆繧・
+                        目標を設定する
                     </button>
                 </div>
             `;
             
-            // 繝懊ち繝ｳ縺ｮ繧､繝吶Φ繝医Μ繧ｹ繝翫・蜀崎ｨｭ螳・
+            // ボタンのイベントリスナー再設定
             const gotoGoalsBtn = document.getElementById('goto-goals-for-ai');
             if (gotoGoalsBtn) {
                 gotoGoalsBtn.addEventListener('click', () => {
@@ -2769,83 +2769,83 @@ class App {
     }
     
     async generateAIRecommendations() {
-        console.log('売 generateAIRecommendations called');
+        console.log('🔄 generateAIRecommendations called');
         const refreshBtn = document.getElementById('refresh-coaching');
         if (refreshBtn) {
             refreshBtn.disabled = true;
-            refreshBtn.innerHTML = '竢ｳ';
+            refreshBtn.innerHTML = '⏳';
         }
         
         try {
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
             const selectedGameData = JSON.parse(localStorage.getItem('selectedGameData') || '{}');
             
-            console.log('投 Goals:', goals.length, 'Game:', selectedGameData.name);
+            console.log('📊 Goals:', goals.length, 'Game:', selectedGameData.name);
             
             if (goals.length === 0) {
-                console.log('笶・No goals found, showing no recommendations message');
+                console.log('❌ No goals found, showing no recommendations message');
                 this.showNoRecommendationsMessage();
                 return;
             }
             
-            // Gemini API縺悟茜逕ｨ蜿ｯ閭ｽ縺九メ繧ｧ繝・け・育ｵｱ荳API繝槭ロ繝ｼ繧ｸ繝｣繝ｼ繧剃ｽｿ逕ｨ・・
-            console.log('肌 API迥ｶ諷九メ繧ｧ繝・け:', {
+            // Gemini APIが利用可能かチェック（統一APIマネージャーを使用）
+            console.log('🔧 API状態チェック:', {
                 unifiedApiManagerExists: !!window.unifiedApiManager,
                 isConfigured: window.unifiedApiManager ? window.unifiedApiManager.isConfigured() : false,
-                apiKey: window.unifiedApiManager ? (window.unifiedApiManager.getAPIKey() ? '險ｭ螳壽ｸ医∩' : '譛ｪ險ｭ螳・) : '邂｡逅・す繧ｹ繝・Β辟｡縺・
+                apiKey: window.unifiedApiManager ? (window.unifiedApiManager.getAPIKey() ? '設定済み' : '未設定') : '管理システム無し'
             });
             
             if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
-                console.log('肌 Using offline recommendations - API not configured');
+                console.log('🔧 Using offline recommendations - API not configured');
                 this.showOfflineRecommendations(goals, selectedGameData);
                 return;
             }
             
-            // 譛繧ょ━蜈亥ｺｦ縺ｮ鬮倥＞逶ｮ讓吶ｒ驕ｸ謚橸ｼ域悄髯舌′霑代＞縲・ｲ謐励′菴弱＞・・
+            // 最も優先度の高い目標を選択（期限が近い、進捗が低い）
             const priorityGoal = this.selectPriorityGoal(goals);
             
-            // Gemini AI縺九ｉ繧｢繝峨ヰ繧､繧ｹ繧貞叙蠕・
+            // Gemini AIからアドバイスを取得
             const prompt = this.generateCoachingPrompt(priorityGoal, selectedGameData);
             const response = await this.geminiService.sendChatMessage(prompt, false);
             
             this.renderAIRecommendations(response.response, priorityGoal);
             
-            // 謌仙粥譎・ 繧ｨ繝ｩ繝ｼ繧ｫ繧ｦ繝ｳ繧ｿ繝ｼ繧偵Μ繧ｻ繝・ヨ
+            // 成功時: エラーカウンターをリセット
             this.consecutiveErrors = 0;
             this.lastSuccessfulAPICall = Date.now();
             
         } catch (error) {
             console.warn('AI recommendations generation failed:', error);
             
-            // 繧ｨ繝ｩ繝ｼ譎・ 繧ｫ繧ｦ繝ｳ繧ｿ繝ｼ繧貞｢怜刈
+            // エラー時: カウンターを増加
             this.consecutiveErrors++;
             this.apiErrorCount++;
             
-            // 騾｣邯壹お繝ｩ繝ｼ縺・蝗樔ｻ･荳翫・蝣ｴ蜷医・縺ｿ繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧定｡ｨ遉ｺ
+            // 連続エラーが2回以上の場合のみエラーメッセージを表示
             if (this.consecutiveErrors >= 2) {
                 this.showAIErrorMessage(error);
             } else {
-                console.log(`売 First error (${this.consecutiveErrors}/2), retrying silently...`);
-                // 譛蛻昴・繧ｨ繝ｩ繝ｼ縺ｯ髱吶°縺ｫ蜃ｦ逅・＠縲・遘貞ｾ後↓蜀崎ｩｦ陦・
+                console.log(`🔄 First error (${this.consecutiveErrors}/2), retrying silently...`);
+                // 最初のエラーは静かに処理し、3秒後に再試行
                 setTimeout(() => {
                     this.generateAIRecommendations();
                 }, 3000);
-                return; // 繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ縺ｯ陦ｨ遉ｺ縺帙★縲√が繝輔Λ繧､繝ｳ陦ｨ遉ｺ繧ゅせ繧ｭ繝・・
+                return; // エラーメッセージは表示せず、オフライン表示もスキップ
             }
             
-            // 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ: 繧ｪ繝輔Λ繧､繝ｳ謗ｨ螂ｨ莠矩・
+            // フォールバック: オフライン推奨事項
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
             const selectedGameData = JSON.parse(localStorage.getItem('selectedGameData') || '{}');
             this.showOfflineRecommendations(goals, selectedGameData);
         } finally {
             if (refreshBtn) {
                 refreshBtn.disabled = false;
-                refreshBtn.innerHTML = '売';
+                refreshBtn.innerHTML = '🔄';
             }
         }
     }
 
-    // AI謗･邯壹お繝ｩ繝ｼ譎ゅ・繝ｦ繝ｼ繧ｶ繝ｼ蜷代￠繝｡繝・そ繝ｼ繧ｸ陦ｨ遉ｺ
+    // AI接続エラー時のユーザー向けメッセージ表示
     showAIErrorMessage(error) {
         const errorContainer = document.querySelector('#ai-coaching .card-content');
         if (!errorContainer) return;
@@ -2854,14 +2854,14 @@ class App {
         let retryMessage = '';
         let isRetryable = true;
 
-        // 騾｣邯壹お繝ｩ繝ｼ蝗樊焚繧偵Γ繝・そ繝ｼ繧ｸ縺ｫ蜿肴丐
-        const errorContext = this.consecutiveErrors > 2 ? '・育ｶ咏ｶ夂噪縺ｪ蝠城｡鯉ｼ・ : '';
+        // 連続エラー回数をメッセージに反映
+        const errorContext = this.consecutiveErrors > 2 ? '（継続的な問題）' : '';
 
-        // 繧ｨ繝ｩ繝ｼ縺ｮ遞ｮ鬘槭↓繧医▲縺ｦ繝｡繝・そ繝ｼ繧ｸ繧貞､画峩
-        if (error.message.includes('驕手ｲ闕ｷ') || error.message.includes('overloaded') || error.message.includes('503')) {
-            userMessage = `売 Gemini AI繧ｵ繝ｼ繝薙せ縺御ｸ譎ら噪縺ｫ豺ｷ髮台ｸｭ${errorContext}`;
-            retryMessage = `<span id="retry-countdown">60</span>遘貞ｾ後↓閾ｪ蜍慕噪縺ｫ蜀崎ｩｦ陦後＠縺ｾ縺・.. (繧ｨ繝ｩ繝ｼ蝗樊焚: ${this.consecutiveErrors})`;
-            // 驕手ｲ闕ｷ繧ｨ繝ｩ繝ｼ縺ｮ蝣ｴ蜷医・0遘貞ｾ後↓閾ｪ蜍輔Μ繝医Λ繧､・医き繧ｦ繝ｳ繝医ム繧ｦ繝ｳ莉倥″・・
+        // エラーの種類によってメッセージを変更
+        if (error.message.includes('過負荷') || error.message.includes('overloaded') || error.message.includes('503')) {
+            userMessage = `🔄 Gemini AIサービスが一時的に混雑中${errorContext}`;
+            retryMessage = `<span id="retry-countdown">60</span>秒後に自動的に再試行します... (エラー回数: ${this.consecutiveErrors})`;
+            // 過負荷エラーの場合、60秒後に自動リトライ（カウントダウン付き）
             let countdown = 60;
             const countdownTimer = setInterval(() => {
                 countdown--;
@@ -2875,27 +2875,27 @@ class App {
             }, 1000);
 
             setTimeout(() => {
-                console.log('売 Auto-retry after 503 error (60s delay)...');
+                console.log('🔄 Auto-retry after 503 error (60s delay)...');
                 clearInterval(countdownTimer);
                 this.generateAIRecommendations();
             }, 60000);
-        } else if (error.message.includes('繧ｯ繧ｩ繝ｼ繧ｿ') || error.message.includes('quota') || error.message.includes('429')) {
-            userMessage = '笞・・API蛻ｩ逕ｨ蛻ｶ髯舌↓驕斐＠縺ｾ縺励◆';
-            retryMessage = '1譎る俣蠕後↓蜀崎ｩｦ陦後＠縺ｦ縺上□縺輔＞';
+        } else if (error.message.includes('クォータ') || error.message.includes('quota') || error.message.includes('429')) {
+            userMessage = '⚠️ API利用制限に達しました';
+            retryMessage = '1時間後に再試行してください';
             isRetryable = false;
-        } else if (error.message.includes('API繧ｭ繝ｼ') || error.message.includes('401') || error.message.includes('403')) {
-            userMessage = '泊 API繧ｭ繝ｼ縺ｫ蝠城｡後′縺ゅｊ縺ｾ縺・;
-            retryMessage = '險ｭ螳壹ｒ遒ｺ隱阪＠縺ｦ縺上□縺輔＞';
+        } else if (error.message.includes('APIキー') || error.message.includes('401') || error.message.includes('403')) {
+            userMessage = '🔑 APIキーに問題があります';
+            retryMessage = '設定を確認してください';
             isRetryable = false;
-        } else if (error.message.includes('繝阪ャ繝医Ρ繝ｼ繧ｯ')) {
-            userMessage = '倹 繧､繝ｳ繧ｿ繝ｼ繝阪ャ繝域磁邯壹ｒ遒ｺ隱阪＠縺ｦ縺上□縺輔＞';
-            retryMessage = '謗･邯壼ｾｩ譌ｧ蠕後↓閾ｪ蜍慕噪縺ｫ蜀崎ｩｦ陦後＠縺ｾ縺・;
+        } else if (error.message.includes('ネットワーク')) {
+            userMessage = '🌐 インターネット接続を確認してください';
+            retryMessage = '接続復旧後に自動的に再試行します';
         } else {
-            userMessage = '笶・AI謗･邯壹↓蝠城｡後′逋ｺ逕溘＠縺ｾ縺励◆';
-            retryMessage = '縺励・繧峨￥蠕・▲縺ｦ縺九ｉ蜀崎ｩｦ陦後＠縺ｦ縺上□縺輔＞';
+            userMessage = '❌ AI接続に問題が発生しました';
+            retryMessage = 'しばらく待ってから再試行してください';
         }
 
-        // 繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧定｡ｨ遉ｺ
+        // エラーメッセージを表示
         const errorHTML = `
             <div class="ai-error-message" style="
                 background: linear-gradient(135deg, #ff6b6b, #ffa500);
@@ -2919,13 +2919,13 @@ class App {
                         cursor: pointer;
                         font-size: 0.8em;
                     " onclick="app.generateAIRecommendations()">
-                        莉翫☆縺仙・隧ｦ陦・
+                        今すぐ再試行
                     </button>
                 ` : ''}
             </div>
         `;
 
-        // 譌｢蟄倥・繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧貞炎髯､縺励※縺九ｉ譁ｰ縺励＞繧ゅ・繧定ｿｽ蜉
+        // 既存のエラーメッセージを削除してから新しいものを追加
         const existingError = errorContainer.querySelector('.ai-error-message');
         if (existingError) {
             existingError.remove();
@@ -2934,19 +2934,19 @@ class App {
     }
     
     selectPriorityGoal(goals) {
-        // 譛滄剞縺瑚ｿ代＞鬆・・ｲ謐励′菴弱＞鬆・〒繧ｽ繝ｼ繝・
+        // 期限が近い順、進捗が低い順でソート
         return goals.sort((a, b) => {
             const dateA = new Date(a.deadline);
             const dateB = new Date(b.deadline);
             const progressA = a.progress || 0;
             const progressB = b.progress || 0;
             
-            // 譛滄剞縺瑚ｿ代＞鬆・
+            // 期限が近い順
             if (Math.abs(dateA - dateB) > 24 * 60 * 60 * 1000) {
                 return dateA - dateB;
             }
             
-            // 騾ｲ謐励′菴弱＞鬆・
+            // 進捗が低い順
             return progressA - progressB;
         })[0];
     }
@@ -2956,27 +2956,27 @@ class App {
         const progress = goal.progress || 0;
         const deadline = new Date(goal.deadline).toLocaleDateString('ja-JP');
         
-        return `縺ゅ↑縺溘・eSports繧ｳ繝ｼ繝√Φ繧ｰ縺ｮ蟆る摩螳ｶ縺ｧ縺吶・
-莉･荳九・逶ｮ讓吶↓蟇ｾ縺励※縲∝・菴鍋噪縺ｧ螳溯ｷｵ逧・↑繧｢繝峨ヰ繧､繧ｹ繧呈署萓帙＠縺ｦ縺上□縺輔＞縲・
+        return `あなたはeSportsコーチングの専門家です。
+以下の目標に対して、具体的で実践的なアドバイスを提供してください。
 
-繧ｲ繝ｼ繝: ${gameName}
-逶ｮ讓・ ${goal.title}
-譛滄剞: ${deadline}
-迴ｾ蝨ｨ縺ｮ騾ｲ謐・ ${progress}%
+ゲーム: ${gameName}
+目標: ${goal.title}
+期限: ${deadline}
+現在の進捗: ${progress}%
 
-莉･荳九・蠖｢蠑上〒譌･譛ｬ隱槭〒邁｡貎斐↓蝗樒ｭ斐＠縺ｦ縺上□縺輔＞・・
-1. 蜈ｷ菴鍋噪縺ｪ陦悟虚謖・・・・0譁・ｭ嶺ｻ･蜀・ｼ・
-2. 縺ｪ縺懊◎繧後′蜉ｹ譫懃噪縺具ｼ・00譁・ｭ嶺ｻ･蜀・ｼ・
-3. 莉頑律螳溯ｷｵ縺ｧ縺阪ｋ縺薙→・・0譁・ｭ嶺ｻ･蜀・ｼ荏;
+以下の形式で日本語で簡潔に回答してください：
+1. 具体的な行動指針（50文字以内）
+2. なぜそれが効果的か（100文字以内）
+3. 今日実践できること（50文字以内）`;
     }
     
-    // AI蠢懃ｭ斐ｒ蝣・欧縺ｫ隗｣譫舌＠縺ｦ3隕∫ｴ縺ｫ蛻・ｧ｣・井ｸ崎ｶｳ譎ゅ・null繧定ｿ斐☆・・
+    // AI応答を堅牢に解析して3要素に分解（不足時はnullを返す）
     parseAIAdvice(aiResponse) {
         if (!aiResponse || typeof aiResponse !== 'string') {
             return { actionPlan: null, effectiveness: null, todayAction: null };
         }
 
-        // 縺ｾ縺壹さ繝ｼ繝峨ヶ繝ｭ繝・け蜀・・JSON繧貞━蜈育噪縺ｫ謚ｽ蜃ｺ・・I縺繰SON縺ｧ霑斐☆繧ｱ繝ｼ繧ｹ縺ｫ蟇ｾ蠢懶ｼ・
+        // まずコードブロック内のJSONを優先的に抽出（AIがJSONで返すケースに対応）
         try {
             const jsonBlockMatch = aiResponse.match(/```(?:json)?\n([\s\S]*?)```/i);
             const raw = jsonBlockMatch ? jsonBlockMatch[1] : aiResponse;
@@ -2996,11 +2996,11 @@ class App {
                 }
             }
         } catch (_) {
-            // JSON縺ｧ縺ｯ縺ｪ縺九▲縺溷ｴ蜷医・騾壼ｸｸ隗｣譫舌↓繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
+            // JSONではなかった場合は通常解析にフォールバック
         }
 
         const text = aiResponse
-            // Markdown 逧・↑蠑ｷ隱ｿ縺ｪ縺ｩ繧帝勁蜴ｻ
+            // Markdown 的な強調などを除去
             .replace(/\*\*|__|`|\*|>\s?/g, '')
             .replace(/\r/g, '')
             .trim();
@@ -3013,38 +3013,38 @@ class App {
 
         const pickByNumber = (n) => {
             try {
-                // 1 / 1. / 1) / 1・・ 1- 縺ｪ縺ｩ繧定ｨｱ螳ｹ
-                const re = new RegExp(`^${n}[\\s\\.縲・\)\\]縲・・喀\-]*(.+)$`);
+                // 1 / 1. / 1) / 1：/ 1- などを許容
+                const re = new RegExp(`^${n}[\\s\\.。\\)\\]、:：\\-]*(.+)$`);
                 for (const l of lines) {
                     const m = l.match(re);
                     if (m && m[1]) return m[1].trim();
                 }
-                // 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
+                // フォールバック
                 for (const l of lines) {
                     if (l.startsWith(n.toString())) {
-                        const content = l.substring(1).replace(/^[\s\.縲・)\]縲・・喀-]+/, '').trim();
+                        const content = l.substring(1).replace(/^[\s\.。\)\]、:：\-]+/, '').trim();
                         if (content) return content;
                     }
                 }
             } catch (error) {
-                console.warn('豁｣隕剰｡ｨ迴ｾ繧ｨ繝ｩ繝ｼ:', error);
+                console.warn('正規表現エラー:', error);
             }
             return null;
         };
 
         const pickByLabel = (labels) => {
-            // 繝ｩ繝吶Ν縺ｮ豁｣隕剰｡ｨ迴ｾ繧貞ｮ牙・縺ｫ讒狗ｯ峨＠縲∝・鬆ｭ/繧ｳ繝ｭ繝ｳ/繝繝・す繝･/遨ｺ逋ｽ繧定ｨｱ螳ｹ
-            const re = new RegExp(`^(?:${labels.map(escapeRegExp).join('|')})[\\s:・喀-]+(.+)$`);
+            // ラベルの正規表現を安全に構築し、先頭/コロン/ダッシュ/空白を許容
+            const re = new RegExp(`^(?:${labels.map(escapeRegExp).join('|')})[\\s:：\-]+(.+)$`);
             for (const l of lines) {
                 const m = l.match(re);
                 if (m && m[1]) return m[1].trim();
             }
-            // 陦後・騾比ｸｭ縺ｫ繝ｩ繝吶Ν縺後≠繧九こ繝ｼ繧ｹ・井ｾ・ 縲瑚｡悟虚謖・・: xxx縲搾ｼ・
+            // 行の途中にラベルがあるケース（例: 「行動指針: xxx」）
             for (const l of lines) {
                 for (const label of labels) {
                     const idx = l.indexOf(label);
                     if (idx >= 0) {
-                        const tail = l.substring(idx + label.length).replace(/^[\s:・喀-]+/, '').trim();
+                        const tail = l.substring(idx + label.length).replace(/^[\s:：\-]+/, '').trim();
                         if (tail) return tail;
                     }
                 }
@@ -3052,13 +3052,13 @@ class App {
             return null;
         };
 
-        let actionPlan = pickByNumber(1) || pickByLabel(['陦悟虚謖・・', '陦悟虚險育判', '繧｢繧ｯ繧ｷ繝ｧ繝ｳ繝励Λ繝ｳ']);
-        let effectiveness = pickByNumber(2) || pickByLabel(['蜉ｹ譫懊・逅・罰', '縺ｪ縺懊◎繧後′蜉ｹ譫懃噪縺・, '逅・罰']);
-        let todayAction = pickByNumber(3) || pickByLabel(['莉頑律繧・ｋ縺薙→', '莉頑律螳溯ｷｵ縺ｧ縺阪ｋ縺薙→', '谺｡縺ｮ荳豁ｩ', 'Next Action']);
+        let actionPlan = pickByNumber(1) || pickByLabel(['行動指針', '行動計画', 'アクションプラン']);
+        let effectiveness = pickByNumber(2) || pickByLabel(['効果の理由', 'なぜそれが効果的か', '理由']);
+        let todayAction = pickByNumber(3) || pickByLabel(['今日やること', '今日実践できること', '次の一歩', 'Next Action']);
 
-        // 蜈磯ｭ縺ｮ邂・擅譖ｸ縺崎ｨ伜捷縺ｪ縺ｩ繧帝勁蜴ｻ
+        // 先頭の箇条書き記号などを除去
         const clean = (s) => s && s
-            .replace(/^[\-繝ｻ\u2022\u25CF\u30fb\s]+/, '')
+            .replace(/^[\-・\u2022\u25CF\u30fb\s]+/, '')
             .replace(/^\.*\s*/, '')
             .trim();
 
@@ -3066,8 +3066,8 @@ class App {
         effectiveness = clean(effectiveness);
         todayAction = clean(todayAction);
 
-        // 譏弱ｉ縺九↑繝励Ξ繝ｼ繧ｹ繝帙Ν繝繝ｼ繝ｻ辟｡蜀・ｮｹ縺ｮ讀懷・
-        const looksPlaceholder = (s) => !s || s.length < 5 || /(蜈ｷ菴鍋噪縺ｪ|縺ｪ縺懊◎繧後′|螳溯ｷｵ縺ｧ縺阪ｋ縺薙→)\s*$/.test(s);
+        // 明らかなプレースホルダー・無内容の検出
+        const looksPlaceholder = (s) => !s || s.length < 5 || /(具体的な|なぜそれが|実践できること)\s*$/.test(s);
         if (looksPlaceholder(actionPlan)) actionPlan = null;
         if (looksPlaceholder(effectiveness)) effectiveness = null;
         if (looksPlaceholder(todayAction)) todayAction = null;
@@ -3079,35 +3079,35 @@ class App {
         const recommendationsContent = document.getElementById('ai-recommendations-content');
         if (!recommendationsContent) return;
 
-        // 謌仙粥譎・ 譌｢蟄倥・繧ｨ繝ｩ繝ｼ繝｡繝・そ繝ｼ繧ｸ繧貞炎髯､
+        // 成功時: 既存のエラーメッセージを削除
         const existingError = recommendationsContent.querySelector('.ai-error-message');
         if (existingError) {
             existingError.remove();
         }
 
-        // 隗｣譫撰ｼ井ｸ崎ｶｳ譎ゅ・蠕後〒驛ｨ蛻・｣懷ｮ鯉ｼ・
+        // 解析（不足時は後で部分補完）
         const parsed = this.parseAIAdvice(aiResponse);
 
         let actionPlan = parsed.actionPlan;
         let effectiveness = parsed.effectiveness;
         let todayAction = parsed.todayAction;
 
-        // 驛ｨ蛻・が繝輔Λ繧､繝ｳ陬懷ｮ後・荳崎ｦ・ AI縺瑚ｿ斐＠縺溷・螳ｹ縺ｮ縺ｿ繧剃ｽｿ逕ｨ・域ｬ謳阪・謠冗判繧ｹ繧ｭ繝・・・・
-        // 遨ｺ隕∫ｴ縺ｯ謠冗判縺励↑縺・婿驥晢ｼ亥ｮ壼梛譁・・謖ｿ蜈･縺励↑縺・ｼ・
+        // 部分オフライン補完は不要: AIが返した内容のみを使用（欠損は描画スキップ）
+        // 空要素は描画しない方針（定型文は挿入しない）
         actionPlan = actionPlan && String(actionPlan).trim();
         effectiveness = effectiveness && String(effectiveness).trim();
         todayAction = todayAction && String(todayAction).trim();
 
-        // 譖ｴ譁ｰ譌･譎ゅｒ菫晏ｭ・
+        // 更新日時を保存
         const updateTime = new Date().toLocaleString('ja-JP');
         localStorage.setItem('coaching-advice-update-time', updateTime);
 
-        // 謠冗判逕ｨ縺ｮ鬆・岼繧貞虚逧・↓邨・∩遶九※・育ｩｺ縺ｯ謠冗判縺励↑縺・ｼ・
+        // 描画用の項目を動的に組み立て（空は描画しない）
         const items = [];
         if (actionPlan) {
             items.push(`
                 <div class="advice-item">
-                    <h4>庁 陦悟虚謖・・</h4>
+                    <h4>💡 行動指針</h4>
                     <p>${actionPlan}</p>
                 </div>
             `);
@@ -3115,7 +3115,7 @@ class App {
         if (effectiveness) {
             items.push(`
                 <div class="advice-item">
-                    <h4>剥 蜉ｹ譫懊・逅・罰</h4>
+                    <h4>🔍 効果の理由</h4>
                     <p>${effectiveness}</p>
                 </div>
             `);
@@ -3123,13 +3123,13 @@ class App {
         if (todayAction) {
             items.push(`
                 <div class="advice-item today-action">
-                    <h4>笞｡ 莉頑律繧・ｋ縺薙→</h4>
+                    <h4>⚡ 今日やること</h4>
                     <p>${todayAction}</p>
                 </div>
             `);
         }
 
-        // 縺吶∋縺ｦ遨ｺ縺ｪ繧画緒逕ｻ繧定｡後ｏ縺壹↓繝ｪ繧ｿ繝ｼ繝ｳ・域里蟄倩｡ｨ遉ｺ繧堤ｶｭ謖・ｼ・
+        // すべて空なら描画を行わずにリターン（既存表示を維持）
         if (items.length === 0) {
             console.warn('No advice items to render (all empty). Skipping UI update.');
             return;
@@ -3139,13 +3139,13 @@ class App {
             <div class="coaching-advice-card">
                 <div class="advice-header">
                     <div class="goal-focus">
-                        <span class="goal-icon">識</span>
-                        <span class="goal-title">逶ｮ讓・ ${goal.title}</span>
+                        <span class="goal-icon">🎯</span>
+                        <span class="goal-title">目標: ${goal.title}</span>
                     </div>
-                    <div class="goal-deadline">譛滄剞: ${new Date(goal.deadline).toLocaleDateString('ja-JP')}</div>
+                    <div class="goal-deadline">期限: ${new Date(goal.deadline).toLocaleDateString('ja-JP')}</div>
                 </div>
                 <div class="advice-update-time">
-                    <span class="update-label">譛邨よ峩譁ｰ:</span>
+                    <span class="update-label">最終更新:</span>
                     <span class="update-time">${updateTime}</span>
                 </div>
                 <div class="advice-content">
@@ -3156,19 +3156,19 @@ class App {
 
         recommendationsContent.innerHTML = adviceHTML;
         
-        // 繧｢繝峨ヰ繧､繧ｹ蜀・ｮｹ繧偵く繝｣繝・す繝･縺ｫ菫晏ｭ・
+        // アドバイス内容をキャッシュに保存
         localStorage.setItem('cached-coaching-advice', JSON.stringify({
             html: adviceHTML,
             timestamp: Date.now()
         }));
     }    showOfflineRecommendations(goals, gameData) {
-        // 逶ｮ讓吶′繧ｼ繝ｭ縺ｮ蝣ｴ蜷医・蠕捺擂縺ｮ縲檎岼讓吶ｒ險ｭ螳壹＠縺ｦ窶ｦ縲阪ｒ陦ｨ遉ｺ
+        // 目標がゼロの場合は従来の「目標を設定して…」を表示
         if (!goals || goals.length === 0) {
             this.showNoRecommendationsMessage();
             return;
         }
 
-        // 繧ｪ繝輔Λ繧､繝ｳ縺ｮ縺溘ａ繧｢繝峨ヰ繧､繧ｹ縺ｯ陦ｨ遉ｺ縺励↑縺・婿驥・
+        // オフラインのためアドバイスは表示しない方針
         const updateTime = new Date().toLocaleString('ja-JP');
         localStorage.setItem('coaching-advice-update-time', updateTime);
 
@@ -3178,38 +3178,38 @@ class App {
                 <div class="coaching-advice-card offline">
                     <div class="advice-header">
                         <div class="goal-focus">
-                            <span class="goal-icon">識</span>
-                            <span class="goal-title">AI繧｢繝峨ヰ繧､繧ｹ繧定｡ｨ遉ｺ縺ｧ縺阪∪縺帙ｓ</span>
+                            <span class="goal-icon">🎯</span>
+                            <span class="goal-title">AIアドバイスを表示できません</span>
                         </div>
-                        <div class="offline-indicator">繧ｪ繝輔Λ繧､繝ｳ縺ｾ縺溘・API譛ｪ險ｭ螳・/div>
+                        <div class="offline-indicator">オフラインまたはAPI未設定</div>
                     </div>
                     <div class="advice-update-time">
-                        <span class="update-label">譛邨ら｢ｺ隱・</span>
+                        <span class="update-label">最終確認:</span>
                         <span class="update-time">${updateTime}</span>
                     </div>
                     <div class="advice-content">
                         <div class="advice-item">
-                            <h4>邃ｹ・・縺疲｡亥・</h4>
-                            <p>迴ｾ蝨ｨ繧ｪ繝輔Λ繧､繝ｳ縲√∪縺溘・ Gemini API 繧ｭ繝ｼ縺梧悴險ｭ螳壹・縺溘ａ縲√さ繝ｼ繝√Φ繧ｰ繧｢繝峨ヰ繧､繧ｹ繧定｡ｨ遉ｺ縺ｧ縺阪∪縺帙ｓ縲・PI繧定ｨｭ螳壼ｾ後↓蜀榊ｺｦ縺願ｩｦ縺励￥縺縺輔＞縲・/p>
+                            <h4>ℹ️ ご案内</h4>
+                            <p>現在オフライン、または Gemini API キーが未設定のため、コーチングアドバイスを表示できません。APIを設定後に再度お試しください。</p>
                         </div>
                     </div>
                     <div class="api-setup-suggestion">
-                        <p>Gemini API繧定ｨｭ螳壹＠縺ｦ縲√ヱ繝ｼ繧ｽ繝翫Λ繧､繧ｺ縺輔ｌ縺溘い繝峨ヰ繧､繧ｹ繧貞女縺大叙繧翫∪縺励ｇ縺・・/p>
-                        <button class="btn-secondary" id="goto-api-setup">API險ｭ螳・/button>
+                        <p>Gemini APIを設定して、パーソナライズされたアドバイスを受け取りましょう。</p>
+                        <button class="btn-secondary" id="goto-api-setup">API設定</button>
                     </div>
                 </div>
             `;
 
             recommendationsContent.innerHTML = adviceHTML;
 
-            // API險ｭ螳壹・繧ｿ繝ｳ縺ｮ繧､繝吶Φ繝医ｒ莉倅ｸ・
+            // API設定ボタンのイベントを付与
             const setupBtn = document.getElementById('goto-api-setup');
             if (setupBtn) {
                 setupBtn.addEventListener('click', () => {
                     try {
                         this.showPage('settings');
                         this.updateNavigation('settings');
-                        // 蛻晄悄險ｭ螳壹Δ繝ｼ繝繝ｫ縺悟ｿ・ｦ√↑繧芽｡ｨ遉ｺ
+                        // 初期設定モーダルが必要なら表示
                         const needsSetup = !window.unifiedApiManager || !window.unifiedApiManager.isConfigured();
                         if (needsSetup) {
                             this.showInitialAPISetupModal();
@@ -3221,7 +3221,7 @@ class App {
                 });
             }
 
-            // 陦ｨ遉ｺ繧偵く繝｣繝・す繝･縺ｫ菫晏ｭ・
+            // 表示をキャッシュに保存
             localStorage.setItem('cached-coaching-advice', JSON.stringify({
                 html: adviceHTML,
                 timestamp: Date.now()
@@ -3230,97 +3230,97 @@ class App {
     }
     
     getOfflineAdvice(goal, gameName) {
-        console.log('識 getOfflineAdvice called for game:', gameName);
-        // 譌･莉倥・繝ｼ繧ｹ縺ｧ螟牙喧縺吶ｋ繧｢繝峨ヰ繧､繧ｹ縺ｮ逕滓・
+        console.log('🎯 getOfflineAdvice called for game:', gameName);
+        // 日付ベースで変化するアドバイスの生成
         const today = new Date();
-        const dayOfWeek = today.getDay(); // 0=譌･譖・ 1=譛域屆, ...
-        const dateHash = today.getDate() + today.getMonth(); // 譌･莉倥・繝ｼ繧ｹ縺ｮ繝上ャ繧ｷ繝･
-        console.log('套 Date hash:', dateHash, 'Day:', dayOfWeek);
+        const dayOfWeek = today.getDay(); // 0=日曜, 1=月曜, ...
+        const dateHash = today.getDate() + today.getMonth(); // 日付ベースのハッシュ
+        console.log('📅 Date hash:', dateHash, 'Day:', dayOfWeek);
         
-        // 繧ｲ繝ｼ繝蝗ｺ譛峨・隍・焚縺ｮ繧｢繝峨ヰ繧､繧ｹ繝・Φ繝励Ξ繝ｼ繝・
+        // ゲーム固有の複数のアドバイステンプレート
         const gameAdvicePool = {
             'League of Legends': [
                 {
-                    actionPlan: 'CS縺ｮ邊ｾ蠎ｦ繧貞髄荳翫＠縲・0蛻・凾轤ｹ縺ｧ縺ｮ逶ｮ讓吶ｒ80縺ｫ險ｭ螳壹＠縺ｾ縺励ｇ縺・,
-                    effectiveness: 'CS縺ｯ螳牙ｮ壹＠縺滄≡蜿主・縺ｮ蝓ｺ逶､縺ｧ縲√Ξ繝ｼ繝井ｸ頑・縺ｫ逶ｴ邨舌＠縺ｾ縺・,
-                    todayAction: '繧ｫ繧ｹ繧ｿ繝繧ｲ繝ｼ繝縺ｧ15蛻・俣縺ｮ繝輔ぃ繝ｼ繝邱ｴ鄙偵ｒ2繧ｻ繝・ヨ'
+                    actionPlan: 'CSの精度を向上し、10分時点での目標を80に設定しましょう',
+                    effectiveness: 'CSは安定した金収入の基盤で、レート上昇に直結します',
+                    todayAction: 'カスタムゲームで15分間のファーム練習を2セット'
                 },
                 {
-                    actionPlan: '繝ｯ繝ｼ繝峨・驟咲ｽｮ菴咲ｽｮ繧呈怙驕ｩ蛹悶＠縲∬ｦ也阜遒ｺ菫昴ｒ謾ｹ蝟・＠縺ｾ縺励ｇ縺・,
-                    effectiveness: '繝槭ャ繝励さ繝ｳ繝医Ο繝ｼ繝ｫ縺ｯ蛻､譁ｭ蜉帙→繝昴ず繧ｷ繝ｧ繝九Φ繧ｰ繧貞､ｧ蟷・↓謾ｹ蝟・＠縺ｾ縺・,
-                    todayAction: '繝ｯ繝ｼ繝蛾・鄂ｮ縺ｮ繧ｻ繧ｪ繝ｪ繝ｼ繧・縺､隕壹∴縲・隧ｦ蜷医〒螳溯ｷｵ'
+                    actionPlan: 'ワードの配置位置を最適化し、視界確保を改善しましょう',
+                    effectiveness: 'マップコントロールは判断力とポジショニングを大幅に改善します',
+                    todayAction: 'ワード配置のセオリーを1つ覚え、3試合で実践'
                 },
                 {
-                    actionPlan: '繝√・繝繝輔ぃ繧､繝医〒縺ｮ繝昴ず繧ｷ繝ｧ繝九Φ繧ｰ繧呈э隴倥＠縺ｾ縺励ｇ縺・,
-                    effectiveness: '豁｣縺励＞繝昴ず繧ｷ繝ｧ繝ｳ縺ｯ逕溷ｭ倡紫縺ｨ蠖ｱ髻ｿ蜉帙ｒ蜷梧凾縺ｫ蜷台ｸ翫＆縺帙∪縺・,
-                todayAction: '骭ｲ逕ｻ繧定ｦ九↑縺後ｉ繝輔ぃ繧､繝医〒縺ｮ遶九■菴咲ｽｮ繧貞・譫・
+                    actionPlan: 'チームファイトでのポジショニングを意識しましょう',
+                    effectiveness: '正しいポジションは生存率と影響力を同時に向上させます',
+                todayAction: '録画を見ながらファイトでの立ち位置を分析'
                 },
                 {
-                    actionPlan: '繝槭ャ繝励・繧ｿ繧､繝溘Φ繧ｰ繧呈э隴倥＠縲√お繝ｳ繧ｲ繝ｼ繧ｸ縺ｮ繧ｿ繧､繝溘Φ繧ｰ繧呈隼蝟・＠縺ｾ縺励ｇ縺・,
-                    effectiveness: '繧ｲ繝ｼ繝逅・ｧ｣縺ｮ豺ｱ蛹悶・蛟倶ｺｺ謚莉･荳翫↓蜍晏茜縺ｫ雋｢迪ｮ縺励∪縺・,
-                    todayAction: '繝溘ル繝槭ャ繝励ｒ3遘偵♀縺阪↓繝√ぉ繝・け縺吶ｋ鄙呈・繧・隧ｦ蜷医〒螳溯ｷｵ'
+                    actionPlan: 'マップのタイミングを意識し、エンゲージのタイミングを改善しましょう',
+                    effectiveness: 'ゲーム理解の深化は個人技以上に勝利に貢献します',
+                    todayAction: 'ミニマップを3秒おきにチェックする習慣を3試合で実践'
                 }
             ],
             'Valorant': [
                 {
-                    actionPlan: '繧ｯ繝ｭ繧ｹ繝倥い驟咲ｽｮ縺ｮ蝓ｺ譛ｬ繧貞ｾｹ蠎輔＠縲√・繝ｪ繧ｨ繧､繝繧堤ｿ呈・蛹悶＠縺ｾ縺励ｇ縺・,
-                    effectiveness: '豁｣遒ｺ縺ｪ繧ｯ繝ｭ繧ｹ繝倥い驟咲ｽｮ縺ｯ蜿榊ｿ憺溷ｺｦ縺ｨ邊ｾ蠎ｦ繧貞酔譎ゅ↓蜷台ｸ翫＆縺帙∪縺・,
-                    todayAction: '繝ｬ繝ｳ繧ｸ縺ｧ隗貞ｺｦ繧呈э隴倥＠縺溘け繝ｭ繧ｹ繝倥い邱ｴ鄙・5蛻・
+                    actionPlan: 'クロスヘア配置の基本を徹底し、プリエイムを習慣化しましょう',
+                    effectiveness: '正確なクロスヘア配置は反応速度と精度を同時に向上させます',
+                    todayAction: 'レンジで角度を意識したクロスヘア練習15分'
                 },
                 {
-                    actionPlan: '繝槭ャ繝励・螳夂浹繝昴ず繧ｷ繝ｧ繝ｳ縺ｨ隗貞ｺｦ繧定ｦ壹∴縺ｦ豢ｻ逕ｨ縺励∪縺励ｇ縺・,
-                    effectiveness: '繝槭ャ繝礼衍隴倥・謌ｦ陦鍋噪蜆ｪ菴肴ｧ繧堤函縺ｿ縲∝享邇・髄荳翫↓逶ｴ邨舌＠縺ｾ縺・,
-                    todayAction: '莉頑律縺ｮ繝槭ャ繝励ｒ1縺､驕ｸ繧薙〒縲∵眠縺励＞繝昴ず繧ｷ繝ｧ繝ｳ繧・縺､邱ｴ鄙・
+                    actionPlan: 'マップの定石ポジションと角度を覚えて活用しましょう',
+                    effectiveness: 'マップ知識は戦術的優位性を生み、勝率向上に直結します',
+                    todayAction: '今日のマップを1つ選んで、新しいポジションを1つ練習'
                 },
                 {
-                    actionPlan: '繝√・繝繧ｳ繝溘Η繝九こ繝ｼ繧ｷ繝ｧ繝ｳ縺ｨ繧ｳ繝ｼ繝ｫ邊ｾ蠎ｦ繧貞髄荳翫＆縺帙∪縺励ｇ縺・,
-                    effectiveness: '繝√・繝謌ｦ縺ｧ縺ｯ諠・ｱ蜈ｱ譛峨′蛟倶ｺｺ謚莉･荳翫↓驥崎ｦ√↑隕∫ｴ縺ｧ縺・,
-                    todayAction: '邁｡貎斐〒豁｣遒ｺ縺ｪ繧ｳ繝ｼ繝ｫ繧貞ｿ・′縺代◆隧ｦ蜷医ｒ3謌ｦ繝励Ξ繧､'
+                    actionPlan: 'チームコミュニケーションとコール精度を向上させましょう',
+                    effectiveness: 'チーム戦では情報共有が個人技以上に重要な要素です',
+                    todayAction: '簡潔で正確なコールを心がけた試合を3戦プレイ'
                 }
             ],
             'Overwatch 2': [
                 {
-                    actionPlan: '繝ｭ繝ｼ繝ｫ逅・ｧ｣繧呈ｷｱ繧√√メ繝ｼ繝騾｣謳ｺ縺ｨ繝昴ず繧ｷ繝ｧ繝九Φ繧ｰ繧呈隼蝟・＠縺ｾ縺励ｇ縺・,
-                    effectiveness: '繝√・繝謌ｦ縺碁㍾隕√↑繧ｲ繝ｼ繝縺ｧ縺ｯ蛟倶ｺｺ謚繧医ｊ騾｣謳ｺ縺悟享謨励ｒ豎ｺ繧√∪縺・,
-                    todayAction: '閾ｪ蛻・・繝ｭ繝ｼ繝ｫ縺ｮ雋ｬ莉ｻ繧呈紛逅・＠縲√さ繝溘Η繝九こ繝ｼ繧ｷ繝ｧ繝ｳ繧呈э隴倥＠縺溯ｩｦ蜷医ｒ3謌ｦ'
+                    actionPlan: 'ロール理解を深め、チーム連携とポジショニングを改善しましょう',
+                    effectiveness: 'チーム戦が重要なゲームでは個人技より連携が勝敗を決めます',
+                    todayAction: '自分のロールの責任を整理し、コミュニケーションを意識した試合を3戦'
                 }
             ]
         };
         
-        // 繝・ヵ繧ｩ繝ｫ繝医い繝峨ヰ繧､繧ｹ・医ご繝ｼ繝縺瑚ｦ九▽縺九ｉ縺ｪ縺・ｴ蜷茨ｼ・
+        // デフォルトアドバイス（ゲームが見つからない場合）
         const defaultAdvice = [
             {
-                actionPlan: '蝓ｺ遉守ｷｴ鄙偵ｒ邯咏ｶ壹＠縲∬ｩｦ蜷医・謖ｯ繧願ｿ斐ｊ繧貞ｮ壽悄逧・↓陦後＞縺ｾ縺励ｇ縺・,
-                effectiveness: '邯咏ｶ夂噪縺ｪ謾ｹ蝟・し繧､繧ｯ繝ｫ縺後せ繧ｭ繝ｫ蜷台ｸ翫・骰ｵ縺ｧ縺・,
-                todayAction: '莉頑律縺ｮ隧ｦ蜷医ｒ1蝗樣鹸逕ｻ縺励※蠕後〒隕玖ｿ斐☆貅門ｙ'
+                actionPlan: '基礎練習を継続し、試合の振り返りを定期的に行いましょう',
+                effectiveness: '継続的な改善サイクルがスキル向上の鍵です',
+                todayAction: '今日の試合を1回録画して後で見返す準備'
             },
             {
-                actionPlan: '逶ｮ讓吶ｒ蜈ｷ菴鍋噪縺ｪ蟆冗岼讓吶↓蛻・ｧ｣縺励∵律縲・・騾ｲ謐励ｒ貂ｬ螳壹＠縺ｾ縺励ｇ縺・,
-                effectiveness: '譏守｢ｺ縺ｪ謖・ｨ吶′縺ゅｋ縺薙→縺ｧ蜷台ｸ雁ｺｦ蜷医＞縺悟庄隕門喧縺輔ｌ縺ｾ縺・,
-                todayAction: '莉翫・閾ｪ蛻・・蠑ｱ轤ｹ繧・縺､迚ｹ螳壹＠縲∵隼蝟・婿豕輔ｒ隱ｿ縺ｹ繧・
+                actionPlan: '目標を具体的な小目標に分解し、日々の進捗を測定しましょう',
+                effectiveness: '明確な指標があることで向上度合いが可視化されます',
+                todayAction: '今の自分の弱点を1つ特定し、改善方法を調べる'
             },
             {
-                actionPlan: '邊ｾ逾樒噪縺ｪ繧ｳ繝ｳ繝・ぅ繧ｷ繝ｧ繝ｳ邂｡逅・ｒ諢剰ｭ倥＠縺ｾ縺励ｇ縺・,
-                effectiveness: '繝｡繝ｳ繧ｿ繝ｫ髱｢縺ｮ螳牙ｮ壹・荳雋ｫ縺励◆繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ縺ｮ蝓ｺ逶､縺ｧ縺・,
-                todayAction: '5蛻・俣縺ｮ豺ｱ蜻ｼ蜷ｸ縺ｨ繝昴ず繝・ぅ繝悶↑閾ｪ蟾ｱ證礼､ｺ繧定ｩｦ蜷亥燕縺ｫ螳滓命'
+                actionPlan: '精神的なコンディション管理を意識しましょう',
+                effectiveness: 'メンタル面の安定は一貫したパフォーマンスの基盤です',
+                todayAction: '5分間の深呼吸とポジティブな自己暗示を試合前に実施'
             }
         ];
         
-        // 繧ｲ繝ｼ繝蝗ｺ譛峨・繧｢繝峨ヰ繧､繧ｹ繝ｪ繧ｹ繝医ｒ蜿門ｾ・
+        // ゲーム固有のアドバイスリストを取得
         const adviceList = gameAdvicePool[gameName] || defaultAdvice;
         
-        // 譌･莉倥・繝ｼ繧ｹ縺ｧ繧｢繝峨ヰ繧､繧ｹ繧帝∈謚橸ｼ亥酔縺俶律縺ｪ繧牙酔縺倥い繝峨ヰ繧､繧ｹ・・
+        // 日付ベースでアドバイスを選択（同じ日なら同じアドバイス）
         const selectedIndex = dateHash % adviceList.length;
         const selectedAdvice = adviceList[selectedIndex];
         
-        console.log('笨・Selected advice index:', selectedIndex, 'from', adviceList.length, 'options');
-        console.log('統 Selected advice:', selectedAdvice.actionPlan);
+        console.log('✅ Selected advice index:', selectedIndex, 'from', adviceList.length, 'options');
+        console.log('📝 Selected advice:', selectedAdvice.actionPlan);
         
         return selectedAdvice;
     }
     
     setupAICoachingGoalsListener() {
-        // LocalStorage縺ｮ逶ｮ讓吝､画峩繧堤屮隕悶＠縺ｦAI謗ｨ螂ｨ莠矩・ｒ譖ｴ譁ｰ
+        // LocalStorageの目標変更を監視してAI推奨事項を更新
         const originalSetItem = localStorage.setItem;
         localStorage.setItem = function(key, value) {
             originalSetItem.call(localStorage, key, value);
@@ -3334,32 +3334,31 @@ class App {
         };
     }
     
-    // Gemini API迥ｶ諷九・蜀阪メ繧ｧ繝・け・磯℃雋闕ｷ隗｣豸亥ｾ鯉ｼ・
+    // Gemini API状態の再チェック（過負荷解消後）
     async recheckGeminiAPI() {
         if (!window.unifiedApiManager?.isConfigured()) {
             return;
         }
         
         try {
-            console.log('売 Gemini API迥ｶ諷九ｒ蜀阪メ繧ｧ繝・け荳ｭ...');
+            console.log('🔄 Gemini API状態を再チェック中...');
             await window.unifiedApiManager.validateAPIKey();
-            this.showToast('笨・Gemini API縺悟ｾｩ譌ｧ縺励∪縺励◆・、I讖溯・縺悟茜逕ｨ蜿ｯ閭ｽ縺ｫ縺ｪ繧翫∪縺励◆縲・, 'success');
-            console.log('笨・Gemini API蠕ｩ譌ｧ繧堤｢ｺ隱・);
+            this.showToast('✅ Gemini APIが復旧しました！AI機能が利用可能になりました。', 'success');
+            console.log('✅ Gemini API復旧を確認');
         } catch (error) {
-            console.log('笞・・Gemini API縺ｯ縺ｾ縺驕手ｲ闕ｷ荳ｭ:', error.message);
-            // 縺ｾ縺驕手ｲ闕ｷ荳ｭ縺ｮ蝣ｴ蜷医√＆繧峨↓5蛻・ｾ後↓蜀阪メ繧ｧ繝・け
-            if (error.message.includes('驕手ｲ闕ｷ') || error.message.includes('overloaded')) {
+            console.log('⚠️ Gemini APIはまだ過負荷中:', error.message);
+            // まだ過負荷中の場合、さらに5分後に再チェック
+            if (error.message.includes('過負荷') || error.message.includes('overloaded')) {
                 setTimeout(() => {
                     this.recheckGeminiAPI();
-                }, 5 * 60 * 1000); // 縺輔ｉ縺ｫ5蛻・ｾ・
+                }, 5 * 60 * 1000); // さらに5分後
             }
         }
     }
 }
 
-// 繧｢繝励Μ縺ｮ襍ｷ蜍・
+// アプリの起動
 const app = new App();
 
 // Export for global access
 window.app = app;
-
