@@ -84,20 +84,17 @@ class App {
         } else {
             console.log('API譛ｪ險ｭ螳壹∪縺溘・謗･邯壼､ｱ謨励∝・譛溯ｨｭ螳夂判髱｢繧定｡ｨ遉ｺ');
             
-            // 503繧ｨ繝ｩ繝ｼ縺ｮ蝣ｴ蜷医・迚ｹ蛻･縺ｪ繝｡繝・そ繝ｼ繧ｸ
-            if (apiCheckResult.error && (
-                apiCheckResult.error.message.includes('503') || 
-                apiCheckResult.error.message.includes('驕手ｲ闕ｷ') ||
-                apiCheckResult.error.message.includes('overloaded')
-            )) {
-                this.showToast('笞・・Gemini API縺御ｸ譎ら噪縺ｫ驕手ｲ闕ｷ荳ｭ縺ｧ縺吶・PI繧ｭ繝ｼ縺ｯ菫晏ｭ倥＆繧後※縺・ｋ縺ｮ縺ｧ縲∝ｾ後⊇縺ｩ閾ｪ蜍慕噪縺ｫ蛻ｩ逕ｨ蜿ｯ閭ｽ縺ｫ縺ｪ繧翫∪縺吶・, 'warning');
-                // 驕手ｲ闕ｷ縺ｮ蝣ｴ蜷医〒繧ゅい繝励Μ縺ｯ襍ｷ蜍輔☆繧・
+            // 503エラーや過負荷に対するハンドリング
+            const errorMessage = (apiCheckResult.error && apiCheckResult.error.message) ? apiCheckResult.error.message : '';
+            if (errorMessage.includes('503') || errorMessage.includes('過負荷') || errorMessage.includes('overloaded')) {
+                this.showToast('Gemini APIが一時的に過負荷です。APIキーは保存済みのため、しばらく待つと自動的に再接続されます。', 'warning');
                 await this.initializeMainApp();
             } else {
-                // API譛ｪ險ｭ螳壹∪縺溘・謗･邯壼､ｱ謨玲凾縺ｯ蛻晄悄險ｭ螳夂判髱｢繧定｡ｨ遉ｺ
+                // API未設定または接続失敗時は初期設定画面を表示
                 this.showInitialAPISetupModal();
                 this.setupInitialAPIModalListeners();
             }
+
         }
         
         console.log('App initialized successfully');

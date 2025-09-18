@@ -296,7 +296,8 @@ class UnifiedAPIManager {
             issues.push('APIキーが異常に長い可能性があります（120文字以内を想定）');
         }
 
-        if (!normalizedKey.match(/^[A-Za-z0-9_-]+$/)) {
+        const allowedPattern = /^[A-Za-z0-9_\-/.=]+$/;
+        if (!allowedPattern.test(normalizedKey)) {
             issues.push('APIキーに無効な文字が含まれています');
         }
 
