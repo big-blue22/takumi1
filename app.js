@@ -23,6 +23,11 @@ class App {
     }
     
     initializeServices() {
+        // APIサービスが存在する場合のみ初期化
+        if (typeof AICoachingService !== 'undefined') {
+            this.aiService = new AICoachingService();
+        }
+        
         // 認証サービス
         if (typeof AuthService !== 'undefined') {
             this.authService = new AuthService();
@@ -290,7 +295,10 @@ class App {
         // その他のナビゲーション機能
         this.initNavigationHelpers();
         
-        // AIコーチング機能は削除済み
+        // AIコーチング機能の初期化（少し遅延させてAPI設定が確実に完了するのを待つ）
+        setTimeout(() => {
+            this.initAICoaching();
+        }, 500);
         
         // 初期ページの表示
         this.showPage(this.currentPage);
