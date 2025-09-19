@@ -67,17 +67,19 @@ class App {
         
         // API設定チェックと初期化（非同期）- この結果によって画面遷移が決まる
         const apiCheckResult = await this.performBackgroundAPICheck();
-        
-        // 初回設定チェック
-        if (this.needsInitialSetup()) {
-            console.log('初回設定が必要です。初期設定画面を表示します。');
-            this.showInitialSetupModal();
-            return; // 初期設定完了まで他の処理をスキップ
-        }
 
         if (apiCheckResult.success) {
-            console.log('バックグラウンドAPI接続成功、メイン画面へ遷移');
-            // API接続成功時は直接メイン初期化
+            console.log('バックグラウンドAPI接続成功');
+
+            // API接続成功時のみ初回設定チェック
+            if (this.needsInitialSetup()) {
+                console.log('初回設定が必要です。初期設定画面を表示します。');
+                this.showInitialSetupModal();
+                return; // 初期設定完了まで他の処理をスキップ
+            }
+
+            // メイン画面へ遷移
+            console.log('メイン画面へ遷移');
             await this.initializeMainApp();
 
             // 過負荷状態の場合は追加メッセージを表示
@@ -85,7 +87,7 @@ class App {
                 this.showToast('⚠️ Gemini APIが過負荷状態です。時間をおいて再度お試しください。', 'warning');
             }
         } else {
-            console.log('API未設定または接続失敗、初期設定画面を表示');
+            console.log('API未設定または接続失敗');
 
             // 503エラーの場合は特別なメッセージ
             if (apiCheckResult.error && (
@@ -97,7 +99,7 @@ class App {
                 // 過負荷の場合でもアプリは起動する
                 await this.initializeMainApp();
             } else {
-                // API未設定または接続失敗時は初期設定画面を表示
+                // API未設定または接続失敗時はAPI設定画面を表示
                 this.showInitialAPISetupModal();
                 this.setupInitialAPIModalListeners();
             }
@@ -2912,10 +2914,21 @@ class App {
     // 初回設定が必要かチェック
     needsInitialSetup() {
         const setupCompleted = localStorage.getItem('initialSetupCompleted');
+        console.log('Setup check - setupCompleted:', setupCompleted);
+
+        // 明示的に初期設定完了フラグがtrueの場合は不要
+        if (setupCompleted === 'true') {
+            return false;
+        }
+
+        // 初期設定フラグがない場合は、ゲームと スキルレベルの存在を確認
         const hasGame = localStorage.getItem('selectedGame');
         const hasSkill = localStorage.getItem('playerSkillLevel');
 
-        return !setupCompleted || !hasGame || !hasSkill;
+        console.log('Setup check - hasGame:', hasGame, 'hasSkill:', hasSkill);
+
+        // いずれかが不足している場合のみ初期設定が必要
+        return !hasGame || !hasSkill;
     }
 
     setupCoachingFeedbackListeners() {
