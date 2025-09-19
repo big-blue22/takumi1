@@ -663,6 +663,152 @@
         </div>
     </div>
 
+    <!-- Initial Setup Modal (Game & Skill Selection) -->
+    <div id="initial-setup-modal" class="modal initial-setup-priority">
+        <div class="modal-overlay"></div>
+        <div class="modal-content initial-setup-content">
+
+            <!-- Header -->
+            <div class="setup-header">
+                <div class="logo-section">
+                    <h1>🌉 e-Bridge</h1>
+                    <p class="tagline">AI-Powered eSports Performance Bridge</p>
+                </div>
+                <div class="setup-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="setup-progress-fill"></div>
+                    </div>
+                    <span class="progress-text" id="setup-progress-text">ステップ 1 / 2</span>
+                </div>
+            </div>
+
+            <!-- Step 1: Game Selection -->
+            <div class="setup-step" id="setup-step-1">
+                <div class="step-content">
+                    <div class="step-title">
+                        <h2>🎮 メインゲームを選択</h2>
+                        <p>最も上達したいゲームを選択してください</p>
+                    </div>
+
+                    <div class="game-grid" id="setup-game-grid">
+                        <!-- ゲームオプションが動的に生成される -->
+                    </div>
+
+                    <div class="step-actions">
+                        <button id="setup-game-next" class="btn-primary" disabled>
+                            次へ進む
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Skill Level Selection -->
+            <div class="setup-step hidden" id="setup-step-2">
+                <div class="step-content">
+                    <div class="step-title">
+                        <h2>📊 スキルレベルを選択</h2>
+                        <p>現在のスキルレベルを正直に選択してください</p>
+                    </div>
+
+                    <div class="skill-grid" id="setup-skill-grid">
+                        <div class="skill-card" data-skill="beginner">
+                            <div class="skill-icon">🌱</div>
+                            <h3>初心者</h3>
+                            <p>基本的なゲームメカニクスを学習中</p>
+                            <ul class="skill-features">
+                                <li>基本操作の習得</li>
+                                <li>ルール理解</li>
+                                <li>基礎練習</li>
+                            </ul>
+                        </div>
+                        <div class="skill-card" data-skill="intermediate">
+                            <div class="skill-icon">📊</div>
+                            <h3>中級者</h3>
+                            <p>ゲームの基本は理解し、上達を目指している</p>
+                            <ul class="skill-features">
+                                <li>戦略理解</li>
+                                <li>応用テクニック</li>
+                                <li>チームプレイ</li>
+                            </ul>
+                        </div>
+                        <div class="skill-card" data-skill="advanced">
+                            <div class="skill-icon">🏆</div>
+                            <h3>上級者</h3>
+                            <p>高度な戦略と技術を身につけている</p>
+                            <ul class="skill-features">
+                                <li>メタ理解</li>
+                                <li>高度な戦術</li>
+                                <li>コーチング視点</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step-actions">
+                        <button id="setup-skill-back" class="btn-secondary">
+                            戻る
+                        </button>
+                        <button id="setup-skill-complete" class="btn-primary" disabled>
+                            設定完了
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Step -->
+            <div class="setup-step hidden" id="setup-step-complete">
+                <div class="step-content completion-content">
+                    <div class="completion-icon">🎉</div>
+                    <h2>設定完了！</h2>
+                    <p>あなたのプロフィールが設定されました</p>
+
+                    <div class="profile-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">選択ゲーム:</span>
+                            <span class="summary-value" id="summary-game">League of Legends</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">スキルレベル:</span>
+                            <span class="summary-value" id="summary-skill">中級者</span>
+                        </div>
+                    </div>
+
+                    <div class="next-steps">
+                        <h3>これからできること：</h3>
+                        <div class="feature-preview">
+                            <div class="preview-item">
+                                <span class="preview-icon">🎯</span>
+                                <div>
+                                    <strong>日替わりコーチング</strong>
+                                    <p>毎日パーソナライズされたアドバイス</p>
+                                </div>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-icon">📈</span>
+                                <div>
+                                    <strong>パフォーマンス分析</strong>
+                                    <p>詳細な試合データ分析</p>
+                                </div>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-icon">🤖</span>
+                                <div>
+                                    <strong>AIチャット</strong>
+                                    <p>リアルタイムでの質問と回答</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-actions">
+                        <button id="setup-start-app" class="btn-primary btn-large">
+                            e-Bridgeを開始する
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="mock-data.js"></script>

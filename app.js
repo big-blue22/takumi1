@@ -68,21 +68,28 @@ class App {
         // API設定チェックと初期化（非同期）- この結果によって画面遷移が決まる
         const apiCheckResult = await this.performBackgroundAPICheck();
         
+        // 初回設定チェック
+        if (this.needsInitialSetup()) {
+            console.log('初回設定が必要です。初期設定画面を表示します。');
+            this.showInitialSetupModal();
+            return; // 初期設定完了まで他の処理をスキップ
+        }
+
         if (apiCheckResult.success) {
             console.log('バックグラウンドAPI接続成功、メイン画面へ遷移');
             // API接続成功時は直接メイン初期化
             await this.initializeMainApp();
-            
+
             // 過負荷状態の場合は追加メッセージを表示
             if (apiCheckResult.overloaded) {
                 this.showToast('⚠️ Gemini APIが過負荷状態です。時間をおいて再度お試しください。', 'warning');
             }
         } else {
             console.log('API未設定または接続失敗、初期設定画面を表示');
-            
+
             // 503エラーの場合は特別なメッセージ
             if (apiCheckResult.error && (
-                apiCheckResult.error.message.includes('503') || 
+                apiCheckResult.error.message.includes('503') ||
                 apiCheckResult.error.message.includes('過負荷') ||
                 apiCheckResult.error.message.includes('overloaded')
             )) {
@@ -2659,6 +2666,258 @@ class App {
         this.currentAdviceId = null;
     }
 
+    // 初期設定モーダル関連のメソッド
+    showInitialSetupModal() {
+        const modal = document.getElementById('initial-setup-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            this.currentSetupStep = 1;
+            this.selectedGameData = null;
+            this.selectedSkillLevel = null;
+
+            // ゲームリストを生成
+            this.generateGameOptions();
+
+            // 初期設定リスナーを設定
+            this.setupInitialSetupListeners();
+        }
+    }
+
+    closeInitialSetupModal() {
+        const modal = document.getElementById('initial-setup-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+    }
+
+    generateGameOptions() {
+        const gameGrid = document.getElementById('setup-game-grid');
+        if (!gameGrid || !this.gameManager) return;
+
+        gameGrid.innerHTML = '';
+
+        const gameCategories = this.gameManager.getGameCategories();
+
+        Object.keys(gameCategories).forEach(categoryId => {
+            const category = gameCategories[categoryId];
+
+            if (categoryId === 'other') return; // カスタムゲームは除外
+
+            category.games.forEach(game => {
+                const gameCard = document.createElement('div');
+                gameCard.className = 'game-option-card';
+                gameCard.dataset.gameId = game.id;
+                gameCard.dataset.gameName = game.name;
+                gameCard.dataset.gameIcon = game.icon;
+                gameCard.dataset.gameCategory = category.name;
+
+                gameCard.innerHTML = `
+                    <div class="game-icon">${game.icon}</div>
+                    <div class="game-name">${game.name}</div>
+                    <div class="game-category">${category.name}</div>
+                `;
+
+                gameCard.addEventListener('click', () => {
+                    this.selectSetupGame(gameCard);
+                });
+
+                gameGrid.appendChild(gameCard);
+            });
+        });
+    }
+
+    selectSetupGame(gameCard) {
+        // 他のカードの選択を解除
+        const allCards = document.querySelectorAll('.game-option-card');
+        allCards.forEach(card => card.classList.remove('selected'));
+
+        // 選択したカードをハイライト
+        gameCard.classList.add('selected');
+
+        // ゲームデータを保存
+        this.selectedGameData = {
+            id: gameCard.dataset.gameId,
+            name: gameCard.dataset.gameName,
+            icon: gameCard.dataset.gameIcon,
+            category: gameCard.dataset.gameCategory
+        };
+
+        // 次へボタンを有効化
+        const nextBtn = document.getElementById('setup-game-next');
+        if (nextBtn) {
+            nextBtn.disabled = false;
+        }
+    }
+
+    selectSetupSkill(skillCard) {
+        // 他のカードの選択を解除
+        const allCards = document.querySelectorAll('.skill-card');
+        allCards.forEach(card => card.classList.remove('selected'));
+
+        // 選択したカードをハイライト
+        skillCard.classList.add('selected');
+
+        // スキルレベルを保存
+        this.selectedSkillLevel = skillCard.dataset.skill;
+
+        // 完了ボタンを有効化
+        const completeBtn = document.getElementById('setup-skill-complete');
+        if (completeBtn) {
+            completeBtn.disabled = false;
+        }
+    }
+
+    nextToSkillSelection() {
+        if (!this.selectedGameData) return;
+
+        // ステップ1を非表示、ステップ2を表示
+        document.getElementById('setup-step-1').classList.add('hidden');
+        document.getElementById('setup-step-2').classList.remove('hidden');
+
+        // プログレスバーを更新
+        this.updateSetupProgress(2);
+
+        this.currentSetupStep = 2;
+    }
+
+    backToGameSelection() {
+        // ステップ2を非表示、ステップ1を表示
+        document.getElementById('setup-step-2').classList.add('hidden');
+        document.getElementById('setup-step-1').classList.remove('hidden');
+
+        // プログレスバーを更新
+        this.updateSetupProgress(1);
+
+        this.currentSetupStep = 1;
+    }
+
+    completeInitialSetup() {
+        if (!this.selectedGameData || !this.selectedSkillLevel) return;
+
+        // 設定を保存
+        localStorage.setItem('selectedGame', this.selectedGameData.id);
+        localStorage.setItem('selectedGameData', JSON.stringify(this.selectedGameData));
+        localStorage.setItem('playerSkillLevel', this.selectedSkillLevel);
+
+        const skillInfo = this.getSkillLevelInfo(this.selectedSkillLevel);
+        localStorage.setItem('playerSkillLevelData', JSON.stringify(skillInfo));
+
+        // 初回設定完了フラグを設定
+        localStorage.setItem('initialSetupCompleted', 'true');
+
+        // ゲーム選択ガイダンスを非表示に
+        this.hideGameSelectionGuidance();
+
+        // 完了画面を表示
+        this.showSetupCompletion();
+    }
+
+    showSetupCompletion() {
+        // すべてのステップを非表示にして完了画面を表示
+        document.getElementById('setup-step-1').classList.add('hidden');
+        document.getElementById('setup-step-2').classList.add('hidden');
+        document.getElementById('setup-step-complete').classList.remove('hidden');
+
+        // プログレスバーを完了状態に
+        this.updateSetupProgress(3);
+
+        // サマリーを更新
+        const summaryGame = document.getElementById('summary-game');
+        const summarySkill = document.getElementById('summary-skill');
+
+        if (summaryGame) summaryGame.textContent = this.selectedGameData.name;
+        if (summarySkill) {
+            const skillInfo = this.getSkillLevelInfo(this.selectedSkillLevel);
+            summarySkill.textContent = skillInfo.name;
+        }
+    }
+
+    updateSetupProgress(step) {
+        const progressFill = document.getElementById('setup-progress-fill');
+        const progressText = document.getElementById('setup-progress-text');
+
+        if (progressFill && progressText) {
+            switch (step) {
+                case 1:
+                    progressFill.style.width = '33%';
+                    progressText.textContent = 'ステップ 1 / 3';
+                    break;
+                case 2:
+                    progressFill.style.width = '66%';
+                    progressText.textContent = 'ステップ 2 / 3';
+                    break;
+                case 3:
+                    progressFill.style.width = '100%';
+                    progressText.textContent = '完了';
+                    break;
+            }
+        }
+    }
+
+    async startApp() {
+        // 初期設定モーダルを閉じる
+        this.closeInitialSetupModal();
+
+        // メインアプリを初期化
+        await this.initializeMainApp();
+
+        // 完了メッセージ
+        this.showToast('e-Bridgeへようこそ！設定が完了しました', 'success');
+    }
+
+    setupInitialSetupListeners() {
+        // ゲーム次へボタン
+        const gameNextBtn = document.getElementById('setup-game-next');
+        if (gameNextBtn) {
+            gameNextBtn.addEventListener('click', () => {
+                this.nextToSkillSelection();
+            });
+        }
+
+        // スキル戻るボタン
+        const skillBackBtn = document.getElementById('setup-skill-back');
+        if (skillBackBtn) {
+            skillBackBtn.addEventListener('click', () => {
+                this.backToGameSelection();
+            });
+        }
+
+        // スキル完了ボタン
+        const skillCompleteBtn = document.getElementById('setup-skill-complete');
+        if (skillCompleteBtn) {
+            skillCompleteBtn.addEventListener('click', () => {
+                this.completeInitialSetup();
+            });
+        }
+
+        // アプリ開始ボタン
+        const startAppBtn = document.getElementById('setup-start-app');
+        if (startAppBtn) {
+            startAppBtn.addEventListener('click', async () => {
+                await this.startApp();
+            });
+        }
+
+        // スキルカードのクリックイベント
+        const skillCards = document.querySelectorAll('.skill-card');
+        skillCards.forEach(card => {
+            card.addEventListener('click', () => {
+                this.selectSetupSkill(card);
+            });
+        });
+    }
+
+    // 初回設定が必要かチェック
+    needsInitialSetup() {
+        const setupCompleted = localStorage.getItem('initialSetupCompleted');
+        const hasGame = localStorage.getItem('selectedGame');
+        const hasSkill = localStorage.getItem('playerSkillLevel');
+
+        return !setupCompleted || !hasGame || !hasSkill;
+    }
+
     setupCoachingFeedbackListeners() {
         const feedbackButtons = document.querySelectorAll('.feedback-btn');
 
@@ -2786,6 +3045,9 @@ class App {
             // コーチング関連のデータを削除
             localStorage.removeItem('coaching_user_progress');
             localStorage.removeItem('coaching_feedback_history');
+
+            // 初期設定フラグを削除
+            localStorage.removeItem('initialSetupCompleted');
 
             // コーチングキャッシュを削除
             const coachingKeys = Object.keys(localStorage).filter(key => key.startsWith('coaching_advice_'));
