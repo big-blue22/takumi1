@@ -2731,6 +2731,8 @@ class App {
     }
 
     selectSetupGame(gameCard) {
+        console.log('selectSetupGame called, gameCard:', gameCard);
+
         // 他のカードの選択を解除
         const allCards = document.querySelectorAll('.game-option-card');
         allCards.forEach(card => card.classList.remove('selected'));
@@ -2746,10 +2748,15 @@ class App {
             category: gameCard.dataset.gameCategory
         };
 
+        console.log('Selected game data:', this.selectedGameData);
+
         // 次へボタンを有効化
         const nextBtn = document.getElementById('setup-game-next');
         if (nextBtn) {
             nextBtn.disabled = false;
+            console.log('Next button enabled');
+        } else {
+            console.error('Next button not found');
         }
     }
 
@@ -2772,7 +2779,13 @@ class App {
     }
 
     nextToSkillSelection() {
-        if (!this.selectedGameData) return;
+        console.log('nextToSkillSelection called, selectedGameData:', this.selectedGameData);
+
+        if (!this.selectedGameData) {
+            console.error('No game selected, cannot proceed to skill selection');
+            this.showToast('ゲームを選択してください', 'warning');
+            return;
+        }
 
         // ステップ1を非表示、ステップ2を表示
         document.getElementById('setup-step-1').classList.add('hidden');
@@ -2782,6 +2795,7 @@ class App {
         this.updateSetupProgress(2);
 
         this.currentSetupStep = 2;
+        console.log('Moved to step 2');
     }
 
     backToGameSelection() {
@@ -2870,44 +2884,95 @@ class App {
     }
 
     setupInitialSetupListeners() {
+        console.log('Setting up initial setup listeners...');
+
+        // 既存のリスナーをクリア（重複防止）
+        this.clearInitialSetupListeners();
+
         // ゲーム次へボタン
         const gameNextBtn = document.getElementById('setup-game-next');
         if (gameNextBtn) {
-            gameNextBtn.addEventListener('click', () => {
+            console.log('Found game next button');
+            this.gameNextHandler = () => {
+                console.log('Game next button clicked');
                 this.nextToSkillSelection();
-            });
+            };
+            gameNextBtn.addEventListener('click', this.gameNextHandler);
+        } else {
+            console.error('Game next button not found');
         }
 
         // スキル戻るボタン
         const skillBackBtn = document.getElementById('setup-skill-back');
         if (skillBackBtn) {
-            skillBackBtn.addEventListener('click', () => {
+            this.skillBackHandler = () => {
                 this.backToGameSelection();
-            });
+            };
+            skillBackBtn.addEventListener('click', this.skillBackHandler);
         }
 
         // スキル完了ボタン
         const skillCompleteBtn = document.getElementById('setup-skill-complete');
         if (skillCompleteBtn) {
-            skillCompleteBtn.addEventListener('click', () => {
+            this.skillCompleteHandler = () => {
                 this.completeInitialSetup();
-            });
+            };
+            skillCompleteBtn.addEventListener('click', this.skillCompleteHandler);
         }
 
         // アプリ開始ボタン
         const startAppBtn = document.getElementById('setup-start-app');
         if (startAppBtn) {
-            startAppBtn.addEventListener('click', async () => {
+            this.startAppHandler = async () => {
                 await this.startApp();
-            });
+            };
+            startAppBtn.addEventListener('click', this.startAppHandler);
         }
 
         // スキルカードのクリックイベント
         const skillCards = document.querySelectorAll('.skill-card');
         skillCards.forEach(card => {
-            card.addEventListener('click', () => {
+            const skillHandler = () => {
                 this.selectSetupSkill(card);
-            });
+            };
+            card.addEventListener('click', skillHandler);
+            // ハンドラーを保存（後でクリーンアップ用）
+            card._skillHandler = skillHandler;
+        });
+    }
+
+    clearInitialSetupListeners() {
+        // ゲーム次へボタンのリスナーを削除
+        const gameNextBtn = document.getElementById('setup-game-next');
+        if (gameNextBtn && this.gameNextHandler) {
+            gameNextBtn.removeEventListener('click', this.gameNextHandler);
+        }
+
+        // スキル戻るボタンのリスナーを削除
+        const skillBackBtn = document.getElementById('setup-skill-back');
+        if (skillBackBtn && this.skillBackHandler) {
+            skillBackBtn.removeEventListener('click', this.skillBackHandler);
+        }
+
+        // スキル完了ボタンのリスナーを削除
+        const skillCompleteBtn = document.getElementById('setup-skill-complete');
+        if (skillCompleteBtn && this.skillCompleteHandler) {
+            skillCompleteBtn.removeEventListener('click', this.skillCompleteHandler);
+        }
+
+        // アプリ開始ボタンのリスナーを削除
+        const startAppBtn = document.getElementById('setup-start-app');
+        if (startAppBtn && this.startAppHandler) {
+            startAppBtn.removeEventListener('click', this.startAppHandler);
+        }
+
+        // スキルカードのリスナーを削除
+        const skillCards = document.querySelectorAll('.skill-card');
+        skillCards.forEach(card => {
+            if (card._skillHandler) {
+                card.removeEventListener('click', card._skillHandler);
+                delete card._skillHandler;
+            }
         });
     }
 
