@@ -286,8 +286,10 @@ class App {
         
         // ゲーム選択とダッシュボード機能の初期化
         this.initGameSelection();
+        this.initializeSkillLevel();
+        this.initDailyCoaching();
         this.initDashboardGoals();
-        
+
         // その他のナビゲーション機能
         this.initNavigationHelpers();
         
@@ -331,6 +333,9 @@ class App {
         
         // メディア解析機能の初期化
         this.initMediaAnalysis();
+
+        // コーチング機能のフィードバックボタンを設定
+        this.setupCoachingFeedbackListeners();
     }
     
     // 初期APIセットアップモーダルを表示
@@ -869,6 +874,30 @@ class App {
         if (cancelGameBtn) {
             cancelGameBtn.addEventListener('click', () => {
                 this.hideGameSelector();
+            });
+        }
+
+        // スキルレベル変更ボタン
+        const changeSkillBtn = document.getElementById('change-skill-btn');
+        if (changeSkillBtn) {
+            changeSkillBtn.addEventListener('click', () => {
+                this.showSkillSelector();
+            });
+        }
+
+        // スキルレベル選択確定ボタン
+        const confirmSkillBtn = document.getElementById('confirm-skill-btn');
+        if (confirmSkillBtn) {
+            confirmSkillBtn.addEventListener('click', () => {
+                this.confirmSkillSelection();
+            });
+        }
+
+        // スキルレベル選択キャンセルボタン
+        const cancelSkillBtn = document.getElementById('cancel-skill-btn');
+        if (cancelSkillBtn) {
+            cancelSkillBtn.addEventListener('click', () => {
+                this.hideSkillSelector();
             });
         }
 
@@ -2248,7 +2277,10 @@ class App {
         this.hideGameSelectionGuidance();
         
         this.showToast(`${gameName} を選択しました`, 'success');
-        
+
+        // コーチングを更新
+        this.refreshDailyCoaching();
+
         // ダッシュボードに戻る
         setTimeout(() => {
             this.showPage('dashboard');
@@ -2358,6 +2390,344 @@ class App {
         }
     }
 
+    // スキルレベル選択関連のメソッド
+    showSkillSelector() {
+        const selector = document.getElementById('skill-selector');
+        if (selector) {
+            selector.classList.remove('hidden');
+            // スキルレベルオプションのクリックイベントを設定
+            this.setupSkillOptions();
+        }
+    }
+
+    hideSkillSelector() {
+        const selector = document.getElementById('skill-selector');
+        if (selector) {
+            selector.classList.add('hidden');
+            // 選択状態をクリア
+            const skillOptions = document.querySelectorAll('.skill-option');
+            skillOptions.forEach(option => option.classList.remove('selected'));
+        }
+    }
+
+    setupSkillOptions() {
+        const skillOptions = document.querySelectorAll('.skill-option');
+        skillOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                this.selectSkillLevel(option);
+            });
+        });
+    }
+
+    selectSkillLevel(skillOption) {
+        // 他のオプションの選択を解除
+        const allOptions = document.querySelectorAll('.skill-option');
+        allOptions.forEach(option => option.classList.remove('selected'));
+
+        // 選択したオプションをハイライト
+        skillOption.classList.add('selected');
+    }
+
+    confirmSkillSelection() {
+        const selectedOption = document.querySelector('.skill-option.selected');
+        if (!selectedOption) {
+            this.showToast('スキルレベルを選択してください', 'warning');
+            return;
+        }
+
+        const skillLevel = selectedOption.dataset.skill;
+        const skillInfo = this.getSkillLevelInfo(skillLevel);
+
+        // LocalStorageに保存
+        localStorage.setItem('playerSkillLevel', skillLevel);
+        localStorage.setItem('playerSkillLevelData', JSON.stringify(skillInfo));
+
+        // UIを更新
+        this.updateSkillLevelUI(skillInfo);
+        this.hideSkillSelector();
+
+        this.showToast(`スキルレベルを${skillInfo.name}に設定しました`, 'success');
+
+        // コーチングを更新
+        this.refreshDailyCoaching();
+    }
+
+    getSkillLevelInfo(skillLevel) {
+        const skillLevels = {
+            beginner: {
+                name: '初心者',
+                description: '基本的なゲームメカニクスを学習中',
+                icon: '🌱'
+            },
+            intermediate: {
+                name: '中級者',
+                description: 'ゲームの基本は理解し、上達を目指している',
+                icon: '📊'
+            },
+            advanced: {
+                name: '上級者',
+                description: '高度な戦略と技術を身につけている',
+                icon: '🏆'
+            }
+        };
+        return skillLevels[skillLevel] || skillLevels.intermediate;
+    }
+
+    updateSkillLevelUI(skillInfo) {
+        const currentSkillLevel = document.getElementById('current-skill-level');
+        const currentSkillDescription = document.getElementById('current-skill-description');
+        const currentSkillIcon = document.getElementById('current-skill-icon');
+
+        if (currentSkillLevel) currentSkillLevel.textContent = skillInfo.name;
+        if (currentSkillDescription) currentSkillDescription.textContent = skillInfo.description;
+        if (currentSkillIcon) currentSkillIcon.textContent = skillInfo.icon;
+    }
+
+    initializeSkillLevel() {
+        // 保存済みのスキルレベルがあれば復元
+        const savedSkillLevel = localStorage.getItem('playerSkillLevel');
+        const savedSkillData = localStorage.getItem('playerSkillLevelData');
+
+        if (savedSkillLevel && savedSkillData) {
+            const skillInfo = JSON.parse(savedSkillData);
+            this.updateSkillLevelUI(skillInfo);
+        } else {
+            // デフォルトで中級者を設定
+            const defaultSkill = this.getSkillLevelInfo('intermediate');
+            this.updateSkillLevelUI(defaultSkill);
+            localStorage.setItem('playerSkillLevel', 'intermediate');
+            localStorage.setItem('playerSkillLevelData', JSON.stringify(defaultSkill));
+        }
+    }
+
+    // 日替わりコーチング機能の初期化
+    initDailyCoaching() {
+        // CoachingServiceを初期化
+        if (typeof CoachingService !== 'undefined') {
+            this.coachingService = new CoachingService();
+        } else {
+            console.warn('CoachingService not found');
+            return;
+        }
+
+        // 日替わりコーチングを表示
+        this.loadDailyCoaching();
+
+        // 進捗統計を更新
+        this.updateCoachingProgress();
+    }
+
+    async loadDailyCoaching() {
+        if (!this.coachingService) return;
+
+        try {
+            // ユーザープロファイルを取得
+            const userProfile = this.getUserProfile();
+
+            if (!userProfile.gameGenre || !userProfile.skillLevel) {
+                // プロファイルが設定されていない場合はプレースホルダーを表示
+                this.showCoachingPlaceholder();
+                return;
+            }
+
+            // ローディング状態を表示
+            this.showCoachingLoading();
+
+            // 本日のコーチングアドバイスを取得（非同期）
+            const dailyAdvice = await this.coachingService.getDailyCoaching(userProfile);
+
+            if (dailyAdvice) {
+                this.displayCoachingAdvice(dailyAdvice);
+
+                // ソース表示（デバッグ用）
+                if (dailyAdvice.source === 'gemini') {
+                    console.log('CoachingService: Using AI-generated advice');
+                } else if (dailyAdvice.source === 'cached_fallback') {
+                    this.showToast('レート制限のため、最近のアドバイスを表示しています', 'info');
+                } else if (dailyAdvice.source === 'fallback') {
+                    console.log('CoachingService: Using fallback static advice');
+                }
+            } else {
+                this.showCoachingPlaceholder();
+            }
+        } catch (error) {
+            console.error('Failed to load daily coaching:', error);
+            this.showCoachingError(error);
+        }
+    }
+
+    getUserProfile() {
+        // ゲーム情報を取得
+        const selectedGame = localStorage.getItem('selectedGame');
+        const gameData = localStorage.getItem('selectedGameData');
+
+        // スキルレベル情報を取得
+        const skillLevel = localStorage.getItem('playerSkillLevel');
+
+        let gameGenre = null;
+
+        if (selectedGame && gameData) {
+            const game = JSON.parse(gameData);
+            // ゲームカテゴリをジャンルにマッピング
+            const categoryToGenre = {
+                'FPS': 'fps',
+                'MOBA': 'moba',
+                '格闘ゲーム': 'fighting',
+                'ストラテジー': 'strategy'
+            };
+            gameGenre = categoryToGenre[game.category] || 'universal';
+        }
+
+        return {
+            gameGenre,
+            skillLevel: skillLevel || 'intermediate'
+        };
+    }
+
+    displayCoachingAdvice(advice) {
+        // HTMLエレメントを取得
+        const headlineEl = document.getElementById('coaching-headline');
+        const coreContentEl = document.getElementById('coaching-core-content');
+        const practicalStepEl = document.getElementById('coaching-practical-step');
+        const dateEl = document.getElementById('coaching-date');
+
+        // コンテンツを更新
+        if (headlineEl) headlineEl.textContent = advice.headline;
+        if (coreContentEl) coreContentEl.textContent = advice.coreContent;
+        if (practicalStepEl) practicalStepEl.textContent = advice.practicalStep;
+        if (dateEl) {
+            const today = new Date();
+            dateEl.textContent = `${today.getMonth() + 1}/${today.getDate()}`;
+        }
+
+        // フィードバックボタンの状態をリセット
+        this.resetFeedbackButtons();
+
+        // 今日のアドバイスIDを保存（フィードバック用）
+        this.currentAdviceId = advice.id;
+    }
+
+    showCoachingPlaceholder() {
+        const headlineEl = document.getElementById('coaching-headline');
+        const coreContentEl = document.getElementById('coaching-core-content');
+        const practicalStepEl = document.getElementById('coaching-practical-step');
+
+        if (headlineEl) headlineEl.textContent = 'コーチングを準備中...';
+        if (coreContentEl) {
+            coreContentEl.textContent = 'ゲームを選択してスキルレベルを設定すると、パーソナライズされたコーチングアドバイスが表示されます。';
+        }
+        if (practicalStepEl) {
+            practicalStepEl.textContent = '設定を完了して、今日のアドバイスを受け取りましょう！';
+        }
+
+        this.currentAdviceId = null;
+    }
+
+    showCoachingLoading() {
+        const headlineEl = document.getElementById('coaching-headline');
+        const coreContentEl = document.getElementById('coaching-core-content');
+        const practicalStepEl = document.getElementById('coaching-practical-step');
+
+        if (headlineEl) headlineEl.textContent = 'AIが今日のアドバイスを生成中...';
+        if (coreContentEl) {
+            coreContentEl.textContent = 'あなたのプロフィールとフィードバック履歴を分析して、最適なコーチングアドバイスを作成しています。少々お待ちください。';
+        }
+        if (practicalStepEl) {
+            practicalStepEl.textContent = '⏳ 生成中...';
+        }
+
+        this.currentAdviceId = null;
+    }
+
+    showCoachingError(error) {
+        const headlineEl = document.getElementById('coaching-headline');
+        const coreContentEl = document.getElementById('coaching-core-content');
+        const practicalStepEl = document.getElementById('coaching-practical-step');
+
+        if (headlineEl) headlineEl.textContent = 'コーチング取得中にエラーが発生しました';
+        if (coreContentEl) {
+            if (error.message && error.message.includes('Rate limit')) {
+                coreContentEl.textContent = 'APIの利用制限に達しました。しばらく時間をおいてから再度お試しください。設定画面から手動でリフレッシュすることも可能です。';
+            } else {
+                coreContentEl.textContent = 'アドバイスの取得中に問題が発生しました。ネットワーク接続とAPI設定を確認してください。';
+            }
+        }
+        if (practicalStepEl) {
+            practicalStepEl.textContent = 'しばらくしてからページを再読み込みしてみてください。';
+        }
+
+        this.currentAdviceId = null;
+    }
+
+    setupCoachingFeedbackListeners() {
+        const feedbackButtons = document.querySelectorAll('.feedback-btn');
+
+        feedbackButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const feedbackType = button.dataset.feedback;
+                this.handleCoachingFeedback(feedbackType, button);
+            });
+        });
+    }
+
+    handleCoachingFeedback(feedbackType, buttonEl) {
+        if (!this.coachingService || !this.currentAdviceId) {
+            this.showToast('フィードバックを送信できませんでした', 'error');
+            return;
+        }
+
+        // フィードバックを記録
+        this.coachingService.recordFeedback(this.currentAdviceId, feedbackType);
+
+        // ボタンの状態を更新
+        this.updateFeedbackButtonState(buttonEl);
+
+        // 進捗統計を更新
+        this.updateCoachingProgress();
+
+        // トーストメッセージを表示
+        const feedbackMessages = {
+            helpful: 'フィードバックありがとうございます！',
+            too_easy: '次回はより挑戦的なアドバイスを提供します',
+            too_hard: '次回はより基本的なアドバイスを提供します'
+        };
+
+        this.showToast(feedbackMessages[feedbackType], 'success');
+    }
+
+    updateFeedbackButtonState(selectedButton) {
+        // すべてのフィードバックボタンから選択状態を削除
+        const allButtons = document.querySelectorAll('.feedback-btn');
+        allButtons.forEach(btn => btn.classList.remove('selected'));
+
+        // 選択されたボタンに選択状態を追加
+        selectedButton.classList.add('selected');
+    }
+
+    resetFeedbackButtons() {
+        const allButtons = document.querySelectorAll('.feedback-btn');
+        allButtons.forEach(btn => btn.classList.remove('selected'));
+    }
+
+    updateCoachingProgress() {
+        if (!this.coachingService) return;
+
+        const stats = this.coachingService.getProgressStats();
+
+        const continuousDaysEl = document.getElementById('continuous-days');
+        const totalLessonsEl = document.getElementById('total-lessons');
+
+        if (continuousDaysEl) continuousDaysEl.textContent = stats.continuousLearningDays;
+        if (totalLessonsEl) totalLessonsEl.textContent = stats.totalLessons;
+    }
+
+    // ゲームやスキルレベル変更時にコーチングを更新
+    async refreshDailyCoaching() {
+        if (this.coachingService) {
+            await this.loadDailyCoaching();
+        }
+    }
+
     // アプリ全体の初期化（データ消去）
     resetAppData() {
         // 確認ダイアログ
@@ -2408,6 +2778,24 @@ class App {
             // コーチング関連のキャッシュを削除
             localStorage.removeItem('cached-coaching-advice');
             localStorage.removeItem('coaching-advice-update-time');
+
+            // スキルレベル関連のデータを削除
+            localStorage.removeItem('playerSkillLevel');
+            localStorage.removeItem('playerSkillLevelData');
+
+            // コーチング関連のデータを削除
+            localStorage.removeItem('coaching_user_progress');
+            localStorage.removeItem('coaching_feedback_history');
+
+            // コーチングキャッシュを削除
+            const coachingKeys = Object.keys(localStorage).filter(key => key.startsWith('coaching_advice_'));
+            coachingKeys.forEach(key => localStorage.removeItem(key));
+
+            // コーチングAPI制限データを削除
+            localStorage.removeItem('coaching_cache_metadata');
+            localStorage.removeItem('coaching_last_api_call');
+            localStorage.removeItem('coaching_api_call_count');
+            localStorage.removeItem('coaching_api_call_times');
 
             // テーマをデフォルトに戻す
             this.currentTheme = 'dark';

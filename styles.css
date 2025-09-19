@@ -1851,6 +1851,441 @@ body {
   border-top: 1px solid var(--glass-border);
 }
 
+/* Profile Settings - Skill Level Selection */
+.profile-settings {
+  margin-top: var(--spacing-lg);
+  border-radius: var(--border-radius-large);
+  overflow: hidden;
+  box-shadow: var(--shadow-medium);
+}
+
+.current-profile {
+  border-radius: var(--border-radius-large);
+  background: linear-gradient(145deg,
+    rgba(15, 52, 96, 0.4),
+    rgba(16, 185, 129, 0.1),
+    rgba(22, 33, 62, 0.7)
+  );
+  transition: var(--transition-base);
+  box-shadow:
+    var(--shadow-medium),
+    0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.profile-info-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl);
+  border: 3px solid rgba(16, 185, 129, 0.4);
+  border-radius: var(--border-radius-large);
+}
+
+.skill-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.skill-icon {
+  font-size: 3rem;
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+}
+
+.skill-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.skill-level {
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+
+.skill-description {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+
+.skill-selector {
+  margin-top: var(--spacing-lg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.skill-selector.hidden {
+  display: none;
+}
+
+.skill-levels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.skill-option {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border: 2px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: var(--transition-base);
+  gap: var(--spacing-lg);
+}
+
+.skill-option:hover {
+  border-color: var(--color-success);
+  background: rgba(16, 185, 129, 0.1);
+  transform: translateY(-2px);
+  box-shadow:
+    var(--shadow-medium),
+    0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.skill-option.selected {
+  border-color: var(--color-success);
+  background: rgba(16, 185, 129, 0.2);
+  box-shadow:
+    var(--shadow-medium),
+    0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.skill-option-icon {
+  font-size: 2.5rem;
+  transition: var(--transition-base);
+}
+
+.skill-option:hover .skill-option-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+}
+
+.skill-option-content {
+  flex: 1;
+}
+
+.skill-option-content h4 {
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 600;
+}
+
+.skill-option-content p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.skill-selector-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Light Theme Support for Profile Settings */
+[data-theme="light"] .current-profile {
+  background: linear-gradient(145deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(16, 185, 129, 0.05),
+    rgba(248, 250, 252, 0.9)
+  );
+  box-shadow:
+    var(--shadow-medium),
+    0 0 15px rgba(16, 185, 129, 0.1);
+}
+
+[data-theme="light"] .profile-info-section {
+  border: 3px solid rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="light"] .skill-option:hover {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+[data-theme="light"] .skill-option.selected {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+/* Daily Coaching Card Styles */
+.coaching-card {
+  margin-bottom: var(--spacing-xl);
+  background: linear-gradient(145deg,
+    rgba(15, 52, 96, 0.4),
+    rgba(233, 69, 96, 0.1),
+    rgba(22, 33, 62, 0.7)
+  );
+  border: 2px solid rgba(233, 69, 96, 0.3);
+  box-shadow:
+    var(--shadow-medium),
+    0 0 20px rgba(233, 69, 96, 0.2);
+  transition: var(--transition-base);
+}
+
+.coaching-card:hover {
+  border-color: rgba(233, 69, 96, 0.5);
+  box-shadow:
+    var(--shadow-large),
+    0 0 25px rgba(233, 69, 96, 0.3);
+  transform: translateY(-2px);
+}
+
+.coaching-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid rgba(233, 69, 96, 0.2);
+}
+
+.coaching-header h3 {
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  margin: 0;
+  font-weight: 600;
+}
+
+.coaching-date {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: rgba(233, 69, 96, 0.2);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+}
+
+.coaching-content {
+  margin-bottom: var(--spacing-lg);
+}
+
+.coaching-headline {
+  margin-bottom: var(--spacing-lg);
+}
+
+.coaching-headline h4 {
+  color: var(--color-accent);
+  font-size: var(--font-size-lg);
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.coaching-core-content {
+  margin-bottom: var(--spacing-lg);
+}
+
+.coaching-core-content p {
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.coaching-practical-step {
+  padding: var(--spacing-lg);
+  background: rgba(233, 69, 96, 0.1);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(233, 69, 96, 0.2);
+}
+
+.step-label {
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.coaching-practical-step p {
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.coaching-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  border-top: 1px solid rgba(233, 69, 96, 0.2);
+  padding-top: var(--spacing-lg);
+}
+
+.coaching-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.feedback-label {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.feedback-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.feedback-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: var(--transition-base);
+  flex: 1;
+  min-width: 100px;
+}
+
+.feedback-btn:hover {
+  border-color: var(--color-accent);
+  background: rgba(233, 69, 96, 0.1);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.feedback-btn.selected {
+  border-color: var(--color-accent);
+  background: rgba(233, 69, 96, 0.2);
+  color: var(--color-accent);
+  box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+}
+
+.feedback-btn.helpful:hover,
+.feedback-btn.helpful.selected {
+  border-color: var(--color-success);
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+}
+
+.feedback-btn.easy:hover,
+.feedback-btn.easy.selected {
+  border-color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--color-warning);
+}
+
+.feedback-btn.hard:hover,
+.feedback-btn.hard.selected {
+  border-color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--color-danger);
+}
+
+.coaching-progress {
+  display: flex;
+  justify-content: center;
+}
+
+.progress-stats {
+  display: flex;
+  gap: var(--spacing-xl);
+}
+
+.progress-stats .stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.progress-stats .stat-value {
+  color: var(--color-accent);
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.progress-stats .stat-label {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* Light Theme Support for Coaching Card */
+[data-theme="light"] .coaching-card {
+  background: linear-gradient(145deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(245, 158, 11, 0.05),
+    rgba(248, 250, 252, 0.9)
+  );
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  box-shadow:
+    var(--shadow-medium),
+    0 0 20px rgba(245, 158, 11, 0.15);
+}
+
+[data-theme="light"] .coaching-card:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow:
+    var(--shadow-large),
+    0 0 25px rgba(245, 158, 11, 0.25);
+}
+
+[data-theme="light"] .coaching-header {
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="light"] .coaching-date {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="light"] .coaching-practical-step {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="light"] .coaching-actions {
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="light"] .feedback-btn:hover {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* Responsive Design for Coaching Card */
+@media (max-width: 768px) {
+  .coaching-header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .feedback-buttons {
+    flex-direction: column;
+  }
+
+  .feedback-btn {
+    min-width: auto;
+    flex: none;
+  }
+
+  .progress-stats {
+    gap: var(--spacing-lg);
+  }
+}
+
 /* Media Analysis Styles */
 .upload-area {
   border: 2px dashed var(--glass-border);

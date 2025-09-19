@@ -141,6 +141,59 @@
                     </div>
                 </div>
 
+                <!-- Daily Coaching Card -->
+                <div class="card coaching-card" id="daily-coaching-card">
+                    <div class="coaching-header">
+                        <h3>🎯 今日のコーチング</h3>
+                        <span class="coaching-date" id="coaching-date">今日</span>
+                    </div>
+
+                    <div class="coaching-content" id="coaching-content">
+                        <div class="coaching-headline">
+                            <h4 id="coaching-headline">コーチングを準備中...</h4>
+                        </div>
+
+                        <div class="coaching-core-content">
+                            <p id="coaching-core-content">ゲームを選択してスキルレベルを設定すると、パーソナライズされたコーチングアドバイスが表示されます。</p>
+                        </div>
+
+                        <div class="coaching-practical-step">
+                            <div class="step-label">今日試してみよう</div>
+                            <p id="coaching-practical-step">設定を完了して、今日のアドバイスを受け取りましょう！</p>
+                        </div>
+                    </div>
+
+                    <div class="coaching-actions">
+                        <div class="coaching-feedback" id="coaching-feedback">
+                            <span class="feedback-label">このアドバイスは役に立ちましたか？</span>
+                            <div class="feedback-buttons">
+                                <button class="feedback-btn helpful" data-feedback="helpful">
+                                    👍 役に立った
+                                </button>
+                                <button class="feedback-btn easy" data-feedback="too_easy">
+                                    😊 簡単すぎた
+                                </button>
+                                <button class="feedback-btn hard" data-feedback="too_hard">
+                                    😅 難しすぎた
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="coaching-progress" id="coaching-progress">
+                            <div class="progress-stats">
+                                <div class="stat">
+                                    <span class="stat-value" id="continuous-days">0</span>
+                                    <span class="stat-label">日継続</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value" id="total-lessons">0</span>
+                                    <span class="stat-label">レッスン完了</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Dashboard Goals -->
                 <div class="card dashboard-goals" id="dashboard-goals">
                     <div class="goals-header">
@@ -347,6 +400,55 @@
                             <div class="game-selector-actions">
                                 <button id="confirm-game-btn" class="btn-primary">選択を確定</button>
                                 <button id="cancel-game-btn" class="btn-secondary">キャンセル</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Player Profile Settings -->
+                <div class="card">
+                    <h3>プレイヤープロファイル</h3>
+                    <div class="profile-settings">
+                        <div class="current-profile" id="current-profile-display">
+                            <div class="profile-info-section">
+                                <div class="skill-info">
+                                    <span class="skill-icon" id="current-skill-icon">📊</span>
+                                    <div class="skill-details">
+                                        <span class="skill-level" id="current-skill-level">中級者</span>
+                                        <span class="skill-description" id="current-skill-description">バランスの取れたスキルレベル</span>
+                                    </div>
+                                </div>
+                                <button id="change-skill-btn" class="btn-secondary">スキルレベルを変更</button>
+                            </div>
+                        </div>
+
+                        <div id="skill-selector" class="skill-selector hidden">
+                            <div class="skill-levels" id="skill-levels">
+                                <div class="skill-option" data-skill="beginner">
+                                    <div class="skill-option-icon">🌱</div>
+                                    <div class="skill-option-content">
+                                        <h4>初心者</h4>
+                                        <p>基本的なゲームメカニクスを学習中</p>
+                                    </div>
+                                </div>
+                                <div class="skill-option" data-skill="intermediate">
+                                    <div class="skill-option-icon">📊</div>
+                                    <div class="skill-option-content">
+                                        <h4>中級者</h4>
+                                        <p>ゲームの基本は理解し、上達を目指している</p>
+                                    </div>
+                                </div>
+                                <div class="skill-option" data-skill="advanced">
+                                    <div class="skill-option-icon">🏆</div>
+                                    <div class="skill-option-content">
+                                        <h4>上級者</h4>
+                                        <p>高度な戦略と技術を身につけている</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="skill-selector-actions">
+                                <button id="confirm-skill-btn" class="btn-primary">選択を確定</button>
+                                <button id="cancel-skill-btn" class="btn-secondary">キャンセル</button>
                             </div>
                         </div>
                     </div>
@@ -571,6 +673,7 @@
     <script src="theme-manager.js"></script>
     <script src="unified-api-manager.js"></script>
     <script src="gemini-service.js"></script>
+    <script src="coaching-service.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
