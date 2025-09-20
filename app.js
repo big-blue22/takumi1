@@ -76,6 +76,10 @@ class App {
                 console.log('初回設定が必要です。初期設定画面を表示します。');
                 this.showInitialSetupModal();
                 return; // 初期設定完了まで他の処理をスキップ
+            } else {
+                console.log('初期設定は完了済みです。初期設定モーダルを非表示にします。');
+                // 初期設定完了済みの場合は、モーダルが表示されていても強制的に非表示にする
+                this.closeInitialSetupModal();
             }
 
             // メイン画面へ遷移
@@ -205,7 +209,8 @@ class App {
         const modals = [
             'login-modal',
             'api-initial-setup-modal',
-            'api-setup-modal'
+            'api-setup-modal',
+            'initial-setup-modal'
         ];
         
         modals.forEach(modalId => {
