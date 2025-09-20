@@ -336,6 +336,15 @@ ${recentFeedback}
         this.userProgress[today].feedback = feedback.feedbackType;
 
         this.saveUserProgress();
+
+        // 進捗統計の更新を通知するためのイベントを発火
+        if (typeof window !== 'undefined' && window.app) {
+            setTimeout(() => {
+                if (window.app.updateCoachingProgress) {
+                    window.app.updateCoachingProgress();
+                }
+            }, 100);
+        }
     }
 
     // 進捗統計を取得
@@ -353,12 +362,37 @@ ${recentFeedback}
         };
     }
 
+    // 今日のフィードバック状態を取得
+    getTodaysFeedbackStatus() {
+        const today = new Date().toDateString();
+        const todayProgress = this.userProgress[today];
+
+        if (todayProgress && todayProgress.feedback) {
+            return {
+                hasFeedback: true,
+                feedbackType: todayProgress.feedback
+            };
+        }
+
+        return {
+            hasFeedback: false,
+            feedbackType: null
+        };
+    }
+
     // 現在の継続日数を計算
     calculateCurrentStreak() {
         const today = new Date();
+        const todayStr = today.toDateString();
         let streak = 0;
 
-        for (let i = 0; i < 365; i++) {
+        // 今日完了済みかどうかを確認
+        const todayCompleted = this.userProgress[todayStr]?.completed || false;
+
+        // 今日が完了済みの場合は今日から、そうでなければ昨日から計算開始
+        const startOffset = todayCompleted ? 0 : 1;
+
+        for (let i = startOffset; i < 365; i++) {
             const checkDate = new Date(today);
             checkDate.setDate(today.getDate() - i);
             const dateStr = checkDate.toDateString();

@@ -2614,11 +2614,11 @@ class App {
             dateEl.textContent = `${today.getMonth() + 1}/${today.getDate()}`;
         }
 
-        // フィードバックボタンの状態をリセット
-        this.resetFeedbackButtons();
-
         // 今日のアドバイスIDを保存（フィードバック用）
         this.currentAdviceId = advice.id;
+
+        // フィードバックボタンの状態を復元
+        this.restoreFeedbackState();
     }
 
     showCoachingPlaceholder() {
@@ -3057,11 +3057,13 @@ class App {
         // フィードバックを記録
         this.coachingService.recordFeedback(this.currentAdviceId, feedbackType);
 
-        // ボタンの状態を更新
+        // ボタンの状態を更新（今日のフィードバックとして保持）
         this.updateFeedbackButtonState(buttonEl);
 
-        // 進捗統計を更新
-        this.updateCoachingProgress();
+        // 進捗統計を更新（少し遅延させてupdateUserProgressの完了を待つ）
+        setTimeout(() => {
+            this.updateCoachingProgress();
+        }, 150);
 
         // トーストメッセージを表示
         const feedbackMessages = {
@@ -3076,15 +3078,63 @@ class App {
     updateFeedbackButtonState(selectedButton) {
         // すべてのフィードバックボタンから選択状態を削除
         const allButtons = document.querySelectorAll('.feedback-btn');
-        allButtons.forEach(btn => btn.classList.remove('selected'));
+        allButtons.forEach(btn => {
+            btn.classList.remove('selected');
+            this.updateFeedbackButtonText(btn, false); // テキストもリセット
+        });
 
         // 選択されたボタンに選択状態を追加
         selectedButton.classList.add('selected');
+        this.updateFeedbackButtonText(selectedButton, true); // 選択状態のテキストに変更
     }
 
     resetFeedbackButtons() {
         const allButtons = document.querySelectorAll('.feedback-btn');
-        allButtons.forEach(btn => btn.classList.remove('selected'));
+        allButtons.forEach(btn => {
+            btn.classList.remove('selected');
+            this.updateFeedbackButtonText(btn, false); // テキストもリセット
+        });
+    }
+
+    // 今日のフィードバック状態を復元
+    restoreFeedbackState() {
+        if (!this.coachingService) return;
+
+        const feedbackStatus = this.coachingService.getTodaysFeedbackStatus();
+
+        if (feedbackStatus.hasFeedback) {
+            // 該当するフィードバックボタンを選択状態にする
+            const targetButton = document.querySelector(`.feedback-btn[data-feedback="${feedbackStatus.feedbackType}"]`);
+            if (targetButton) {
+                this.resetFeedbackButtons(); // まず全てリセット
+                targetButton.classList.add('selected'); // 今日のフィードバックを選択状態に
+                this.updateFeedbackButtonText(targetButton, true); // 選択状態のテキストに更新
+            }
+        } else {
+            // フィードバックがない場合は全てリセット
+            this.resetFeedbackButtons();
+        }
+    }
+
+    // フィードバックボタンのテキストを更新
+    updateFeedbackButtonText(button, isSelected) {
+        const feedbackType = button.dataset.feedback;
+        const originalTexts = {
+            helpful: '👍 役に立った',
+            too_easy: '😊 簡単すぎた',
+            too_hard: '😰 難しすぎた'
+        };
+        const selectedTexts = {
+            helpful: '✅ 役に立った',
+            too_easy: '✅ 簡単すぎた',
+            too_hard: '✅ 難しすぎた'
+        };
+
+        if (isSelected) {
+            button.textContent = selectedTexts[feedbackType] || button.textContent;
+        } else {
+            button.textContent = originalTexts[feedbackType] || button.textContent;
+        }
     }
 
     updateCoachingProgress() {

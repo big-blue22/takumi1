@@ -2167,6 +2167,8 @@ body {
   background: rgba(233, 69, 96, 0.2);
   color: var(--color-accent);
   box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+  transform: translateY(-1px);
+  font-weight: 600;
 }
 
 .feedback-btn.helpful:hover,
@@ -2174,6 +2176,7 @@ body {
   border-color: var(--color-success);
   background: rgba(16, 185, 129, 0.2);
   color: var(--color-success);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
 .feedback-btn.easy:hover,
@@ -2181,6 +2184,7 @@ body {
   border-color: var(--color-warning);
   background: rgba(245, 158, 11, 0.2);
   color: var(--color-warning);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
 }
 
 .feedback-btn.hard:hover,
@@ -2188,6 +2192,7 @@ body {
   border-color: var(--color-danger);
   background: rgba(239, 68, 68, 0.2);
   color: var(--color-danger);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
 
 .coaching-progress {
