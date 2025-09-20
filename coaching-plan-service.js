@@ -141,20 +141,37 @@ class CoachingPlanService {
     parsePlanResponse(responseText, planStructure) {
         try {
             console.log('🔍 Parsing AI response...');
+            console.log('📝 Full response text:', responseText);
+
             let jsonText = null;
 
-            // 複数のJSONパターンをチェック
+            // より堅牢なJSONパターンをチェック
             const patterns = [
-                /```json\s*([\s\S]*?)\s*```/,  // ```json ... ```
-                /```\s*([\s\S]*?)\s*```/,      // ``` ... ```
-                /\{[\s\S]*\}/                   // { ... } 直接
+                /```json\s*([\s\S]*?)\s*```/i,    // ```json ... ```
+                /```\s*([\s\S]*?)\s*```/,         // ``` ... ```
+                /(\{[\s\S]*?"weeks"[\s\S]*?\})/,  // weeks を含む最初の JSON オブジェクト
+                /\{[\s\S]*\}/                     // { ... } 直接
             ];
 
-            for (const pattern of patterns) {
+            for (let i = 0; i < patterns.length; i++) {
+                const pattern = patterns[i];
                 const match = responseText.match(pattern);
                 if (match) {
                     jsonText = match[1] || match[0];
-                    console.log('✅ Found JSON pattern');
+                    console.log(`✅ Found JSON pattern ${i + 1}:`, jsonText.substring(0, 100) + '...');
+
+                    // JSONが不完全な場合は修復を試みる
+                    if (!jsonText.trim().endsWith('}')) {
+                        console.log('⚠️ Incomplete JSON detected, attempting to fix...');
+                        const openBraces = (jsonText.match(/\{/g) || []).length;
+                        const closeBraces = (jsonText.match(/\}/g) || []).length;
+                        const missingBraces = openBraces - closeBraces;
+
+                        if (missingBraces > 0) {
+                            jsonText += '}'.repeat(missingBraces);
+                            console.log('🔧 Added missing closing braces:', missingBraces);
+                        }
+                    }
                     break;
                 }
             }
@@ -164,9 +181,26 @@ class CoachingPlanService {
                 jsonText = responseText.trim();
             }
 
-            console.log('📝 JSON text to parse:', jsonText.substring(0, 200) + '...');
+            console.log('📝 Final JSON to parse:', jsonText);
 
-            const parsed = JSON.parse(jsonText);
+            let parsed;
+            try {
+                parsed = JSON.parse(jsonText);
+            } catch (parseError) {
+                console.error('❌ JSON parse failed:', parseError);
+                // 最後の手段：部分的なJSONを修復
+                const weeksMatch = jsonText.match(/"weeks"\s*:\s*\[([\s\S]*)/);
+                if (weeksMatch) {
+                    console.log('🔧 Attempting partial JSON reconstruction...');
+                    try {
+                        parsed = { weeks: JSON.parse('[' + weeksMatch[1].split(']')[0] + ']') };
+                    } catch {
+                        throw parseError;
+                    }
+                } else {
+                    throw parseError;
+                }
+            }
 
             if (!parsed.weeks || !Array.isArray(parsed.weeks)) {
                 throw new Error('Response missing "weeks" array');
