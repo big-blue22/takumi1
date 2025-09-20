@@ -20,7 +20,7 @@ class GeminiService {
         // Gemini 2.5 Flash用の最適化されたパラメータ
         this.chatParams = {
             temperature: 0.7,
-            maxOutputTokens: 2048, // Gemini 2.5 Flashの性能を活用
+            maxOutputTokens: 4096, // コーチングプラン生成用により大きなトークン数
             topP: 0.9,
             topK: 40 // より幅広い回答生成
         };
@@ -543,6 +543,13 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             }
 
             const candidate = data.candidates[0];
+
+            // MAX_TOKENSエラーのチェック
+            if (candidate.finishReason === 'MAX_TOKENS') {
+                console.error('Response truncated due to token limit:', candidate);
+                throw new Error('レスポンスがトークン制限により切り捨てられました。プロンプトを短くしてください。');
+            }
+
             if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
                 console.error('Invalid API response structure:', JSON.stringify(data, null, 2));
                 console.error('Candidate structure:', candidate);

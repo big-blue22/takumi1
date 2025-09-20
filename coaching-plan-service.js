@@ -130,76 +130,75 @@ class CoachingPlanService {
 
     // AI用プロンプトを構築
     buildPlanGenerationPrompt(goal, planStructure) {
-        const { title, description, gameGenre, skillLevel } = goal;
+        const { title } = goal;
+        const weeks = Math.min(planStructure.totalWeeks, 4); // Limit to max 4 weeks to prevent token overflow
 
-        return `あなたはプロのeスポーツコーチです。以下の目標を達成するための詳細な${planStructure.totalWeeks}週間コーチングプランを作成してください。
-
-## 目標詳細
-- **目標**: ${title}
-- **詳細**: ${description || '目標の具体的な説明'}
-- **ゲーム**: ${gameGenre || 'ゲーム未指定'}
-- **現在レベル**: ${skillLevel || '中級者'}
-- **期間**: ${planStructure.totalDays}日間（${planStructure.totalWeeks}週間）
-
-## 必須要件
-1. **段階的進歩**: 初級→中級→上級の順序で段階的にスキルアップ
-2. **具体的内容**: 実際のゲームで実行可能な具体的な練習メニュー
-3. **測定可能**: 数値や明確な基準で進歩を測定可能
-4. **実践的**: プレイヤーが実際に実行できる現実的な内容
-
-重要: 必ず以下のJSONフォーマットで応答してください。コメントや説明は不要です。
-
-\`\`\`json
-{
-  "weeks": [
-    {
-      "weekNumber": 1,
-      "focus": "第1週の明確な重点項目",
-      "objectives": [
-        "週の終わりまでに達成すべき具体的目標1",
-        "週の終わりまでに達成すべき具体的目標2"
-      ],
-      "dailyTasks": [
-        "月曜日: 具体的な練習内容(30-60分)",
-        "火曜日: 具体的な練習内容(30-60分)",
-        "水曜日: 具体的な練習内容(30-60分)",
-        "木曜日: 具体的な練習内容(30-60分)",
-        "金曜日: 具体的な練習内容(30-60分)",
-        "土曜日: 具体的な練習内容(30-60分)",
-        "日曜日: 休憩または軽い練習"
-      ],
-      "milestones": [
-        "測定可能な達成指標1（数値含む）",
-        "測定可能な達成指標2（数値含む）"
-      ]
-    }
-  ]
-}
-\`\`\`
-
-${planStructure.totalWeeks}週分すべてのプランを生成してください。各週は前週よりも高いレベルの内容にしてください。`;
+        return `${title} ${weeks}週プラン。JSONのみ:
+{"weeks":[{"weekNumber":1,"focus":"基礎","objectives":["目標"],"dailyTasks":["月","火","水","木","金","土","日"],"milestones":["達成"]}]}`;
     }
 
     // AIレスポンスを解析
     parsePlanResponse(responseText, planStructure) {
         try {
-            const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+            console.log('🔍 Parsing AI response...');
+            let jsonText = null;
 
-            if (jsonMatch) {
-                const jsonText = jsonMatch[1];
-                const parsed = JSON.parse(jsonText);
+            // 複数のJSONパターンをチェック
+            const patterns = [
+                /```json\s*([\s\S]*?)\s*```/,  // ```json ... ```
+                /```\s*([\s\S]*?)\s*```/,      // ``` ... ```
+                /\{[\s\S]*\}/                   // { ... } 直接
+            ];
 
-                if (parsed.weeks && Array.isArray(parsed.weeks)) {
-                    // 構造データとマージ
-                    return planStructure.weeks.map((week, index) => ({
-                        ...week,
-                        ...(parsed.weeks[index] || {}),
-                        weekNumber: week.weekNumber // 週番号は構造データを優先
-                    }));
+            for (const pattern of patterns) {
+                const match = responseText.match(pattern);
+                if (match) {
+                    jsonText = match[1] || match[0];
+                    console.log('✅ Found JSON pattern');
+                    break;
                 }
             }
 
-            throw new Error('Invalid AI response format');
+            if (!jsonText) {
+                console.log('❌ No JSON pattern found, using full response');
+                jsonText = responseText.trim();
+            }
+
+            console.log('📝 JSON text to parse:', jsonText.substring(0, 200) + '...');
+
+            const parsed = JSON.parse(jsonText);
+
+            if (!parsed.weeks || !Array.isArray(parsed.weeks)) {
+                throw new Error('Response missing "weeks" array');
+            }
+
+            if (parsed.weeks.length === 0) {
+                throw new Error('Empty weeks array in response');
+            }
+
+            console.log(`✅ Successfully parsed ${parsed.weeks.length} weeks`);
+
+            // 構造データとマージ（AIが生成した週数が少ない場合は残りを拡張）
+            return planStructure.weeks.map((week, index) => {
+                if (index < parsed.weeks.length) {
+                    return {
+                        ...week,
+                        ...parsed.weeks[index],
+                        weekNumber: week.weekNumber
+                    };
+                } else {
+                    // AIが生成しなかった週は最後の週のパターンを使用
+                    const lastParsedWeek = parsed.weeks[parsed.weeks.length - 1];
+                    return {
+                        ...week,
+                        focus: lastParsedWeek?.focus || '継続練習',
+                        objectives: lastParsedWeek?.objectives || ['基本練習'],
+                        dailyTasks: lastParsedWeek?.dailyTasks || ['練習', '練習', '練習', '練習', '練習', '練習', '休憩'],
+                        milestones: lastParsedWeek?.milestones || ['週目標達成']
+                    };
+                }
+            });
+
         } catch (error) {
             console.error('Failed to parse AI plan response:', error);
             console.error('Response text:', responseText);
