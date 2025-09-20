@@ -2683,6 +2683,9 @@ class App {
 
             // 初期設定リスナーを設定
             this.setupInitialSetupListeners();
+
+            // ボタンの初期状態を確認
+            this.debugButtonStates();
         }
     }
 
@@ -2695,13 +2698,23 @@ class App {
     }
 
     generateGameOptions() {
+        console.log('generateGameOptions called');
         const gameGrid = document.getElementById('setup-game-grid');
-        if (!gameGrid || !this.gameManager) return;
+        if (!gameGrid) {
+            console.error('Game grid element not found');
+            return;
+        }
+        if (!this.gameManager) {
+            console.error('Game manager not initialized');
+            return;
+        }
 
         gameGrid.innerHTML = '';
 
         const gameCategories = this.gameManager.getGameCategories();
+        console.log('Game categories:', gameCategories);
 
+        let gameCount = 0;
         Object.keys(gameCategories).forEach(categoryId => {
             const category = gameCategories[categoryId];
 
@@ -2722,12 +2735,16 @@ class App {
                 `;
 
                 gameCard.addEventListener('click', () => {
+                    console.log('Game card clicked:', game.name);
                     this.selectSetupGame(gameCard);
                 });
 
                 gameGrid.appendChild(gameCard);
+                gameCount++;
             });
         });
+
+        console.log(`Generated ${gameCount} game cards`);
     }
 
     selectSetupGame(gameCard) {
@@ -2974,6 +2991,25 @@ class App {
                 delete card._skillHandler;
             }
         });
+    }
+
+    debugButtonStates() {
+        console.log('=== Button States Debug ===');
+        const gameNextBtn = document.getElementById('setup-game-next');
+        if (gameNextBtn) {
+            console.log('Game next button found');
+            console.log('- disabled:', gameNextBtn.disabled);
+            console.log('- textContent:', gameNextBtn.textContent);
+            console.log('- classList:', gameNextBtn.classList.toString());
+        } else {
+            console.error('Game next button not found');
+        }
+
+        const skillBackBtn = document.getElementById('setup-skill-back');
+        const skillCompleteBtn = document.getElementById('setup-skill-complete');
+        console.log('Skill back button found:', !!skillBackBtn);
+        console.log('Skill complete button found:', !!skillCompleteBtn);
+        console.log('=== End Button Debug ===');
     }
 
     // 初回設定が必要かチェック
