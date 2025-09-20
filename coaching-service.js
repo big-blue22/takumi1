@@ -75,7 +75,7 @@ class CoachingService {
         const prompt = this.buildCoachingPrompt(userProfile);
 
         try {
-            const response = await this.geminiService.generateContent(prompt);
+            const response = await this.geminiService.sendChatMessage(prompt, false);
 
             if (response && response.text) {
                 return this.parseGeminiResponse(response.text);
