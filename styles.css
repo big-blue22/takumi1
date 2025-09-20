@@ -2116,6 +2116,425 @@ body {
   line-height: 1.5;
 }
 
+/* Goal Connection Section */
+.coaching-goal-connection {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  animation: slideIn 0.3s ease-out;
+}
+
+.goal-connection-label {
+  color: #3b82f6;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.coaching-goal-connection p {
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* Light theme support for goal connection */
+[data-theme="light"] .coaching-goal-connection {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .goal-connection-label {
+  color: #1d4ed8;
+}
+
+/* Slide-in animation for goal connection */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Coaching Plan Modal Styles */
+.coaching-plan-modal {
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.plan-step {
+  display: none;
+}
+
+.plan-step.active {
+  display: block;
+}
+
+/* Goal Summary Card */
+.goal-summary-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.goal-summary-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.goal-summary-details {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.goal-summary-deadline,
+.goal-summary-duration {
+  background: rgba(233, 69, 96, 0.1);
+  color: var(--color-accent);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.goal-summary-description {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+/* Plan Generation */
+.generation-status {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--glass-border);
+  border-top: 3px solid var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--spacing-md);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.generation-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+/* Plan Overview */
+.plan-overview {
+  margin-bottom: var(--spacing-lg);
+}
+
+.plan-stats {
+  display: flex;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.plan-stat {
+  text-align: center;
+}
+
+.plan-stat .stat-number {
+  display: block;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-accent);
+  line-height: 1;
+}
+
+.plan-stat .stat-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: var(--spacing-xs);
+}
+
+/* Week Cards */
+.weeks-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: var(--spacing-sm);
+}
+
+.week-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  transition: var(--transition-base);
+}
+
+.week-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.1);
+}
+
+.week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.week-number {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-accent);
+  background: rgba(233, 69, 96, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+}
+
+.week-dates {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.week-focus {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.week-objectives,
+.week-milestones {
+  margin-bottom: var(--spacing-md);
+}
+
+.week-objectives h5,
+.week-milestones h5 {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.objectives-list,
+.milestones-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.objectives-list li,
+.milestones-list li {
+  padding: var(--spacing-xs) 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  position: relative;
+  padding-left: var(--spacing-md);
+}
+
+.objectives-list li::before {
+  content: "🎯";
+  position: absolute;
+  left: 0;
+}
+
+.milestones-list li::before {
+  content: "✅";
+  position: absolute;
+  left: 0;
+}
+
+.daily-tasks {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.daily-task {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Plan Actions */
+.plan-actions,
+.edit-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Edit Mode */
+.edit-weeks-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.edit-week-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+}
+
+.edit-week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.edit-field {
+  margin-bottom: var(--spacing-md);
+}
+
+.edit-field label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.edit-field input,
+.edit-field textarea {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.edit-field textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+/* Button Enhancements */
+.btn-accent {
+  background: linear-gradient(135deg, var(--color-accent), #ff6b9d);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.btn-accent:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(233, 69, 96, 0.3);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+.btn-outline:hover {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Light theme support for plan modal */
+[data-theme="light"] .coaching-plan-modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+[data-theme="light"] .goal-summary-card,
+[data-theme="light"] .week-card,
+[data-theme="light"] .edit-week-card {
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+[data-theme="light"] .plan-stats,
+[data-theme="light"] .generation-status {
+  background: rgba(248, 250, 252, 0.8);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .coaching-plan-modal {
+    max-width: 95vw;
+    margin: var(--spacing-md);
+  }
+
+  .plan-stats {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .generation-buttons,
+  .plan-actions,
+  .edit-actions {
+    flex-direction: column;
+  }
+
+  .daily-tasks {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .coaching-actions {
   display: flex;
   flex-direction: column;

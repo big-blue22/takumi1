@@ -47,7 +47,12 @@ class App {
         if (typeof PlayerStatsManager !== 'undefined') {
             this.playerStatsManager = new PlayerStatsManager();
         }
-        
+
+        // コーチングプランサービス
+        if (typeof CoachingPlanService !== 'undefined') {
+            this.coachingPlanService = new CoachingPlanService();
+        }
+
         // メディア解析用のファイル配列
         this.uploadedFiles = [];
         this.chatMessages = [];
@@ -821,6 +826,17 @@ class App {
                 this.handleGoalSubmit();
             });
         }
+
+        // プラン付き目標作成ボタン
+        const createWithPlanBtn = document.getElementById('create-with-plan-btn');
+        if (createWithPlanBtn) {
+            createWithPlanBtn.addEventListener('click', () => {
+                this.handleCreateGoalWithPlan();
+            });
+        }
+
+        // コーチングプランモーダルイベント
+        this.initCoachingPlanModal();
         
         // API設定フォーム
         const apiForm = document.getElementById('api-form');
@@ -2578,6 +2594,10 @@ class App {
         // スキルレベル情報を取得
         const skillLevel = localStorage.getItem('playerSkillLevel');
 
+        // 目標情報を取得
+        const currentGoals = this.getCurrentGoalsFromStorage();
+        const weeklyGoals = this.getWeeklyGoalsFromStorage();
+
         let gameGenre = null;
 
         if (selectedGame && gameData) {
@@ -2594,7 +2614,9 @@ class App {
 
         return {
             gameGenre,
-            skillLevel: skillLevel || 'intermediate'
+            skillLevel: skillLevel || 'intermediate',
+            currentGoals: currentGoals || [],
+            weeklyGoals: weeklyGoals || []
         };
     }
 
@@ -2604,6 +2626,8 @@ class App {
         const coreContentEl = document.getElementById('coaching-core-content');
         const practicalStepEl = document.getElementById('coaching-practical-step');
         const dateEl = document.getElementById('coaching-date');
+        const goalConnectionEl = document.getElementById('coaching-goal-connection');
+        const goalConnectionContainer = document.getElementById('coaching-goal-connection-container');
 
         // コンテンツを更新
         if (headlineEl) headlineEl.textContent = advice.headline;
@@ -2612,6 +2636,14 @@ class App {
         if (dateEl) {
             const today = new Date();
             dateEl.textContent = `${today.getMonth() + 1}/${today.getDate()}`;
+        }
+
+        // 目標との関連性を表示
+        if (goalConnectionEl && goalConnectionContainer && advice.goalConnection) {
+            goalConnectionEl.textContent = advice.goalConnection;
+            goalConnectionContainer.style.display = 'block';
+        } else if (goalConnectionContainer) {
+            goalConnectionContainer.style.display = 'none';
         }
 
         // 今日のアドバイスIDを保存（フィードバック用）
@@ -3400,14 +3432,378 @@ class App {
         // AI用目標設定ボタン
     }
 
+    // === 目標管理支援機能（コーチング用） ===
 
+    // 現在の目標をストレージから取得（コーチング用）
+    getCurrentGoalsFromStorage() {
+        try {
+            const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+            // 今日以降の期限の目標を返す（現在進行中の目標）
+            const today = new Date().toISOString().split('T')[0];
+            return goals.filter(goal => {
+                if (!goal.deadline) return true; // 期限なしは現在目標として扱う
+                return goal.deadline >= today;
+            });
+        } catch (error) {
+            console.warn('Failed to get current goals:', error);
+            return [];
+        }
+    }
 
-    
-    
+    // 今週の目標をストレージから取得（コーチング用）
+    getWeeklyGoalsFromStorage() {
+        try {
+            const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+            // 今週内（今日から7日以内）の期限の目標を返す
+            const today = new Date();
+            const weekFromNow = new Date();
+            weekFromNow.setDate(today.getDate() + 7);
 
-    
-    
-    
+            const todayStr = today.toISOString().split('T')[0];
+            const weekFromNowStr = weekFromNow.toISOString().split('T')[0];
+
+            return goals.filter(goal => {
+                if (!goal.deadline) return false; // 期限なしは週間目標から除外
+                return goal.deadline >= todayStr && goal.deadline <= weekFromNowStr;
+            });
+        } catch (error) {
+            console.warn('Failed to get weekly goals:', error);
+            return [];
+        }
+    }
+
+    // === コーチングプラン機能 ===
+
+    // プラン付き目標作成を開始
+    handleCreateGoalWithPlan() {
+        // フォームデータを取得
+        const goalData = this.getGoalFormData();
+
+        if (!goalData.title || !goalData.deadline) {
+            this.showToast('目標タイトルと期限を入力してください', 'warning');
+            return;
+        }
+
+        // プランモーダルを開く
+        this.openCoachingPlanModal(goalData);
+    }
+
+    // 目標フォームデータを取得
+    getGoalFormData() {
+        return {
+            title: document.getElementById('goal-title').value,
+            deadline: document.getElementById('goal-deadline').value,
+            description: document.getElementById('goal-description').value,
+            gameGenre: this.getCurrentGameGenre(),
+            skillLevel: this.getCurrentSkillLevel()
+        };
+    }
+
+    // 現在のゲームジャンルを取得
+    getCurrentGameGenre() {
+        const gameData = localStorage.getItem('selectedGameData');
+        if (gameData) {
+            const game = JSON.parse(gameData);
+            const categoryToGenre = {
+                'FPS': 'fps',
+                'MOBA': 'moba',
+                '格闘ゲーム': 'fighting',
+                'ストラテジー': 'strategy'
+            };
+            return categoryToGenre[game.category] || 'universal';
+        }
+        return 'universal';
+    }
+
+    // 現在のスキルレベルを取得
+    getCurrentSkillLevel() {
+        return localStorage.getItem('playerSkillLevel') || 'intermediate';
+    }
+
+    // コーチングプランモーダルの初期化
+    initCoachingPlanModal() {
+        // モーダルクローズ
+        const closeModal = document.getElementById('close-plan-modal');
+        if (closeModal) {
+            closeModal.addEventListener('click', () => {
+                this.closeCoachingPlanModal();
+            });
+        }
+
+        // AI生成ボタン
+        const generateBtn = document.getElementById('generate-plan-btn');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', () => {
+                this.generatePlanWithAI();
+            });
+        }
+
+        // 手動作成ボタン
+        const manualBtn = document.getElementById('manual-plan-btn');
+        if (manualBtn) {
+            manualBtn.addEventListener('click', () => {
+                this.createManualPlan();
+            });
+        }
+
+        // プラン編集ボタン
+        const editBtn = document.getElementById('edit-plan-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                this.editPlan();
+            });
+        }
+
+        // プラン承認ボタン
+        const approveBtn = document.getElementById('approve-plan-btn');
+        if (approveBtn) {
+            approveBtn.addEventListener('click', () => {
+                this.approvePlan();
+            });
+        }
+
+        // 再生成ボタン
+        const regenerateBtn = document.getElementById('regenerate-plan-btn');
+        if (regenerateBtn) {
+            regenerateBtn.addEventListener('click', () => {
+                this.regeneratePlan();
+            });
+        }
+
+        // プラン保存ボタン
+        const saveBtn = document.getElementById('save-plan-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.savePlanEdits();
+            });
+        }
+
+        // 編集キャンセルボタン
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => {
+                this.cancelPlanEdit();
+            });
+        }
+    }
+
+    // コーチングプランモーダルを開く
+    openCoachingPlanModal(goalData) {
+        this.currentGoalData = goalData;
+
+        // 目標情報を表示
+        this.displayGoalSummary(goalData);
+
+        // モーダルを表示
+        const modal = document.getElementById('coaching-plan-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            this.showPlanStep('plan-generation-step');
+        }
+    }
+
+    // コーチングプランモーダルを閉じる
+    closeCoachingPlanModal() {
+        const modal = document.getElementById('coaching-plan-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        this.currentGoalData = null;
+        this.currentPlan = null;
+    }
+
+    // 目標概要を表示
+    displayGoalSummary(goalData) {
+        const titleEl = document.getElementById('modal-goal-title');
+        const deadlineEl = document.getElementById('modal-goal-deadline');
+        const durationEl = document.getElementById('modal-goal-duration');
+        const descriptionEl = document.getElementById('modal-goal-description');
+
+        if (titleEl) titleEl.textContent = goalData.title;
+        if (deadlineEl) deadlineEl.textContent = `期限: ${goalData.deadline}`;
+        if (descriptionEl) descriptionEl.textContent = goalData.description || '詳細説明なし';
+
+        // 期間計算
+        if (durationEl && goalData.deadline) {
+            const today = new Date();
+            const deadline = new Date(goalData.deadline);
+            const diffTime = deadline - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 0) {
+                durationEl.textContent = `期間: ${diffDays}日間`;
+            } else {
+                durationEl.textContent = '期限: 本日または過去';
+            }
+        }
+    }
+
+    // プランステップを表示
+    showPlanStep(stepId) {
+        // 全ステップを非表示
+        document.querySelectorAll('.plan-step').forEach(step => {
+            step.classList.remove('active');
+        });
+
+        // 指定ステップを表示
+        const targetStep = document.getElementById(stepId);
+        if (targetStep) {
+            targetStep.classList.add('active');
+        }
+    }
+
+    // AIでプラン生成
+    async generatePlanWithAI() {
+        if (!this.coachingPlanService) {
+            this.showToast('コーチングプランサービスが利用できません', 'error');
+            return;
+        }
+
+        this.showPlanGenerationLoading(true);
+
+        try {
+            const plan = await this.coachingPlanService.generateCoachingPlan(this.currentGoalData);
+            this.currentPlan = plan;
+
+            this.displayGeneratedPlan(plan);
+            this.showPlanStep('plan-review-step');
+        } catch (error) {
+            console.error('Failed to generate coaching plan:', error);
+            this.showToast('プラン生成に失敗しました: ' + error.message, 'error');
+        } finally {
+            this.showPlanGenerationLoading(false);
+        }
+    }
+
+    // プラン生成ローディング表示
+    showPlanGenerationLoading(show) {
+        const status = document.getElementById('generation-status');
+        const buttons = document.getElementById('generation-buttons');
+
+        if (status) {
+            status.style.display = show ? 'block' : 'none';
+        }
+        if (buttons) {
+            buttons.style.display = show ? 'none' : 'flex';
+        }
+    }
+
+    // 生成されたプランを表示
+    displayGeneratedPlan(plan) {
+        // プラン統計を表示
+        const weeksEl = document.getElementById('plan-total-weeks');
+        const daysEl = document.getElementById('plan-total-days');
+
+        if (weeksEl) weeksEl.textContent = plan.weeks.length;
+        if (daysEl) daysEl.textContent = plan.metadata.totalWeeks * 7;
+
+        // 週別プランを表示
+        this.renderWeekCards(plan.weeks);
+    }
+
+    // 週別カードをレンダリング
+    renderWeekCards(weeks) {
+        const container = document.getElementById('weeks-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        weeks.forEach(week => {
+            const weekCard = this.createWeekCard(week);
+            container.appendChild(weekCard);
+        });
+    }
+
+    // 週カードを作成
+    createWeekCard(week) {
+        const card = document.createElement('div');
+        card.className = 'week-card';
+
+        card.innerHTML = `
+            <div class="week-header">
+                <span class="week-number">第${week.weekNumber}週</span>
+                <span class="week-dates">${week.startDate} - ${week.endDate}</span>
+            </div>
+            <div class="week-focus">${week.focus}</div>
+            <div class="week-objectives">
+                <h5>目標</h5>
+                <ul class="objectives-list">
+                    ${week.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="week-milestones">
+                <h5>マイルストーン</h5>
+                <ul class="milestones-list">
+                    ${week.milestones.map(milestone => `<li>${milestone}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="daily-tasks">
+                ${week.dailyTasks.map(task => `<div class="daily-task">${task}</div>`).join('')}
+            </div>
+        `;
+
+        return card;
+    }
+
+    // プランを承認して目標を作成
+    async approvePlan() {
+        if (!this.currentPlan || !this.currentGoalData) return;
+
+        try {
+            // 目標を作成（プラン情報付き）
+            const goalData = {
+                ...this.currentGoalData,
+                id: Date.now(),
+                progress: 0,
+                hasCoachingPlan: true,
+                planId: this.currentPlan.id
+            };
+
+            // プランのステータスをアクティブに更新
+            this.currentPlan.status = 'active';
+            this.currentPlan.goalId = goalData.id;
+
+            // 保存
+            this.coachingPlanService.savePlan(this.currentPlan);
+            this.addGoal(goalData);
+
+            // フォームをリセット
+            document.getElementById('goal-form').reset();
+
+            // モーダルを閉じる
+            this.closeCoachingPlanModal();
+
+            this.showToast('コーチングプラン付きの目標を作成しました！', 'success');
+        } catch (error) {
+            console.error('Failed to approve plan:', error);
+            this.showToast('プランの承認に失敗しました', 'error');
+        }
+    }
+
+    // 手動プラン作成（簡易版）
+    createManualPlan() {
+        this.showToast('手動プラン作成機能は今後実装予定です', 'info');
+    }
+
+    // プラン編集
+    editPlan() {
+        this.showToast('プラン編集機能は今後実装予定です', 'info');
+    }
+
+    // プラン再生成
+    regeneratePlan() {
+        this.generatePlanWithAI();
+    }
+
+    // プラン編集保存
+    savePlanEdits() {
+        this.showToast('プラン編集保存機能は今後実装予定です', 'info');
+    }
+
+    // プラン編集キャンセル
+    cancelPlanEdit() {
+        this.showPlanStep('plan-review-step');
+    }
 }
 
 // アプリの起動

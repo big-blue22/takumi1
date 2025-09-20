@@ -58,8 +58,8 @@ class CoachingService {
             console.warn('CoachingService: Gemini API generation failed, falling back to static data:', error);
         }
 
-        // フォールバック: 静的データから選択
-        const fallbackAdvice = this.selectPersonalizedAdvice(userProfile);
+        // フォールバック: 目標達成向けの静的データから選択
+        const fallbackAdvice = this.selectGoalOrientedAdvice(userProfile);
         fallbackAdvice.date = today;
         fallbackAdvice.source = 'fallback';
         this.cacheAdvice(today, fallbackAdvice);
@@ -90,11 +90,12 @@ class CoachingService {
 
     // Gemini API用のプロンプトを構築
     buildCoachingPrompt(userProfile) {
-        const { gameGenre, skillLevel } = userProfile;
+        const { gameGenre, skillLevel, currentGoals = [], weeklyGoals = [] } = userProfile;
         const recentFeedback = this.getRecentFeedbackAnalysis();
         const progressStats = this.getProgressStats();
+        const goalProgress = this.getGoalProgress(userProfile);
 
-        return `あなたは経験豊富なeスポーツコーチです。以下のプレイヤー向けに今日の個別コーチングアドバイスを作成してください。
+        return `あなたは経験豊富なeスポーツコーチです。以下のプレイヤーの【現在の目標達成】に最適化されたコーチングアドバイスを作成してください。
 
 ## プレイヤー情報
 - ゲームジャンル: ${this.getGameGenreDescription(gameGenre)}
@@ -102,8 +103,18 @@ class CoachingService {
 - 学習継続日数: ${progressStats.continuousLearningDays}日
 - 完了レッスン数: ${progressStats.totalLessons}個
 
+## 現在の目標と進捗
+${goalProgress}
+
 ## 最近のフィードバック傾向
 ${recentFeedback}
+
+## 重要：目標達成にフォーカスしたアドバイス作成
+今日のアドバイスは以下の目標達成支援に特化してください：
+1. 現在の目標に直接貢献する具体的なアクション
+2. 目標達成のための段階的なステップ
+3. 進捗を測定可能な具体的な指標
+4. モチベーション維持のための成功体験設計
 
 ## 出力形式
 以下のJSON形式で回答してください：
@@ -113,16 +124,19 @@ ${recentFeedback}
   "id": "gemini_${Date.now()}",
   "category": "${gameGenre}",
   "skillLevels": ["${skillLevel}"],
-  "headline": "魅力的で行動を促すタイトル（30文字以内）",
-  "coreContent": "1-2パラグラフの詳細説明（200-300文字程度）。なぜこのアドバイスが重要なのか、どのような効果が期待できるのかを具体的に説明してください。",
-  "practicalStep": "今日すぐに実践できる具体的なアクション（100文字以内）。測定可能で達成可能な目標を設定してください。"
+  "headline": "目標達成に直結する魅力的なタイトル（35文字以内）",
+  "coreContent": "目標達成に向けた具体的な戦略とその理由（250-350文字程度）。なぜこのアドバイスが目標達成に重要なのか、どのような効果が期待できるのかを明確に説明し、目標達成への道筋を示してください。",
+  "practicalStep": "今日実行すべき目標達成のための具体的なアクション（120文字以内）。測定可能で目標に直結する達成可能なタスクを設定してください。",
+  "goalConnection": "このアドバイスが目標達成にどう貢献するかの説明（80文字以内）"
 }
 \`\`\`
 
 ## 注意事項
-- プレイヤーのスキルレベルに適した難易度にしてください
-- フィードバック履歴を考慮して調整してください
-- 具体的で実行可能なアドバイスにしてください
+- 必ず設定された目標に関連付けたアドバイスにしてください
+- 目標がない場合は、スキル向上につながる新しい目標設定を提案してください
+- プレイヤーのスキルレベルに適した難易度で目標達成をサポートしてください
+- フィードバック履歴を考慮して目標達成の難易度を調整してください
+- 具体的で実行可能、かつ目標達成に直結するアドバイスにしてください
 - 日本語で分かりやすく書いてください
 - ゲーミング用語は適度に使い、必要に応じて説明を加えてください`;
     }
@@ -193,8 +207,12 @@ ${recentFeedback}
                 const jsonText = jsonMatch[1];
                 const parsed = JSON.parse(jsonText);
 
-                // 必要なフィールドの検証
+                // 必要なフィールドの検証（目標達成向けの新フィールドを含む）
                 if (parsed.headline && parsed.coreContent && parsed.practicalStep) {
+                    // goalConnectionフィールドがない場合はデフォルト値を設定
+                    if (!parsed.goalConnection) {
+                        parsed.goalConnection = "今日のスキル向上を通じて全体的な目標達成をサポートします";
+                    }
                     return parsed;
                 } else {
                     throw new Error('Missing required fields in response');
@@ -204,6 +222,10 @@ ${recentFeedback}
                 const parsed = JSON.parse(responseText);
 
                 if (parsed.headline && parsed.coreContent && parsed.practicalStep) {
+                    // goalConnectionフィールドがない場合はデフォルト値を設定
+                    if (!parsed.goalConnection) {
+                        parsed.goalConnection = "今日のスキル向上を通じて全体的な目標達成をサポートします";
+                    }
                     return parsed;
                 } else {
                     throw new Error('Missing required fields in response');
@@ -218,6 +240,12 @@ ${recentFeedback}
 
     // ユーザープロファイルに基づいてパーソナライズされたアドバイスを選択（フォールバック用）
     selectPersonalizedAdvice(userProfile) {
+        // 最初にアクティブなコーチングプランをチェック
+        const planBasedAdvice = this.getPlanBasedAdvice(userProfile);
+        if (planBasedAdvice) {
+            return planBasedAdvice;
+        }
+
         const { gameGenre, skillLevel } = userProfile;
 
         // フィードバック履歴に基づく優先度計算
@@ -699,6 +727,208 @@ ${recentFeedback}
 
         return adjusted;
     }
+
+    // 目標と進捗の分析を取得（新メソッド）
+    getGoalProgress(userProfile) {
+        const { currentGoals = [], weeklyGoals = [] } = userProfile;
+
+        if (currentGoals.length === 0 && weeklyGoals.length === 0) {
+            return `- 現在設定されている目標がありません
+- 提案：今日のコーチングで新しい目標設定をサポートしてください
+- 推奨：短期目標（1-3日）と中期目標（1週間）を1つずつ設定`;
+        }
+
+        let goalProgressText = '';
+
+        if (currentGoals.length > 0) {
+            goalProgressText += '## 現在の目標:\n';
+            currentGoals.forEach((goal, index) => {
+                const progress = this.calculateGoalProgress(goal);
+                goalProgressText += `${index + 1}. ${goal.title} (進捗: ${progress}%)\n`;
+                goalProgressText += `   詳細: ${goal.description || 'なし'}\n`;
+                goalProgressText += `   期限: ${goal.deadline || '未設定'}\n`;
+            });
+        }
+
+        if (weeklyGoals.length > 0) {
+            goalProgressText += '\n## 今週の目標:\n';
+            weeklyGoals.forEach((goal, index) => {
+                const progress = this.calculateGoalProgress(goal);
+                goalProgressText += `${index + 1}. ${goal.title} (進捗: ${progress}%)\n`;
+                goalProgressText += `   詳細: ${goal.description || 'なし'}\n`;
+            });
+        }
+
+        goalProgressText += '\n## 重要：今日のコーチングは上記目標の達成を最優先に設計してください';
+
+        return goalProgressText;
+    }
+
+    // 個別目標の進捗を計算
+    calculateGoalProgress(goal) {
+        if (!goal.progress) return 0;
+
+        // 進捗の種類に応じた計算
+        if (goal.type === 'numerical') {
+            const current = goal.progress.current || 0;
+            const target = goal.progress.target || 1;
+            return Math.min(100, Math.round((current / target) * 100));
+        } else if (goal.type === 'boolean') {
+            return goal.progress.completed ? 100 : 0;
+        } else if (goal.type === 'milestone') {
+            const completed = goal.progress.completedMilestones || 0;
+            const total = goal.progress.totalMilestones || 1;
+            return Math.round((completed / total) * 100);
+        }
+
+        return 0;
+    }
+
+    // 目標達成向けの静的アドバイス選択（フォールバック強化）
+    selectGoalOrientedAdvice(userProfile) {
+        const { currentGoals = [], weeklyGoals = [] } = userProfile;
+        const allGoals = [...currentGoals, ...weeklyGoals];
+
+        if (allGoals.length > 0) {
+            // 目標があるプレイヤー向けのアドバイス選択
+            return this.selectAdviceForGoals(allGoals, userProfile);
+        } else {
+            // 目標がないプレイヤー向けの目標設定サポートアドバイス
+            return this.selectGoalSettingAdvice(userProfile);
+        }
+    }
+
+    // 目標に基づくアドバイス選択
+    selectAdviceForGoals(goals, userProfile) {
+        const { gameGenre, skillLevel } = userProfile;
+
+        // 進捗が遅れている目標を優先
+        const priorityGoal = this.findPriorityGoal(goals);
+
+        if (priorityGoal) {
+            // 特定目標に関連するアドバイスを探す
+            const relatedAdvice = this.findGoalRelatedAdvice(priorityGoal, userProfile);
+            if (relatedAdvice) {
+                return this.enhanceAdviceForGoal(relatedAdvice, priorityGoal);
+            }
+        }
+
+        // 一般的な目標達成サポートアドバイスにフォールバック
+        return this.selectPersonalizedAdvice(userProfile);
+    }
+
+    // 優先目標を特定
+    findPriorityGoal(goals) {
+        // 進捗が50%未満で期限が近い目標を優先
+        const urgentGoals = goals.filter(goal => {
+            const progress = this.calculateGoalProgress(goal);
+            const isUrgent = goal.deadline && new Date(goal.deadline) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3日以内
+            return progress < 50 || isUrgent;
+        });
+
+        return urgentGoals.length > 0 ? urgentGoals[0] : goals[0];
+    }
+
+    // 目標関連アドバイスを検索
+    findGoalRelatedAdvice(goal, userProfile) {
+        const { gameGenre, skillLevel } = userProfile;
+
+        // 目標のキーワードに基づくアドバイス選択
+        const goalKeywords = (goal.title + ' ' + (goal.description || '')).toLowerCase();
+
+        const relevantAdvice = this.fallbackData.filter(advice => {
+            if (!advice.skillLevels.includes(skillLevel)) return false;
+            if (advice.category !== gameGenre && advice.category !== 'universal') return false;
+
+            // キーワードマッチング
+            const adviceText = (advice.headline + ' ' + advice.coreContent + ' ' + advice.practicalStep).toLowerCase();
+
+            // 一般的なゲーミングキーワードでの関連性チェック
+            const commonKeywords = ['aim', 'エイム', 'practice', '練習', 'skill', 'スキル', 'improve', '向上', 'master', 'マスター'];
+            return commonKeywords.some(keyword =>
+                goalKeywords.includes(keyword) && adviceText.includes(keyword)
+            );
+        });
+
+        return relevantAdvice.length > 0 ? relevantAdvice[Math.floor(Math.random() * relevantAdvice.length)] : null;
+    }
+
+    // アドバイスを目標向けに強化
+    enhanceAdviceForGoal(advice, goal) {
+        return {
+            ...advice,
+            goalConnection: `「${goal.title}」の達成に直接貢献します`,
+            practicalStep: `【目標達成ステップ】${advice.practicalStep}`,
+            coreContent: advice.coreContent + ` この練習は設定された目標「${goal.title}」の達成において重要な要素となります。`
+        };
+    }
+
+    // 目標設定サポートアドバイス
+    selectGoalSettingAdvice(userProfile) {
+        const { gameGenre, skillLevel } = userProfile;
+
+        const goalSettingAdvice = {
+            id: `goal_setting_${Date.now()}`,
+            category: gameGenre,
+            skillLevels: [skillLevel],
+            headline: "目標設定でゲーミングライフを変革しよう",
+            coreContent: "明確な目標設定は上達の加速に不可欠です。「今週○○を達成する」といった具体的で測定可能な目標を設定することで、練習に方向性が生まれ、進歩を実感しやすくなります。まずは1つの小さな目標から始めて、達成の喜びを体験しましょう。",
+            practicalStep: "今日は「今週達成したい具体的な目標」を1つ決めて、それに向けた最初のアクションを15分間実行してみましょう。",
+            goalConnection: "目標設定習慣の確立により継続的な成長をサポートします",
+            source: 'goal_setting_support'
+        };
+
+        return goalSettingAdvice;
+    }
+
+    // プラン基盤のコーチングアドバイスを取得
+    getPlanBasedAdvice(userProfile) {
+        try {
+            // コーチングプランサービスが利用可能かチェック
+            if (!window.CoachingPlanService) {
+                return null;
+            }
+
+            const planService = new window.CoachingPlanService();
+            const activePlans = planService.getActivePlans();
+
+            if (activePlans.length === 0) {
+                return null;
+            }
+
+            // 最初のアクティブプランから今日のタスクを取得
+            const currentPlan = activePlans[0];
+            const todayTask = planService.getTodayTask(currentPlan.id);
+
+            if (!todayTask) {
+                return null;
+            }
+
+            // プラン基盤のアドバイスを作成
+            return this.createPlanBasedAdvice(currentPlan, todayTask, userProfile);
+        } catch (error) {
+            console.warn('Failed to get plan-based advice:', error);
+            return null;
+        }
+    }
+
+    // プラン基盤のアドバイスを作成
+    createPlanBasedAdvice(plan, todayTask, userProfile) {
+        return {
+            id: `plan_advice_${Date.now()}`,
+            category: plan.metadata.gameGenre || userProfile.gameGenre || 'universal',
+            skillLevels: [plan.metadata.skillLevel || userProfile.skillLevel || 'intermediate'],
+            headline: `【週${todayTask.weekNumber}】${todayTask.focus}`,
+            coreContent: `今週のフォーカスは「${todayTask.focus}」です。設定された目標「${plan.goalTitle}」の達成に向けて、計画的にスキルアップを進めましょう。今日の練習内容は段階的な成長プロセスの一部として設計されています。`,
+            practicalStep: `【今日のプラン】${todayTask.todayTask}`,
+            goalConnection: `コーチングプラン「${plan.goalTitle}」の第${todayTask.weekNumber}週目の実行`,
+            source: 'coaching_plan',
+            planId: plan.id,
+            weekNumber: todayTask.weekNumber,
+            objectives: todayTask.objectives,
+            milestones: todayTask.milestones
+        };
+    }
 }
 
 // コーチングアドバイスデータベース
@@ -710,7 +940,8 @@ const COACHING_ADVICE_DATABASE = [
         skillLevels: ["beginner"],
         headline: "小さな目標から始めよう",
         coreContent: "大きな目標は素晴らしいものですが、まずは達成可能な小さな目標から始めることが重要です。例えば「今日は30分練習する」「1つの新しいテクニックを覚える」など、具体的で測定可能な目標を設定しましょう。小さな成功体験を積み重ねることで、自信とモチベーションが向上します。",
-        practicalStep: "今日は15分間の集中練習セッションを設定し、1つの基本スキルに焦点を当てて練習してみましょう。"
+        practicalStep: "今日は15分間の集中練習セッションを設定し、1つの基本スキルに焦点を当てて練習してみましょう。",
+        goalConnection: "小さな目標の達成習慣が大きな目標達成の基盤となります"
     },
     {
         id: "universal_002",
@@ -718,7 +949,8 @@ const COACHING_ADVICE_DATABASE = [
         skillLevels: ["beginner"],
         headline: "練習の質を意識する",
         coreContent: "長時間の練習よりも、集中した短時間の練習の方が効果的です。だらだらと何時間もプレイするのではなく、明確な目的を持って集中的に練習することで、スキルアップのスピードが格段に向上します。疲れているときの練習は逆効果になることもあります。",
-        practicalStep: "今日は20分タイマーをセットし、特定のスキル（エイムやラストヒットなど）だけに集中して練習してみましょう。"
+        practicalStep: "今日は20分タイマーをセットし、特定のスキル（エイムやラストヒットなど）だけに集中して練習してみましょう。",
+        goalConnection: "集中練習の質向上により設定した目標の効率的達成をサポートします"
     },
 
     // 普遍的原則 - 中級者向け
@@ -728,7 +960,8 @@ const COACHING_ADVICE_DATABASE = [
         skillLevels: ["intermediate"],
         headline: "メンタルトレーニングの重要性",
         coreContent: "技術的なスキルだけでなく、メンタル面のトレーニングも同じくらい重要です。負けた試合から学び、感情をコントロールし、プレッシャーの中でも冷静に判断する能力を育てましょう。トップレベルのプレイヤーほど、メンタルトレーニングに時間を投資しています。",
-        practicalStep: "次の試合で負けたときは、5分間冷静に何が悪かったかを分析し、改善点を1つノートに書き留めてみましょう。"
+        practicalStep: "次の試合で負けたときは、5分間冷静に何が悪かったかを分析し、改善点を1つノートに書き留めてみましょう。",
+        goalConnection: "メンタル強化により困難な目標にも諦めずに取り組む力を育成します"
     },
     {
         id: "universal_004",
@@ -736,7 +969,8 @@ const COACHING_ADVICE_DATABASE = [
         skillLevels: ["intermediate"],
         headline: "リプレイ分析の習慣化",
         coreContent: "自分のプレイを客観的に見ることで、プレイ中には気づかない課題や改善点を発見できます。特に負けた試合のリプレイを見ることで、判断ミスやポジショニングの問題を特定できます。週に数回、15分程度でも良いのでリプレイ分析の時間を作りましょう。",
-        practicalStep: "今日は最近の試合から1つ選んで、10分間リプレイを見ながら改善できそうなポイントを3つ見つけてみましょう。"
+        practicalStep: "今日は最近の試合から1つ選んで、10分間リプレイを見ながら改善できそうなポイントを3つ見つけてみましょう。",
+        goalConnection: "客観的分析により目標達成のための具体的改善点を明確化できます"
     },
 
     // 普遍的原則 - 上級者向け
@@ -746,7 +980,8 @@ const COACHING_ADVICE_DATABASE = [
         skillLevels: ["advanced"],
         headline: "チームコミュニケーションの最適化",
         coreContent: "上級レベルでは個人スキル以上にチームワークが勝敗を左右します。効果的なコミュニケーションは、情報を正確かつ簡潔に伝え、チームの戦略的判断を向上させます。不要な会話を避け、重要な情報のみを適切なタイミングで共有することが重要です。",
-        practicalStep: "今日のチーム戦では、コール（呼びかけ）を「敵の位置」「自分の状況」「提案する戦略」の3要素に絞って練習してみましょう。"
+        practicalStep: "今日のチーム戦では、コール（呼びかけ）を「敵の位置」「自分の状況」「提案する戦略」の3要素に絞って練習してみましょう。",
+        goalConnection: "チーム連携向上により個人では達成困難な高レベル目標の実現を可能にします"
     },
 
     // FPS - 初心者向け

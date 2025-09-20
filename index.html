@@ -161,6 +161,12 @@
                             <div class="step-label">今日試してみよう</div>
                             <p id="coaching-practical-step">設定を完了して、今日のアドバイスを受け取りましょう！</p>
                         </div>
+
+                        <!-- Goal Connection (目標との関連) -->
+                        <div class="coaching-goal-connection" id="coaching-goal-connection-container" style="display: none;">
+                            <div class="goal-connection-label">🎯 目標達成への貢献</div>
+                            <p id="coaching-goal-connection">目標達成への関連性が表示されます</p>
+                        </div>
                     </div>
 
                     <div class="coaching-actions">
@@ -323,6 +329,7 @@
                             <textarea id="goal-description" placeholder="目標の詳細説明"></textarea>
                         </div>
                         <button type="submit" class="btn-primary">目標を追加</button>
+                        <button type="button" id="create-with-plan-btn" class="btn-accent">📋 プラン付きで目標作成</button>
                     </form>
                 </div>
 
@@ -331,6 +338,93 @@
                     <h3>現在の目標</h3>
                     <div id="goals-list" class="goals-list">
                         <!-- Goals will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Coaching Plan Modal -->
+                <div id="coaching-plan-modal" class="modal hidden">
+                    <div class="modal-content coaching-plan-modal">
+                        <div class="modal-header">
+                            <h3>📋 コーチングプラン作成</h3>
+                            <button class="modal-close" id="close-plan-modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body">
+                            <!-- Plan Generation Step -->
+                            <div id="plan-generation-step" class="plan-step">
+                                <div class="plan-summary">
+                                    <h4>目標概要</h4>
+                                    <div class="goal-summary-card">
+                                        <div class="goal-summary-title" id="modal-goal-title">目標タイトル</div>
+                                        <div class="goal-summary-details">
+                                            <span class="goal-summary-deadline" id="modal-goal-deadline">期限</span>
+                                            <span class="goal-summary-duration" id="modal-goal-duration">期間</span>
+                                        </div>
+                                        <div class="goal-summary-description" id="modal-goal-description">詳細説明</div>
+                                    </div>
+                                </div>
+
+                                <div class="plan-generation">
+                                    <div class="generation-status" id="generation-status">
+                                        <div class="loading-spinner"></div>
+                                        <p>AIがあなた専用のコーチングプランを作成中...</p>
+                                    </div>
+
+                                    <div class="generation-buttons">
+                                        <button id="generate-plan-btn" class="btn-primary">🤖 AIでプラン生成</button>
+                                        <button id="manual-plan-btn" class="btn-secondary">✏️ 手動でプラン作成</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Plan Review Step -->
+                            <div id="plan-review-step" class="plan-step hidden">
+                                <div class="plan-preview">
+                                    <h4>生成されたコーチングプラン</h4>
+                                    <div class="plan-overview">
+                                        <div class="plan-stats">
+                                            <div class="plan-stat">
+                                                <span class="stat-number" id="plan-total-weeks">0</span>
+                                                <span class="stat-label">週間</span>
+                                            </div>
+                                            <div class="plan-stat">
+                                                <span class="stat-number" id="plan-total-days">0</span>
+                                                <span class="stat-label">日間</span>
+                                            </div>
+                                            <div class="plan-stat">
+                                                <span class="stat-number">60</span>
+                                                <span class="stat-label">分/日</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="weeks-container" id="weeks-container">
+                                        <!-- 週別プランが表示される -->
+                                    </div>
+                                </div>
+
+                                <div class="plan-actions">
+                                    <button id="edit-plan-btn" class="btn-secondary">✏️ プランを編集</button>
+                                    <button id="approve-plan-btn" class="btn-primary">✅ このプランで開始</button>
+                                    <button id="regenerate-plan-btn" class="btn-outline">🔄 再生成</button>
+                                </div>
+                            </div>
+
+                            <!-- Plan Edit Step -->
+                            <div id="plan-edit-step" class="plan-step hidden">
+                                <div class="plan-editor">
+                                    <h4>プラン編集</h4>
+                                    <div class="edit-weeks-container" id="edit-weeks-container">
+                                        <!-- 編集可能な週別プラン -->
+                                    </div>
+                                </div>
+
+                                <div class="edit-actions">
+                                    <button id="save-plan-btn" class="btn-primary">💾 プランを保存</button>
+                                    <button id="cancel-edit-btn" class="btn-secondary">キャンセル</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -820,6 +914,7 @@
     <script src="unified-api-manager.js"></script>
     <script src="gemini-service.js"></script>
     <script src="coaching-service.js"></script>
+    <script src="coaching-plan-service.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
