@@ -3640,15 +3640,22 @@ class App {
 
     // プランステップを表示
     showPlanStep(stepId) {
+        console.log('🔄 Switching to plan step:', stepId);
+
         // 全ステップを非表示
         document.querySelectorAll('.plan-step').forEach(step => {
             step.classList.remove('active');
+            console.log('🔄 Removed active from step:', step.id);
         });
 
         // 指定ステップを表示
         const targetStep = document.getElementById(stepId);
         if (targetStep) {
             targetStep.classList.add('active');
+            targetStep.classList.remove('hidden'); // hiddenクラスも削除
+            console.log('✅ Activated step:', stepId);
+        } else {
+            console.error('❌ Target step not found:', stepId);
         }
     }
 
@@ -3701,28 +3708,50 @@ class App {
 
     // 生成されたプランを表示
     displayGeneratedPlan(plan) {
+        console.log('🎯 Displaying generated plan:', plan);
+
         // プラン統計を表示
         const weeksEl = document.getElementById('plan-total-weeks');
         const daysEl = document.getElementById('plan-total-days');
 
-        if (weeksEl) weeksEl.textContent = plan.weeks.length;
-        if (daysEl) daysEl.textContent = plan.metadata.totalWeeks * 7;
+        if (weeksEl) {
+            weeksEl.textContent = plan.weeks.length;
+            console.log('📊 Set weeks count:', plan.weeks.length);
+        } else {
+            console.error('❌ plan-total-weeks element not found');
+        }
+
+        if (daysEl) {
+            daysEl.textContent = plan.metadata.totalWeeks * 7;
+            console.log('📊 Set days count:', plan.metadata.totalWeeks * 7);
+        } else {
+            console.error('❌ plan-total-days element not found');
+        }
 
         // 週別プランを表示
+        console.log('📅 Rendering week cards...');
         this.renderWeekCards(plan.weeks);
     }
 
     // 週別カードをレンダリング
     renderWeekCards(weeks) {
         const container = document.getElementById('weeks-container');
-        if (!container) return;
+        if (!container) {
+            console.error('❌ weeks-container not found');
+            return;
+        }
 
+        console.log('📅 Found weeks container, clearing content...');
         container.innerHTML = '';
 
-        weeks.forEach(week => {
+        console.log('📅 Rendering', weeks.length, 'week cards...');
+        weeks.forEach((week, index) => {
+            console.log(`📅 Creating week card ${index + 1}:`, week);
             const weekCard = this.createWeekCard(week);
             container.appendChild(weekCard);
         });
+
+        console.log('📅 Week cards rendered successfully');
     }
 
     // 週カードを作成
