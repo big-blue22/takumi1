@@ -28,14 +28,14 @@ class CoachingPlanService {
         try {
             const planData = this.calculatePlanStructure(deadline);
 
-            if (this.geminiService) {
-                return await this.generatePlanWithAI(goal, planData);
-            } else {
-                return this.generateFallbackPlan(goal, planData);
+            if (!this.geminiService) {
+                throw new Error('Gemini APIサービスが利用できません。APIキーを設定してください。');
             }
+
+            return await this.generatePlanWithAI(goal, planData);
         } catch (error) {
             console.error('Failed to generate coaching plan:', error);
-            return this.generateFallbackPlan(goal, this.calculatePlanStructure(deadline));
+            throw error;
         }
     }
 
@@ -90,17 +90,35 @@ class CoachingPlanService {
         const prompt = this.buildPlanGenerationPrompt(goal, planStructure);
 
         try {
+            console.log('🤖 Generating plan with Gemini API...');
             const response = await this.geminiService.sendChatMessage(prompt, false);
 
-            let responseText = null;
-            if (response && response.response) {
-                responseText = response.response;
-            } else if (response && response.text) {
-                responseText = response.text;
-            } else {
-                console.error('Invalid API response:', response);
-                throw new Error('Invalid response from AI');
+            console.log('📡 Raw API Response:', response);
+
+            if (!response) {
+                throw new Error('Gemini APIからの応答がありません');
             }
+
+            let responseText = null;
+            if (response.response) {
+                responseText = response.response;
+                console.log('✅ Using response.response field');
+            } else if (response.text) {
+                responseText = response.text;
+                console.log('✅ Using response.text field');
+            } else {
+                console.error('❌ Invalid API response structure:', response);
+                console.error('Response type:', typeof response);
+                console.error('Response keys:', Object.keys(response));
+                throw new Error('APIレスポンスに有効なテキストフィールドがありません');
+            }
+
+            if (!responseText || responseText.trim().length === 0) {
+                throw new Error('AIからの応答テキストが空です');
+            }
+
+            console.log('📝 Response text length:', responseText.length);
+            console.log('📝 Response preview:', responseText.substring(0, 200) + '...');
 
             const generatedPlan = this.parsePlanResponse(responseText, planStructure);
             return this.createPlanObject(goal, generatedPlan);
@@ -114,57 +132,52 @@ class CoachingPlanService {
     buildPlanGenerationPrompt(goal, planStructure) {
         const { title, description, gameGenre, skillLevel } = goal;
 
-        return `あなたは経験豊富なeスポーツコーチです。以下の目標達成のための${planStructure.totalWeeks}週間のコーチングプランを作成してください。
+        return `あなたはプロのeスポーツコーチです。以下の目標を達成するための詳細な${planStructure.totalWeeks}週間コーチングプランを作成してください。
 
-## 目標情報
-- タイトル: ${title}
-- 詳細: ${description || 'なし'}
-- ゲームジャンル: ${gameGenre || '未設定'}
-- スキルレベル: ${skillLevel || '中級'}
-- 期間: ${planStructure.totalDays}日間（${planStructure.totalWeeks}週間）
+## 目標詳細
+- **目標**: ${title}
+- **詳細**: ${description || '目標の具体的な説明'}
+- **ゲーム**: ${gameGenre || 'ゲーム未指定'}
+- **現在レベル**: ${skillLevel || '中級者'}
+- **期間**: ${planStructure.totalDays}日間（${planStructure.totalWeeks}週間）
 
-## プラン作成指針
-1. 週ごとに段階的にスキルアップできる構成にしてください
-2. 各週は明確なフォーカス（重点項目）を設定してください
-3. 実践的で測定可能な目標を設定してください
-4. プレイヤーのスキルレベルに適した難易度にしてください
+## 必須要件
+1. **段階的進歩**: 初級→中級→上級の順序で段階的にスキルアップ
+2. **具体的内容**: 実際のゲームで実行可能な具体的な練習メニュー
+3. **測定可能**: 数値や明確な基準で進歩を測定可能
+4. **実践的**: プレイヤーが実際に実行できる現実的な内容
 
-## 出力形式
-以下のJSON形式で回答してください：
+重要: 必ず以下のJSONフォーマットで応答してください。コメントや説明は不要です。
 
 \`\`\`json
 {
   "weeks": [
     {
       "weekNumber": 1,
-      "focus": "第1週の重点項目（例：基礎固め）",
+      "focus": "第1週の明確な重点項目",
       "objectives": [
-        "この週で達成すべき具体的な目標1",
-        "この週で達成すべき具体的な目標2"
+        "週の終わりまでに達成すべき具体的目標1",
+        "週の終わりまでに達成すべき具体的目標2"
       ],
       "dailyTasks": [
-        "月曜日の推奨練習内容",
-        "火曜日の推奨練習内容",
-        "水曜日の推奨練習内容",
-        "木曜日の推奨練習内容",
-        "金曜日の推奨練習内容",
-        "土曜日の推奨練習内容",
-        "日曜日の推奨練習内容"
+        "月曜日: 具体的な練習内容(30-60分)",
+        "火曜日: 具体的な練習内容(30-60分)",
+        "水曜日: 具体的な練習内容(30-60分)",
+        "木曜日: 具体的な練習内容(30-60分)",
+        "金曜日: 具体的な練習内容(30-60分)",
+        "土曜日: 具体的な練習内容(30-60分)",
+        "日曜日: 休憩または軽い練習"
       ],
       "milestones": [
-        "週末までに達成すべき測定可能な指標1",
-        "週末までに達成すべき測定可能な指標2"
+        "測定可能な達成指標1（数値含む）",
+        "測定可能な達成指標2（数値含む）"
       ]
     }
   ]
 }
 \`\`\`
 
-## 注意事項
-- 各週のフォーカスは段階的に進歩するように設計してください
-- 日別タスクは30分-1時間程度で実行可能な内容にしてください
-- マイルストーンは数値で測定できるものを含めてください
-- 実際のゲーム環境で実践できる具体的な内容にしてください`;
+${planStructure.totalWeeks}週分すべてのプランを生成してください。各週は前週よりも高いレベルの内容にしてください。`;
     }
 
     // AIレスポンスを解析
@@ -194,74 +207,6 @@ class CoachingPlanService {
         }
     }
 
-    // フォールバックプランを生成
-    generateFallbackPlan(goal, planStructure) {
-        const weeks = planStructure.weeks.map((week, index) => ({
-            ...week,
-            focus: this.getFallbackFocus(index + 1, planStructure.totalWeeks, goal.gameGenre),
-            objectives: this.getFallbackObjectives(index + 1, goal.gameGenre),
-            dailyTasks: this.getFallbackDailyTasks(goal.gameGenre),
-            milestones: this.getFallbackMilestones(index + 1, goal.gameGenre)
-        }));
-
-        return this.createPlanObject(goal, weeks);
-    }
-
-    // フォールバック用フォーカス
-    getFallbackFocus(weekNumber, totalWeeks, gameGenre) {
-        const phase = Math.ceil((weekNumber / totalWeeks) * 3); // 3段階に分割
-
-        const focuses = {
-            1: '基礎スキルの習得と改善',
-            2: '応用技術の練習と実戦投入',
-            3: '総仕上げと目標達成の確認'
-        };
-
-        return focuses[phase] || '総合的なスキル向上';
-    }
-
-    // フォールバック用目標
-    getFallbackObjectives(weekNumber, gameGenre) {
-        const baseObjectives = [
-            '毎日30分以上の集中練習を実行',
-            '週末に進捗を確認し、次週の計画を調整'
-        ];
-
-        const gameSpecificObjectives = {
-            'fps': ['エイム精度の向上', 'マップ知識の習得'],
-            'moba': ['ラストヒット精度の向上', 'ワード配置の最適化'],
-            'fighting': ['基本コンボの安定化', '対戦相手への対応力向上'],
-            'strategy': ['資源管理の効率化', '戦略判断力の向上']
-        };
-
-        return [
-            ...baseObjectives,
-            ...(gameSpecificObjectives[gameGenre] || ['スキル全般の向上'])
-        ];
-    }
-
-    // フォールバック用日別タスク
-    getFallbackDailyTasks(gameGenre) {
-        const baseTasks = [
-            '基礎練習（20分）',
-            '実戦練習（30分）',
-            '復習と分析（10分）',
-            'スキル練習（25分）',
-            '対戦練習（35分）',
-            '総合練習（45分）',
-            '休憩・軽い練習（15分）'
-        ];
-
-        return baseTasks;
-    }
-
-    // フォールバック用マイルストーン
-    getFallbackMilestones(weekNumber, gameGenre) {
-        return [
-            '週間練習時間5時間以上達成',
-            '設定した練習メニューを80%以上実行'
-        ];
-    }
 
     // プランオブジェクトを作成
     createPlanObject(goal, weeks) {

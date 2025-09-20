@@ -3665,11 +3665,22 @@ class App {
             const plan = await this.coachingPlanService.generateCoachingPlan(this.currentGoalData);
             this.currentPlan = plan;
 
+            this.showToast('AIによるカスタムプランを生成しました！', 'success');
             this.displayGeneratedPlan(plan);
             this.showPlanStep('plan-review-step');
         } catch (error) {
             console.error('Failed to generate coaching plan:', error);
-            this.showToast('プラン生成に失敗しました: ' + error.message, 'error');
+
+            let errorMessage = 'プラン生成に失敗しました: ';
+            if (error.message.includes('APIキー')) {
+                errorMessage += 'Gemini APIキーを設定してください。';
+            } else if (error.message.includes('API')) {
+                errorMessage += 'API接続に問題があります。';
+            } else {
+                errorMessage += error.message;
+            }
+
+            this.showToast(errorMessage, 'error');
         } finally {
             this.showPlanGenerationLoading(false);
         }
@@ -3804,6 +3815,7 @@ class App {
     cancelPlanEdit() {
         this.showPlanStep('plan-review-step');
     }
+
 }
 
 // アプリの起動
