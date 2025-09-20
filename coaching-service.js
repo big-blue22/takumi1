@@ -77,11 +77,17 @@ class CoachingService {
         try {
             const response = await this.geminiService.sendChatMessage(prompt, false);
 
-            if (response && response.text) {
-                return this.parseGeminiResponse(response.text);
+            let responseText = null;
+            if (response && response.response) {
+                responseText = response.response;
+            } else if (response && response.text) {
+                responseText = response.text;
             } else {
+                console.error('CoachingService: Invalid API response:', response);
                 throw new Error('Invalid response from Gemini API');
             }
+
+            return this.parseGeminiResponse(responseText);
         } catch (error) {
             console.error('CoachingService: Gemini API error:', error);
             throw error;

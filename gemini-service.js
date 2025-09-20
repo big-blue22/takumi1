@@ -542,7 +542,19 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 throw new Error('APIから有効な応答が得られませんでした');
             }
 
-            const aiResponse = data.candidates[0].content.parts[0].text;
+            const candidate = data.candidates[0];
+            if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+                console.error('Invalid API response structure:', JSON.stringify(data, null, 2));
+                console.error('Candidate structure:', candidate);
+                throw new Error('APIレスポンスの形式が無効です');
+            }
+
+            if (!candidate.content.parts[0].text) {
+                console.error('No text in response part:', candidate.content.parts[0]);
+                throw new Error('AIからのテキスト応答がありません');
+            }
+
+            const aiResponse = candidate.content.parts[0].text;
 
             // チャット履歴を更新（最新20件まで保持）
             this.chatHistory.push({

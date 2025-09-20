@@ -92,12 +92,18 @@ class CoachingPlanService {
         try {
             const response = await this.geminiService.sendChatMessage(prompt, false);
 
-            if (response && response.text) {
-                const generatedPlan = this.parsePlanResponse(response.text, planStructure);
-                return this.createPlanObject(goal, generatedPlan);
+            let responseText = null;
+            if (response && response.response) {
+                responseText = response.response;
+            } else if (response && response.text) {
+                responseText = response.text;
             } else {
+                console.error('Invalid API response:', response);
                 throw new Error('Invalid response from AI');
             }
+
+            const generatedPlan = this.parsePlanResponse(responseText, planStructure);
+            return this.createPlanObject(goal, generatedPlan);
         } catch (error) {
             console.error('AI plan generation failed:', error);
             throw error;
@@ -183,7 +189,8 @@ class CoachingPlanService {
             throw new Error('Invalid AI response format');
         } catch (error) {
             console.error('Failed to parse AI plan response:', error);
-            throw error;
+            console.error('Response text:', responseText);
+            throw new Error('AI応答の解析に失敗しました: ' + error.message);
         }
     }
 
