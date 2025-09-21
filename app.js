@@ -3081,6 +3081,55 @@ class App {
                 this.handleCoachingFeedback(feedbackType, button);
             });
         });
+
+        // コメント機能のリスナー
+        this.setupCommentFeedbackListeners();
+    }
+
+    setupCommentFeedbackListeners() {
+        const commentTextarea = document.getElementById('feedback-comment');
+        const submitBtn = document.getElementById('submit-feedback-btn');
+        const cancelBtn = document.getElementById('cancel-feedback-btn');
+        const charCountSpan = document.getElementById('comment-char-count');
+
+        // テキストエリアの文字数カウント
+        if (commentTextarea && charCountSpan) {
+            commentTextarea.addEventListener('input', (e) => {
+                const count = e.target.value.length;
+                charCountSpan.textContent = count;
+
+                // ボタン状態の更新
+                if (submitBtn) {
+                    submitBtn.disabled = count === 0 || count > 500;
+                }
+
+                // 文字数警告の色変更
+                const counter = document.querySelector('.comment-counter');
+                if (counter) {
+                    counter.classList.remove('warning', 'error');
+                    if (count > 450) {
+                        counter.classList.add('warning');
+                    }
+                    if (count > 500) {
+                        counter.classList.add('error');
+                    }
+                }
+            });
+        }
+
+        // フィードバック送信ボタン
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                this.submitFeedbackWithComment();
+            });
+        }
+
+        // キャンセルボタン
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.cancelFeedbackComment();
+            });
+        }
     }
 
     handleCoachingFeedback(feedbackType, buttonEl) {
@@ -3089,16 +3138,64 @@ class App {
             return;
         }
 
-        // フィードバックを記録
-        this.coachingService.recordFeedback(this.currentAdviceId, feedbackType);
+        // 選択されたフィードバックタイプを保存
+        this.selectedFeedbackType = feedbackType;
+        this.selectedFeedbackButton = buttonEl;
 
-        // ボタンの状態を更新（今日のフィードバックとして保持）
+        // ボタンの状態を更新
         this.updateFeedbackButtonState(buttonEl);
 
-        // 進捗統計を更新（少し遅延させてupdateUserProgressの完了を待つ）
+        // コメントセクションを表示
+        this.showCommentSection();
+    }
+
+    showCommentSection() {
+        const commentSection = document.getElementById('feedback-comment-section');
+        const commentTextarea = document.getElementById('feedback-comment');
+
+        if (commentSection) {
+            commentSection.style.display = 'block';
+            commentSection.classList.add('show');
+
+            // フォーカスをテキストエリアに
+            if (commentTextarea) {
+                setTimeout(() => {
+                    commentTextarea.focus();
+                }, 200);
+            }
+        }
+    }
+
+    hideCommentSection() {
+        const commentSection = document.getElementById('feedback-comment-section');
+        if (commentSection) {
+            commentSection.classList.remove('show');
+            setTimeout(() => {
+                commentSection.style.display = 'none';
+            }, 300);
+        }
+    }
+
+    submitFeedbackWithComment() {
+        if (!this.coachingService || !this.currentAdviceId || !this.selectedFeedbackType) {
+            this.showToast('フィードバックを送信できませんでした', 'error');
+            return;
+        }
+
+        const commentTextarea = document.getElementById('feedback-comment');
+        const comment = commentTextarea ? commentTextarea.value.trim() : '';
+
+        // フィードバックを記録（コメント付き）
+        this.coachingService.recordFeedback(this.currentAdviceId, this.selectedFeedbackType, comment);
+
+        // 進捗統計を更新
         setTimeout(() => {
             this.updateCoachingProgress();
         }, 150);
+
+        // UIをリセット
+        this.hideCommentSection();
+        this.resetCommentForm();
 
         // トーストメッセージを表示
         const feedbackMessages = {
@@ -3107,7 +3204,54 @@ class App {
             too_hard: '次回はより基本的なアドバイスを提供します'
         };
 
-        this.showToast(feedbackMessages[feedbackType], 'success');
+        let message = feedbackMessages[this.selectedFeedbackType];
+        if (comment.length > 0) {
+            message += '\nコメントは明日のコーチングに反映されます！';
+        }
+
+        this.showToast(message, 'success');
+
+        // 変数をクリア
+        this.selectedFeedbackType = null;
+        this.selectedFeedbackButton = null;
+    }
+
+    cancelFeedbackComment() {
+        // フィードバックボタンの選択状態をリセット
+        if (this.selectedFeedbackButton) {
+            this.resetFeedbackButtons();
+        }
+
+        // コメントセクションを隠す
+        this.hideCommentSection();
+        this.resetCommentForm();
+
+        // 変数をクリア
+        this.selectedFeedbackType = null;
+        this.selectedFeedbackButton = null;
+    }
+
+    resetCommentForm() {
+        const commentTextarea = document.getElementById('feedback-comment');
+        const charCountSpan = document.getElementById('comment-char-count');
+        const submitBtn = document.getElementById('submit-feedback-btn');
+        const counter = document.querySelector('.comment-counter');
+
+        if (commentTextarea) {
+            commentTextarea.value = '';
+        }
+
+        if (charCountSpan) {
+            charCountSpan.textContent = '0';
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+
+        if (counter) {
+            counter.classList.remove('warning', 'error');
+        }
     }
 
     updateFeedbackButtonState(selectedButton) {

@@ -169,11 +169,13 @@ ${recentFeedback}
         return descriptions[skillLevel] || '中級者';
     }
 
-    // 最近のフィードバック分析を取得
+    // 最近のフィードバック分析を取得（コメント機能拡張版）
     getRecentFeedbackAnalysis() {
+        const today = new Date().toDateString();
         const recentFeedback = this.feedbackHistory.slice(-10);
+        const todayFeedbacks = this.getNextDayFeedbacks(today);
 
-        if (recentFeedback.length === 0) {
+        if (recentFeedback.length === 0 && todayFeedbacks.length === 0) {
             return '- フィードバック履歴なし（初回利用者向けの基本的なアドバイスを提供してください）';
         }
 
@@ -193,11 +195,22 @@ ${recentFeedback}
         analysis += `  - 難しすぎた: ${feedbackCounts.too_hard}件\n`;
 
         if (feedbackCounts.too_easy > feedbackCounts.too_hard) {
-            analysis += '- 調整指示: より挑戦的で高度な内容にしてください';
+            analysis += '- 調整指示: より挑戦的で高度な内容にしてください\n';
         } else if (feedbackCounts.too_hard > feedbackCounts.too_easy) {
-            analysis += '- 調整指示: より基本的で理解しやすい内容にしてください';
+            analysis += '- 調整指示: より基本的で理解しやすい内容にしてください\n';
         } else {
-            analysis += '- 調整指示: 現在の難易度レベルを維持してください';
+            analysis += '- 調整指示: 現在の難易度レベルを維持してください\n';
+        }
+
+        // 昨日のコメントフィードバックを追加
+        if (todayFeedbacks.length > 0) {
+            analysis += '\n## 昨日のフィードバックコメント（重要）：\n';
+            todayFeedbacks.forEach((feedback, index) => {
+                if (feedback.comment && feedback.comment.trim().length > 0) {
+                    analysis += `${index + 1}. ${feedback.comment}\n`;
+                }
+            });
+            analysis += '\n重要：上記のコメントを今日のアドバイスに具体的に反映してください。\n';
         }
 
         return analysis;
@@ -341,11 +354,12 @@ ${recentFeedback}
         return adviceList[randomIndex];
     }
 
-    // フィードバックを記録
-    recordFeedback(adviceId, feedbackType) {
+    // フィードバックを記録（コメント機能拡張版）
+    recordFeedback(adviceId, feedbackType, comment = null) {
         const feedback = {
             adviceId,
             feedbackType, // 'helpful', 'too_easy', 'too_hard'
+            comment, // 新規追加：ユーザーのコメント
             timestamp: new Date().toISOString(),
             date: new Date().toDateString()
         };
@@ -353,6 +367,43 @@ ${recentFeedback}
         this.feedbackHistory.push(feedback);
         this.saveFeedbackHistory();
         this.updateUserProgress(feedback);
+
+        // コメントがある場合は次の日のコーチングプロンプトに反映
+        if (comment && comment.trim().length > 0) {
+            this.saveFeedbackForNextDay(feedback);
+        }
+    }
+
+    // 次の日のコーチング用にフィードバックを保存
+    saveFeedbackForNextDay(feedback) {
+        try {
+            const today = new Date().toDateString();
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toDateString();
+
+            const nextDayFeedbacks = this.getNextDayFeedbacks(tomorrowStr);
+            nextDayFeedbacks.push({
+                ...feedback,
+                forDate: tomorrowStr,
+                savedAt: today
+            });
+
+            localStorage.setItem(`coaching_next_day_feedback_${tomorrowStr}`, JSON.stringify(nextDayFeedbacks));
+        } catch (error) {
+            console.warn('Failed to save feedback for next day:', error);
+        }
+    }
+
+    // 指定日の次の日向けフィードバックを取得
+    getNextDayFeedbacks(dateStr) {
+        try {
+            const stored = localStorage.getItem(`coaching_next_day_feedback_${dateStr}`);
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.warn('Failed to load next day feedbacks:', error);
+            return [];
+        }
     }
 
     // ユーザープログレスを更新
@@ -539,6 +590,9 @@ ${recentFeedback}
                 }
             });
 
+            // 古い次の日向けフィードバックも削除
+            this.cleanOldNextDayFeedbacks();
+
             // メタデータを更新
             if (keysToRemove.length > 0) {
                 localStorage.setItem('coaching_cache_metadata', JSON.stringify(metadata));
@@ -549,6 +603,34 @@ ${recentFeedback}
             this.limitCacheSize(metadata);
         } catch (error) {
             console.warn('CoachingService: Failed to clean old cache:', error);
+        }
+    }
+
+    // 古い次の日向けフィードバックを削除
+    cleanOldNextDayFeedbacks() {
+        try {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            const feedbackKeys = Object.keys(localStorage).filter(key =>
+                key.startsWith('coaching_next_day_feedback_')
+            );
+
+            feedbackKeys.forEach(key => {
+                const dateStr = key.replace('coaching_next_day_feedback_', '');
+                try {
+                    const feedbackDate = new Date(dateStr);
+                    if (feedbackDate < sevenDaysAgo) {
+                        localStorage.removeItem(key);
+                        console.log(`CoachingService: Cleaned old next-day feedback for ${dateStr}`);
+                    }
+                } catch (error) {
+                    // 日付の解析に失敗した場合は削除
+                    localStorage.removeItem(key);
+                }
+            });
+        } catch (error) {
+            console.warn('CoachingService: Failed to clean old next-day feedbacks:', error);
         }
     }
 

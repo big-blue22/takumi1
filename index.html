@@ -187,6 +187,30 @@
                                     😅 難しすぎた
                                 </button>
                             </div>
+
+                            <!-- コメント機能エリア -->
+                            <div class="feedback-comment-section" id="feedback-comment-section" style="display: none;">
+                                <div class="comment-header">
+                                    <label for="feedback-comment">💬 詳細なフィードバック（任意）</label>
+                                    <span class="comment-helper">明日のコーチングに反映されます</span>
+                                </div>
+                                <textarea
+                                    id="feedback-comment"
+                                    placeholder="例：エイム練習をもっと詳しく教えて欲しい、戦略的な判断について学びたい、など具体的な要望を入力してください"
+                                    rows="3"
+                                    maxlength="500"></textarea>
+                                <div class="comment-actions">
+                                    <button class="submit-feedback-btn" id="submit-feedback-btn" disabled>
+                                        フィードバックを送信
+                                    </button>
+                                    <button class="cancel-feedback-btn" id="cancel-feedback-btn">
+                                        キャンセル
+                                    </button>
+                                </div>
+                                <div class="comment-counter">
+                                    <span id="comment-char-count">0</span>/500文字
+                                </div>
+                            </div>
                         </div>
 
                         <div class="coaching-progress" id="coaching-progress">
