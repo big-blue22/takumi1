@@ -977,6 +977,73 @@
         </div>
     </div>
 
+    <!-- Plan Detail Modal -->
+    <div id="plan-detail-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="app.closePlanDetailModal()"></div>
+        <div class="modal-content plan-detail-content">
+            <div class="modal-header">
+                <h2 id="plan-detail-title">プラン詳細</h2>
+                <button class="modal-close" onclick="app.closePlanDetailModal()">✕</button>
+            </div>
+
+            <div class="plan-detail-body">
+                <!-- プラン概要 -->
+                <div class="plan-overview">
+                    <div class="plan-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">目標</span>
+                            <span class="meta-value" id="detail-goal-title">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">ステータス</span>
+                            <span class="meta-value" id="detail-plan-status">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">総週数</span>
+                            <span class="meta-value" id="detail-total-weeks">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">進捗</span>
+                            <span class="meta-value" id="detail-progress">-</span>
+                        </div>
+                    </div>
+
+                    <div class="plan-progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="detail-progress-bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 現在週の詳細 -->
+                <div class="current-week-section">
+                    <h3>📅 現在週の詳細</h3>
+                    <div class="current-week-card" id="detail-current-week">
+                        <!-- 動的に生成 -->
+                    </div>
+                </div>
+
+                <!-- 週別プラン一覧 -->
+                <div class="weeks-timeline">
+                    <h3>📋 週別プラン</h3>
+                    <div class="timeline-container" id="detail-weeks-timeline">
+                        <!-- 動的に生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="plan-detail-actions">
+                <button class="btn-secondary" onclick="app.closePlanDetailModal()">閉じる</button>
+                <button class="btn-accent" id="detail-edit-plan-btn" onclick="app.editPlanFromDetail()">プランを編集</button>
+                <div class="plan-status-actions">
+                    <button class="btn-warning" id="detail-pause-plan-btn" onclick="app.pausePlanFromDetail()">一時停止</button>
+                    <button class="btn-success" id="detail-resume-plan-btn" onclick="app.resumePlanFromDetail()">再開</button>
+                    <button class="btn-primary" id="detail-complete-plan-btn" onclick="app.completePlanFromDetail()">完了</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="mock-data.js"></script>

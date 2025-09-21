@@ -4174,10 +4174,176 @@ class App {
 
     // プラン詳細を表示
     viewPlanDetails(planId) {
-        // プラン詳細モーダルを表示する機能（今後実装）
         const plan = this.coachingPlanService.getPlan(planId);
-        console.log('Plan details:', plan);
-        this.showToast('プラン詳細機能は今後実装予定です', 'info');
+        if (!plan) {
+            this.showToast('プランが見つかりません', 'error');
+            return;
+        }
+
+        this.currentDetailPlanId = planId;
+        this.displayPlanDetailModal(plan);
+        this.showPlanDetailModal();
+    }
+
+    // プラン詳細モーダルを表示
+    showPlanDetailModal() {
+        const modal = document.getElementById('plan-detail-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    // プラン詳細モーダルを閉じる
+    closePlanDetailModal() {
+        const modal = document.getElementById('plan-detail-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        this.currentDetailPlanId = null;
+    }
+
+    // プラン詳細データを表示
+    displayPlanDetailModal(plan) {
+        // プラン基本情報
+        document.getElementById('detail-goal-title').textContent = plan.goalTitle;
+        document.getElementById('detail-plan-status').textContent = this.getStatusLabel(plan.status);
+        document.getElementById('detail-total-weeks').textContent = `${plan.weeks.length}週`;
+
+        // 進捗計算と表示
+        const progress = this.calculatePlanProgress(plan);
+        document.getElementById('detail-progress').textContent = `${progress}%`;
+        document.getElementById('detail-progress-bar').style.width = `${progress}%`;
+
+        // 現在週の詳細表示
+        this.displayCurrentWeekDetail(plan);
+
+        // 週別タイムライン表示
+        this.displayWeeksTimeline(plan);
+
+        // アクションボタンの状態更新
+        this.updatePlanDetailActions(plan);
+    }
+
+    // 現在週の詳細を表示
+    displayCurrentWeekDetail(plan) {
+        const currentWeek = this.coachingPlanService.getCurrentWeekPlan(plan.id);
+        const container = document.getElementById('detail-current-week');
+
+        if (!currentWeek) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <p>現在アクティブな週がありません</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="week-header">
+                <div class="week-title">第${currentWeek.weekNumber}週</div>
+                <div class="week-period">${currentWeek.startDate} ～ ${currentWeek.endDate}</div>
+                <div class="week-focus">${currentWeek.focus}</div>
+            </div>
+            <div class="week-content">
+                <div class="objectives-section">
+                    <h4>📋 今週の目標</h4>
+                    <ul class="objectives-list">
+                        ${currentWeek.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="milestones-section">
+                    <h4>🎯 達成指標</h4>
+                    <ul class="milestones-list">
+                        ${currentWeek.milestones.map(milestone => `<li>${milestone}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    // 週別タイムライン表示
+    displayWeeksTimeline(plan) {
+        const container = document.getElementById('detail-weeks-timeline');
+        const currentWeek = this.coachingPlanService.getCurrentWeekPlan(plan.id);
+        const currentWeekNumber = currentWeek?.weekNumber || 1;
+
+        container.innerHTML = plan.weeks.map(week => {
+            const isCompleted = week.weekNumber < currentWeekNumber;
+            const isCurrent = week.weekNumber === currentWeekNumber;
+            const statusClass = isCompleted ? 'completed' : isCurrent ? 'current' : '';
+
+            return `
+                <div class="timeline-week ${statusClass}">
+                    <div class="week-number">${week.weekNumber}</div>
+                    <div class="week-info">
+                        <div class="week-info-title">第${week.weekNumber}週: ${week.focus}</div>
+                        <div class="week-info-focus">${week.objectives.join(', ')}</div>
+                        <div class="week-info-period">${week.startDate} ～ ${week.endDate}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // プラン詳細アクションボタンの状態更新
+    updatePlanDetailActions(plan) {
+        const editBtn = document.getElementById('detail-edit-plan-btn');
+        const pauseBtn = document.getElementById('detail-pause-plan-btn');
+        const resumeBtn = document.getElementById('detail-resume-plan-btn');
+        const completeBtn = document.getElementById('detail-complete-plan-btn');
+
+        // ボタンの表示/非表示を制御
+        if (editBtn) editBtn.style.display = plan.status === 'completed' ? 'none' : 'inline-block';
+        if (pauseBtn) pauseBtn.style.display = plan.status === 'active' ? 'inline-block' : 'none';
+        if (resumeBtn) resumeBtn.style.display = plan.status === 'paused' ? 'inline-block' : 'none';
+        if (completeBtn) completeBtn.style.display = plan.status === 'completed' ? 'none' : 'inline-block';
+    }
+
+    // 詳細モーダルからプラン編集
+    editPlanFromDetail() {
+        if (this.currentDetailPlanId) {
+            this.closePlanDetailModal();
+            this.editPlan(this.currentDetailPlanId);
+        }
+    }
+
+    // 詳細モーダルからプラン一時停止
+    pausePlanFromDetail() {
+        if (this.currentDetailPlanId) {
+            this.pausePlan(this.currentDetailPlanId);
+            // モーダルを更新
+            const plan = this.coachingPlanService.getPlan(this.currentDetailPlanId);
+            if (plan) {
+                this.displayPlanDetailModal(plan);
+            }
+        }
+    }
+
+    // 詳細モーダルからプラン再開
+    resumePlanFromDetail() {
+        if (this.currentDetailPlanId) {
+            this.resumePlan(this.currentDetailPlanId);
+            // モーダルを更新
+            const plan = this.coachingPlanService.getPlan(this.currentDetailPlanId);
+            if (plan) {
+                this.displayPlanDetailModal(plan);
+            }
+        }
+    }
+
+    // 詳細モーダルからプラン完了
+    completePlanFromDetail() {
+        if (this.currentDetailPlanId) {
+            if (this.coachingPlanService.updatePlanStatus(this.currentDetailPlanId, 'completed')) {
+                this.showToast('プランを完了しました🎉', 'success');
+                this.loadCoachingPlans();
+                // モーダルを更新
+                const plan = this.coachingPlanService.getPlan(this.currentDetailPlanId);
+                if (plan) {
+                    this.displayPlanDetailModal(plan);
+                }
+            }
+        }
     }
 
     // プランを一時停止

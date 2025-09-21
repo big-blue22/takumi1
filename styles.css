@@ -5603,3 +5603,292 @@ input, select, textarea {
     border-width: 0.5px;
   }
 }
+
+/* Plan Detail Modal Styles */
+.plan-detail-content {
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.plan-detail-body {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* Plan Overview Section */
+.plan-overview {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--glass-border);
+}
+
+.plan-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.meta-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.meta-value {
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.plan-progress-section {
+  margin-top: var(--spacing-md);
+}
+
+/* Current Week Section */
+.current-week-section {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--glass-border);
+}
+
+.current-week-section h3 {
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+}
+
+.current-week-card {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--glass-border);
+}
+
+.week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.week-title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.week-period {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.week-focus {
+  background: var(--color-accent);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.week-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.objectives-section,
+.milestones-section {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md);
+}
+
+.objectives-section h4,
+.milestones-section h4 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.objectives-list,
+.milestones-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.objectives-list li,
+.milestones-list li {
+  padding: var(--spacing-xs) 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.objectives-list li:last-child,
+.milestones-list li:last-child {
+  border-bottom: none;
+}
+
+.objectives-list li::before {
+  content: "🎯 ";
+  margin-right: var(--spacing-xs);
+}
+
+.milestones-list li::before {
+  content: "✅ ";
+  margin-right: var(--spacing-xs);
+}
+
+/* Weeks Timeline Section */
+.weeks-timeline {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--glass-border);
+}
+
+.weeks-timeline h3 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+}
+
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.timeline-week {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--glass-border);
+  transition: all 0.3s ease;
+}
+
+.timeline-week:hover {
+  background: var(--glass-bg);
+  transform: translateX(5px);
+}
+
+.timeline-week.current {
+  border-color: var(--color-accent);
+  background: rgba(233, 69, 96, 0.1);
+}
+
+.timeline-week.completed {
+  opacity: 0.7;
+  border-color: var(--color-success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.week-number {
+  background: var(--color-accent);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  min-width: 40px;
+  text-align: center;
+}
+
+.timeline-week.completed .week-number {
+  background: var(--color-success);
+}
+
+.timeline-week.current .week-number {
+  background: var(--color-accent);
+  box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+.week-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.week-info-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+}
+
+.week-info-focus {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.week-info-period {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+
+/* Plan Detail Actions */
+.plan-detail-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--glass-border);
+  background: var(--bg-secondary);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.plan-status-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* Responsive Design for Plan Detail Modal */
+@media (max-width: 768px) {
+  .plan-detail-content {
+    width: 95vw;
+    max-height: 95vh;
+  }
+
+  .plan-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .week-content {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-week {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .plan-detail-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .plan-status-actions {
+    justify-content: center;
+  }
+}
