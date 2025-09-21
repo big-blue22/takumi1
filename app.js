@@ -749,6 +749,9 @@ class App {
     
     initPageContent(pageId) {
         switch(pageId) {
+            case 'coaching-plans':
+                this.initCoachingPlansPage();
+                break;
             case 'dashboard':
                 this.loadDashboard();
                 break;
@@ -3843,6 +3846,230 @@ class App {
     // プラン編集キャンセル
     cancelPlanEdit() {
         this.showPlanStep('plan-review-step');
+    }
+
+    // コーチングプランページの初期化
+    initCoachingPlansPage() {
+        // 更新ボタンのイベントリスナー
+        document.getElementById('refresh-plans-btn')?.addEventListener('click', () => {
+            this.loadCoachingPlans();
+        });
+
+        // ステータスフィルターのイベントリスナー
+        document.getElementById('plan-status-filter')?.addEventListener('change', (e) => {
+            this.filterPlans(e.target.value);
+        });
+
+        // ページ表示時にプランを読み込み
+        this.loadCoachingPlans();
+    }
+
+    // コーチングプランを読み込み
+    loadCoachingPlans() {
+        const activePlans = this.coachingPlanService.getActivePlans();
+        const allPlans = this.coachingPlanService.getAllPlans();
+
+        this.displayActivePlans(activePlans);
+        this.displayAllPlans(allPlans);
+
+        // アクティブなプランがある場合は今週の詳細を表示
+        if (activePlans.length > 0) {
+            this.displayCurrentWeek(activePlans[0]);
+        }
+    }
+
+    // アクティブなプランを表示
+    displayActivePlans(plans) {
+        const container = document.getElementById('active-plans-container');
+        if (!container) return;
+
+        if (plans.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>アクティブなプランがありません</h3>
+                    <p>目標ページでプラン付きの目標を作成してください</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = plans.map(plan => this.createPlanCard(plan)).join('');
+    }
+
+    // すべてのプランを表示
+    displayAllPlans(plans) {
+        const container = document.getElementById('all-plans-container');
+        if (!container) return;
+
+        if (plans.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>プランがありません</h3>
+                    <p>目標ページでプランを作成してください</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = plans.map(plan => this.createPlanCard(plan)).join('');
+    }
+
+    // プランカードを作成
+    createPlanCard(plan) {
+        const progress = this.calculatePlanProgress(plan);
+        const currentWeek = this.coachingPlanService.getCurrentWeekPlan(plan.id);
+
+        return `
+            <div class="plan-card" data-plan-id="${plan.id}">
+                <div class="plan-card-header">
+                    <h3 class="plan-title">${plan.goalTitle}</h3>
+                    <span class="plan-status ${plan.status}">${this.getStatusLabel(plan.status)}</span>
+                </div>
+
+                <div class="plan-info">
+                    <div class="plan-stat">
+                        <span class="plan-stat-value">${plan.weeks.length}</span>
+                        <span class="plan-stat-label">週</span>
+                    </div>
+                    <div class="plan-stat">
+                        <span class="plan-stat-value">${currentWeek?.weekNumber || 1}</span>
+                        <span class="plan-stat-label">現在週</span>
+                    </div>
+                    <div class="plan-stat">
+                        <span class="plan-stat-value">${progress}%</span>
+                        <span class="plan-stat-label">進捗</span>
+                    </div>
+                </div>
+
+                <div class="plan-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+
+                <div class="plan-actions">
+                    <button class="btn-primary btn-sm" onclick="app.viewPlanDetails('${plan.id}')">詳細表示</button>
+                    ${plan.status === 'active' ?
+                        `<button class="btn-secondary btn-sm" onclick="app.pausePlan('${plan.id}')">一時停止</button>` :
+                        plan.status === 'paused' ?
+                        `<button class="btn-accent btn-sm" onclick="app.resumePlan('${plan.id}')">再開</button>` :
+                        ''
+                    }
+                    ${plan.status !== 'completed' ?
+                        `<button class="btn-secondary btn-sm" onclick="app.editPlan('${plan.id}')">編集</button>` : ''
+                    }
+                </div>
+            </div>
+        `;
+    }
+
+    // 今週の詳細を表示
+    displayCurrentWeek(plan) {
+        const currentWeek = this.coachingPlanService.getCurrentWeekPlan(plan.id);
+        const card = document.getElementById('current-week-card');
+        const content = document.getElementById('current-week-content');
+
+        if (!currentWeek || !card || !content) {
+            if (card) card.style.display = 'none';
+            return;
+        }
+
+        card.style.display = 'block';
+
+        const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
+
+        content.innerHTML = `
+            <div class="week-focus">
+                第${currentWeek.weekNumber}週: ${currentWeek.focus}
+            </div>
+
+            <div class="week-objectives">
+                <h4>今週の目標</h4>
+                <ul class="objectives-list">
+                    ${(currentWeek.objectives || []).map(obj => `<li>${obj}</li>`).join('')}
+                </ul>
+            </div>
+
+            <div class="week-objectives">
+                <h4>日別タスク</h4>
+                <div class="daily-tasks">
+                    ${dayNames.map((day, index) => `
+                        <div class="task-day">
+                            <div class="task-day-name">${day}</div>
+                            <div class="task-content">${(currentWeek.dailyTasks || [])[index] || '休憩'}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="week-objectives">
+                <h4>達成指標</h4>
+                <ul class="objectives-list">
+                    ${(currentWeek.milestones || []).map(milestone => `<li>${milestone}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    // プランの進捗を計算
+    calculatePlanProgress(plan) {
+        const currentWeek = this.coachingPlanService.getCurrentWeekPlan(plan.id);
+        if (!currentWeek) return 0;
+
+        const totalWeeks = plan.weeks.length;
+        const currentWeekNumber = currentWeek.weekNumber;
+
+        return Math.round((currentWeekNumber / totalWeeks) * 100);
+    }
+
+    // ステータスラベルを取得
+    getStatusLabel(status) {
+        const labels = {
+            'active': 'アクティブ',
+            'completed': '完了',
+            'paused': '一時停止',
+            'draft': '下書き'
+        };
+        return labels[status] || status;
+    }
+
+    // プランをフィルター
+    filterPlans(status) {
+        const allPlans = this.coachingPlanService.getAllPlans();
+        const filteredPlans = status === 'all' ? allPlans : allPlans.filter(plan => plan.status === status);
+        this.displayAllPlans(filteredPlans);
+    }
+
+    // プラン詳細を表示
+    viewPlanDetails(planId) {
+        // プラン詳細モーダルを表示する機能（今後実装）
+        const plan = this.coachingPlanService.getPlan(planId);
+        console.log('Plan details:', plan);
+        this.showToast('プラン詳細機能は今後実装予定です', 'info');
+    }
+
+    // プランを一時停止
+    pausePlan(planId) {
+        if (this.coachingPlanService.updatePlanStatus(planId, 'paused')) {
+            this.showToast('プランを一時停止しました', 'success');
+            this.loadCoachingPlans();
+        }
+    }
+
+    // プランを再開
+    resumePlan(planId) {
+        if (this.coachingPlanService.updatePlanStatus(planId, 'active')) {
+            this.showToast('プランを再開しました', 'success');
+            this.loadCoachingPlans();
+        }
+    }
+
+    // プランを編集
+    editPlan(planId) {
+        // プラン編集機能（今後実装）
+        this.showToast('プラン編集機能は今後実装予定です', 'info');
     }
 
 }

@@ -3775,6 +3775,208 @@ input, select, textarea {
   animation: fadeIn 0.3s ease;
 }
 
+/* Coaching Plans Page Styles */
+.plans-container {
+    display: grid;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.plan-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    transition: all 0.3s ease;
+}
+
+.plan-card:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 12px rgba(233, 69, 96, 0.1);
+}
+
+.plan-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+}
+
+.plan-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.plan-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8em;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.plan-status.active {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.plan-status.completed {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.plan-status.paused {
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
+}
+
+.plan-status.draft {
+    background: rgba(156, 163, 175, 0.1);
+    color: #9ca3af;
+}
+
+.plan-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.plan-stat {
+    text-align: center;
+}
+
+.plan-stat-value {
+    display: block;
+    font-size: 1.5em;
+    font-weight: 600;
+    color: var(--color-accent);
+}
+
+.plan-stat-label {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.plan-progress {
+    margin-bottom: var(--spacing-md);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent), var(--color-primary));
+    transition: width 0.3s ease;
+}
+
+.plan-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.current-week-details {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+}
+
+.week-focus {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: var(--spacing-md);
+}
+
+.week-objectives {
+    margin-bottom: var(--spacing-md);
+}
+
+.week-objectives h4 {
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+}
+
+.objectives-list {
+    list-style: none;
+    padding: 0;
+}
+
+.objectives-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.objectives-list li::before {
+    content: "🎯 ";
+    margin-right: 0.5rem;
+}
+
+.daily-tasks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.task-day {
+    text-align: center;
+    padding: var(--spacing-sm);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.task-day-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9em;
+    margin-bottom: 0.5rem;
+}
+
+.task-content {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+}
+
+.plan-filters {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.card-header h3 {
+    margin: 0;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+.empty-state-icon {
+    font-size: 3em;
+    margin-bottom: var(--spacing-md);
+}
+
 /* Theme toggle button enhancement */
 .theme-btn {
   background: var(--glass-bg);
