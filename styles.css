@@ -4627,26 +4627,10 @@ input, select, textarea {
   transition: var(--transition-fast);
 }
 
-[data-theme="light"] .view-all-goals {
-  background: var(--glass-bg);
-  border: 1px solid var(--card-border);
-  color: var(--text-primary);
-  font-weight: 500;
-  box-shadow: var(--shadow-small);
-}
-
 .view-all-goals:hover {
   background: var(--color-accent);
   color: white;
   border-color: var(--color-accent);
-}
-
-[data-theme="light"] .view-all-goals:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  border-color: transparent;
-  box-shadow: var(--shadow-medium);
-  transform: translateY(-1px);
 }
 
 .dashboard-goals-list {
@@ -4730,20 +4714,9 @@ input, select, textarea {
   color: var(--text-muted);
 }
 
-[data-theme="light"] .no-goals-message {
-  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--card-border);
-}
-
 .no-goals-message h4 {
   color: var(--text-secondary);
   margin-bottom: var(--spacing-md);
-}
-
-[data-theme="light"] .no-goals-message h4 {
-  color: var(--text-primary);
-  font-weight: 600;
 }
 
 .add-goal-btn {
@@ -4757,25 +4730,9 @@ input, select, textarea {
   transition: var(--transition-fast);
 }
 
-[data-theme="light"] .add-goal-btn {
-  background: rgba(255, 255, 255, 0.7);
-  border: 2px dashed #cbd5e1;
-  color: var(--text-primary);
-  font-weight: 500;
-  box-shadow: var(--shadow-small);
-}
-
 .add-goal-btn:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
-}
-
-[data-theme="light"] .add-goal-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: #3b82f6;
-  color: #1d4ed8;
-  box-shadow: var(--shadow-medium);
-  transform: translateY(-1px);
 }
 
 /* No Matches Message */
