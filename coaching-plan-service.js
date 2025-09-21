@@ -131,10 +131,22 @@ class CoachingPlanService {
     // AI用プロンプトを構築
     buildPlanGenerationPrompt(goal, planStructure) {
         const { title } = goal;
-        const weeks = Math.min(planStructure.totalWeeks, 4); // Limit to max 4 weeks to prevent token overflow
 
-        return `${title} ${weeks}週プラン。JSONのみ:
-{"weeks":[{"weekNumber":1,"focus":"基礎","objectives":["目標"],"dailyTasks":["月","火","水","木","金","土","日"],"milestones":["達成"]}]}`;
+        return `目標「${title}」の${planStructure.totalWeeks}週練習プラン。JSON形式のみ回答:
+
+{
+  "weeks": [
+    {
+      "weekNumber": 1,
+      "focus": "基礎練習",
+      "objectives": ["目標1", "目標2"],
+      "dailyTasks": ["月練習", "火練習", "水練習", "木練習", "金練習", "土練習", "日休憩"],
+      "milestones": ["達成1", "達成2"]
+    }
+  ]
+}
+
+${planStructure.totalWeeks}週分生成。`;
     }
 
     // AIレスポンスを解析
@@ -207,7 +219,15 @@ class CoachingPlanService {
             }
 
             if (parsed.weeks.length === 0) {
-                throw new Error('Empty weeks array in response');
+                console.warn('⚠️ Empty weeks array, creating minimal plan');
+                // 空の場合は最小限のプランを作成
+                parsed.weeks = [{
+                    weekNumber: 1,
+                    focus: '基礎練習',
+                    objectives: ['基本スキル向上'],
+                    dailyTasks: ['練習', '練習', '練習', '練習', '練習', '練習', '休憩'],
+                    milestones: ['週目標達成']
+                }];
             }
 
             console.log(`✅ Successfully parsed ${parsed.weeks.length} weeks`);

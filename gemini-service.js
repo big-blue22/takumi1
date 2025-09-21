@@ -20,7 +20,7 @@ class GeminiService {
         // Gemini 2.5 Flash用の最適化されたパラメータ
         this.chatParams = {
             temperature: 0.7,
-            maxOutputTokens: 4096, // コーチングプラン生成用により大きなトークン数
+            maxOutputTokens: 8192, // より大きなトークン数に緩和
             topP: 0.9,
             topK: 40 // より幅広い回答生成
         };
@@ -544,10 +544,10 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 
             const candidate = data.candidates[0];
 
-            // MAX_TOKENSエラーのチェック
+            // MAX_TOKENSエラーのチェック（警告のみで処理継続）
             if (candidate.finishReason === 'MAX_TOKENS') {
-                console.error('Response truncated due to token limit:', candidate);
-                throw new Error('レスポンスがトークン制限により切り捨てられました。プロンプトを短くしてください。');
+                console.warn('⚠️ Response truncated due to token limit, but continuing with partial content:', candidate);
+                // エラーを投げずに部分的なレスポンスを使用
             }
 
             if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
