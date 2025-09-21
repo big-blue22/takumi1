@@ -71,7 +71,6 @@ class CoachingPlanService {
                 endDate: weekEnd.toISOString().split('T')[0],
                 focus: '', // AIまたはユーザーが設定
                 objectives: [], // 週の目標
-                dailyTasks: [], // 日別タスク
                 milestones: [] // 達成指標
             });
 
@@ -140,7 +139,6 @@ class CoachingPlanService {
       "weekNumber": 1,
       "focus": "基礎練習",
       "objectives": ["目標1", "目標2"],
-      "dailyTasks": ["月練習", "火練習", "水練習", "木練習", "金練習", "土練習", "日休憩"],
       "milestones": ["達成1", "達成2"]
     }
   ]
@@ -225,7 +223,6 @@ ${planStructure.totalWeeks}週分生成。`;
                     weekNumber: 1,
                     focus: '基礎練習',
                     objectives: ['基本スキル向上'],
-                    dailyTasks: ['練習', '練習', '練習', '練習', '練習', '練習', '休憩'],
                     milestones: ['週目標達成']
                 }];
             }
@@ -247,7 +244,6 @@ ${planStructure.totalWeeks}週分生成。`;
                         ...week,
                         focus: lastParsedWeek?.focus || '継続練習',
                         objectives: lastParsedWeek?.objectives || ['基本練習'],
-                        dailyTasks: lastParsedWeek?.dailyTasks || ['練習', '練習', '練習', '練習', '練習', '練習', '休憩'],
                         milestones: lastParsedWeek?.milestones || ['週目標達成']
                     };
                 }
@@ -341,23 +337,6 @@ ${planStructure.totalWeeks}週分生成。`;
         return currentWeek;
     }
 
-    // 今日のタスクを取得
-    getTodayTask(planId) {
-        const currentWeek = this.getCurrentWeekPlan(planId);
-        if (!currentWeek || !currentWeek.dailyTasks) return null;
-
-        const today = new Date();
-        const dayOfWeek = today.getDay(); // 0=日曜, 1=月曜, ...
-        const taskIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 月曜日を0にする
-
-        return {
-            weekNumber: currentWeek.weekNumber,
-            focus: currentWeek.focus,
-            todayTask: currentWeek.dailyTasks[taskIndex] || '休憩日',
-            objectives: currentWeek.objectives,
-            milestones: currentWeek.milestones
-        };
-    }
 
     // プランのステータスを更新
     updatePlanStatus(planId, status) {

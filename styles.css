@@ -2390,22 +2390,6 @@ body {
   left: 0;
 }
 
-.daily-tasks {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--spacing-xs);
-  margin-top: var(--spacing-sm);
-}
-
-.daily-task {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-xs);
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  text-align: center;
-}
 
 /* Plan Actions */
 .plan-actions,
@@ -2543,9 +2527,6 @@ body {
     flex-direction: column;
   }
 
-  .daily-tasks {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 .coaching-actions {
@@ -3935,31 +3916,6 @@ input, select, textarea {
     margin-right: 0.5rem;
 }
 
-.daily-tasks {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: var(--spacing-sm);
-}
-
-.task-day {
-    text-align: center;
-    padding: var(--spacing-sm);
-    background: var(--bg-secondary);
-    border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
-}
-
-.task-day-name {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.9em;
-    margin-bottom: 0.5rem;
-}
-
-.task-content {
-    font-size: 0.8em;
-    color: var(--text-secondary);
-}
 
 .plan-filters {
     display: flex;

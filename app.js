@@ -3780,9 +3780,6 @@ class App {
                     ${week.milestones.map(milestone => `<li>${milestone}</li>`).join('')}
                 </ul>
             </div>
-            <div class="daily-tasks">
-                ${week.dailyTasks.map(task => `<div class="daily-task">${task}</div>`).join('')}
-            </div>
         `;
 
         return card;
@@ -3992,17 +3989,6 @@ class App {
                 </ul>
             </div>
 
-            <div class="week-objectives">
-                <h4>日別タスク</h4>
-                <div class="daily-tasks">
-                    ${dayNames.map((day, index) => `
-                        <div class="task-day">
-                            <div class="task-day-name">${day}</div>
-                            <div class="task-content">${(currentWeek.dailyTasks || [])[index] || '休憩'}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
 
             <div class="week-objectives">
                 <h4>達成指標</h4>
