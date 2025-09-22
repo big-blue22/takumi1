@@ -1362,18 +1362,6 @@ class App {
                     <span class="progress-text">${calculatedProgress}% (日数ベース)</span>
                 </div>
                 <div class="goal-actions">
-                    <div class="progress-update">
-                        <label for="progress-input-${goal.id}">手動進捗:</label>
-                        <input type="range"
-                               id="progress-input-${goal.id}"
-                               min="0"
-                               max="100"
-                               value="${goal.progress || 0}"
-                               class="progress-slider"
-                               oninput="document.getElementById('progress-value-${goal.id}').textContent = this.value + '%'"
-                               onchange="app.updateGoalProgress(${goal.id}, parseInt(this.value))">
-                        <span id="progress-value-${goal.id}" class="progress-value">${goal.progress || 0}%</span>
-                    </div>
                     <button class="btn-danger btn-sm" onclick="app.deleteGoal(${goal.id})">削除</button>
                 </div>
             </div>
@@ -1388,43 +1376,6 @@ class App {
         this.loadGoalsList();
     }
 
-    updateGoalProgress(goalId, newProgress) {
-        try {
-            const goals = JSON.parse(localStorage.getItem('goals') || '[]');
-            const goalIndex = goals.findIndex(goal => goal.id === goalId);
-
-            console.log('🎯 Updating goal progress:', { goalId, newProgress, goalIndex, currentGoals: goals });
-
-            if (goalIndex !== -1) {
-                // 進捗を0-100の範囲に制限
-                const clampedProgress = Math.max(0, Math.min(100, newProgress));
-                const oldProgress = goals[goalIndex].progress;
-                goals[goalIndex].progress = clampedProgress;
-
-                console.log(`🎯 Goal "${goals[goalIndex].title}" progress: ${oldProgress}% → ${clampedProgress}%`);
-
-                localStorage.setItem('goals', JSON.stringify(goals));
-
-                // ダッシュボードの目標リストを更新
-                this.loadGoalsList();
-
-                // 現在のページがダッシュボードの場合のみ更新
-                if (this.currentPage === 'dashboard') {
-                    this.loadDashboardGoals();
-                }
-
-                this.showToast(`目標の進捗を${clampedProgress}%に更新しました`, 'success');
-                return true;
-            }
-
-            this.showToast('目標が見つかりませんでした', 'error');
-            return false;
-        } catch (error) {
-            console.error('Failed to update goal progress:', error);
-            this.showToast('進捗の更新に失敗しました', 'error');
-            return false;
-        }
-    }
 
     // デバッグ用: 特定の目標の進捗を強制的に更新する関数
     forceUpdateGoalByTitle(title, progress) {
@@ -3722,9 +3673,9 @@ class App {
             const createdAt = goal.createdAt ? new Date(goal.createdAt) : null;
             const deadline = new Date(goal.deadline);
 
-            // 作成日が設定されていない場合は手動進捗を使用
+            // 作成日が設定されていない場合はデフォルト値を返す
             if (!createdAt) {
-                return goal.progress || 0;
+                return 0;
             }
 
             // 期限が過去の場合は100%
