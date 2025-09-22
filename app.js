@@ -1276,6 +1276,9 @@ class App {
         if (this.playerStatsManager) {
             this.playerStatsManager.loadStatsToUI();
         }
+
+        // ダッシュボード目標を読み込み
+        this.loadDashboardGoals();
     }
     
     loadAnalysis() {
@@ -1385,10 +1388,15 @@ class App {
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
             const goalIndex = goals.findIndex(goal => goal.id === goalId);
 
+            console.log('🎯 Updating goal progress:', { goalId, newProgress, goalIndex, currentGoals: goals });
+
             if (goalIndex !== -1) {
                 // 進捗を0-100の範囲に制限
                 const clampedProgress = Math.max(0, Math.min(100, newProgress));
+                const oldProgress = goals[goalIndex].progress;
                 goals[goalIndex].progress = clampedProgress;
+
+                console.log(`🎯 Goal "${goals[goalIndex].title}" progress: ${oldProgress}% → ${clampedProgress}%`);
 
                 localStorage.setItem('goals', JSON.stringify(goals));
 
@@ -1405,6 +1413,26 @@ class App {
         } catch (error) {
             console.error('Failed to update goal progress:', error);
             this.showToast('進捗の更新に失敗しました', 'error');
+            return false;
+        }
+    }
+
+    // デバッグ用: 特定の目標の進捗を強制的に更新する関数
+    forceUpdateGoalByTitle(title, progress) {
+        try {
+            const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+            const goalIndex = goals.findIndex(goal => goal.title === title);
+
+            if (goalIndex !== -1) {
+                goals[goalIndex].progress = progress;
+                localStorage.setItem('goals', JSON.stringify(goals));
+                this.loadDashboardGoals();
+                console.log(`🎯 Force updated "${title}" to ${progress}%`);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Force update failed:', error);
             return false;
         }
     }
@@ -3483,31 +3511,69 @@ class App {
 
     // === ダッシュボード目標表示機能 ===
     initDashboardGoals() {
-        console.log('Initializing dashboard goals...');
-        
+        console.log('🎯 Initializing dashboard goals...');
+
+        // 既存の目標データをチェック・修正
+        this.checkAndFixGoalsData();
+
         // イベントリスナー設定
         const viewAllGoalsBtn = document.getElementById('view-all-goals');
         const addFirstGoalBtn = document.getElementById('add-first-goal');
-        
+
         if (viewAllGoalsBtn) {
             viewAllGoalsBtn.addEventListener('click', () => {
                 this.showPage('goals');
                 this.updateNavigation('goals');
             });
         }
-        
+
         if (addFirstGoalBtn) {
             addFirstGoalBtn.addEventListener('click', () => {
                 this.showPage('goals');
                 this.updateNavigation('goals');
             });
         }
-        
+
         // 目標データを読み込み
         this.loadDashboardGoals();
-        
+
         // LocalStorageの変更を監視
         this.setupGoalsStorageListener();
+    }
+
+    // 目標データの整合性をチェック・修正
+    checkAndFixGoalsData() {
+        try {
+            const goalsData = localStorage.getItem('goals');
+            if (!goalsData) return;
+
+            const goals = JSON.parse(goalsData);
+            let dataFixed = false;
+
+            const fixedGoals = goals.map(goal => {
+                // 進捗値が不正な場合の修正
+                if (typeof goal.progress !== 'number' || isNaN(goal.progress) || goal.progress < 0 || goal.progress > 100) {
+                    console.log(`🔧 Fixing invalid progress for goal "${goal.title}": ${goal.progress} → 0`);
+                    goal.progress = 0;
+                    dataFixed = true;
+                }
+
+                // IDが存在しない場合の修正
+                if (!goal.id) {
+                    goal.id = Date.now() + Math.random();
+                    dataFixed = true;
+                }
+
+                return goal;
+            });
+
+            if (dataFixed) {
+                localStorage.setItem('goals', JSON.stringify(fixedGoals));
+                console.log('🎯 Goals data has been fixed and saved');
+            }
+        } catch (error) {
+            console.error('Error checking goals data:', error);
+        }
     }
     
     loadDashboardGoals() {
@@ -3515,16 +3581,25 @@ class App {
             const goalsData = localStorage.getItem('goals');
             let goals = goalsData ? JSON.parse(goalsData) : [];
 
+            console.log('🎯 Loading dashboard goals:', goals);
+
             // 既存の目標で進捗が未定義の場合は0に初期化
-            goals = goals.map(goal => ({
-                ...goal,
-                progress: (typeof goal.progress === 'number') ? goal.progress : 0
-            }));
+            const updatedGoals = goals.map(goal => {
+                const updatedGoal = {
+                    ...goal,
+                    progress: (typeof goal.progress === 'number') ? goal.progress : 0
+                };
+                console.log(`🎯 Goal "${goal.title}": progress = ${updatedGoal.progress}%`);
+                return updatedGoal;
+            });
 
             // 修正されたデータを保存
-            localStorage.setItem('goals', JSON.stringify(goals));
+            if (JSON.stringify(goals) !== JSON.stringify(updatedGoals)) {
+                localStorage.setItem('goals', JSON.stringify(updatedGoals));
+                console.log('🎯 Updated goals data saved to localStorage');
+            }
 
-            this.renderDashboardGoals(goals);
+            this.renderDashboardGoals(updatedGoals);
         } catch (error) {
             console.warn('Failed to load goals:', error);
             this.renderDashboardGoals([]);
@@ -3585,6 +3660,8 @@ class App {
         const deadline = new Date(goal.deadline).toLocaleDateString('ja-JP');
         const isUrgent = this.isDeadlineUrgent(goal.deadline);
         const urgentClass = isUrgent ? 'urgent' : '';
+
+        console.log(`🎯 Rendering goal "${goal.title}" with progress: ${progress}%`);
 
         return `
             <div class="dashboard-goal-item ${urgentClass}">

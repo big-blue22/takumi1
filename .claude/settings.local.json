@@ -3,7 +3,8 @@
     "allow": [
       "Bash(python:*)",
       "Bash(node:*)",
-      "mcp__gemini-search__gemini_web_search"
+      "mcp__gemini-search__gemini_web_search",
+      "Bash(start index.html)"
     ],
     "deny": [],
     "ask": []
