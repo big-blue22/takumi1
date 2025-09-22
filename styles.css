@@ -1348,9 +1348,10 @@ body {
 }
 
 .btn-sm {
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
   border-radius: var(--border-radius-small);
+  min-height: auto;
 }
 
 /* Settings */
