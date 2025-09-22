@@ -1407,7 +1407,11 @@ class App {
 
                 // ダッシュボードの目標リストを更新
                 this.loadGoalsList();
-                this.loadDashboardGoals();
+
+                // 現在のページがダッシュボードの場合のみ更新
+                if (this.currentPage === 'dashboard') {
+                    this.loadDashboardGoals();
+                }
 
                 this.showToast(`目標の進捗を${clampedProgress}%に更新しました`, 'success');
                 return true;
@@ -1452,7 +1456,11 @@ class App {
 
             // リストを更新
             this.loadGoalsList();
-            this.loadDashboardGoals();
+
+            // 現在のページがダッシュボードの場合のみ更新
+            if (this.currentPage === 'dashboard') {
+                this.loadDashboardGoals();
+            }
 
             this.showToast('目標を削除しました', 'success');
         } catch (error) {
@@ -3609,30 +3617,10 @@ class App {
             const goalsData = localStorage.getItem('goals');
             let goals = goalsData ? JSON.parse(goalsData) : [];
 
-            console.log('🎯 Raw goals data from localStorage:', goalsData);
-            console.log('🎯 Parsed goals:', goals);
+            console.log('🎯 Loading dashboard goals:', goals.length, 'goals found');
 
-            // 目標データをクリーンアップして正規化
-            const cleanedGoals = goals.map(goal => {
-                // progressプロパティを明示的に数値として設定
-                if (typeof goal.progress !== 'number' || isNaN(goal.progress)) {
-                    goal.progress = 0;
-                }
-
-                console.log(`🎯 Goal: "${goal.title}"`, {
-                    originalProgress: goal.progress,
-                    type: typeof goal.progress,
-                    isNumber: typeof goal.progress === 'number',
-                    isNaN: isNaN(goal.progress)
-                });
-
-                return goal;
-            });
-
-            // クリーンアップされたデータを保存
-            localStorage.setItem('goals', JSON.stringify(cleanedGoals));
-
-            this.renderDashboardGoals(cleanedGoals);
+            // データのクリーンアップは初期化時のみ実行（無限ループ防止）
+            this.renderDashboardGoals(goals);
         } catch (error) {
             console.warn('Failed to load goals:', error);
             this.renderDashboardGoals([]);
@@ -3645,8 +3633,6 @@ class App {
             console.error('🎯 dashboard-goals-list element not found');
             return;
         }
-
-        console.log('🎯 renderDashboardGoals called with:', goals);
 
         if (goals.length === 0) {
             // 目標なし
@@ -3689,8 +3675,6 @@ class App {
         // 最大3件表示
         const displayGoals = sortedGoals.slice(0, 3);
 
-        console.log('🎯 Displaying goals:', displayGoals);
-
         // HTMLを生成して挿入
         const html = displayGoals.map(goal => this.renderGoalItem(goal)).join('');
         goalsList.innerHTML = html;
@@ -3703,7 +3687,10 @@ class App {
         const isUrgent = this.isDeadlineUrgent(goal.deadline);
         const urgentClass = isUrgent ? 'urgent' : '';
 
-        console.log(`🎯 Rendering goal "${goal.title}" with calculated progress: ${progress}%`);
+        // デバッグ時のみログ出力
+        if (window.DEBUG_GOALS) {
+            console.log(`🎯 Rendering "${goal.title}": ${progress}%`);
+        }
 
         return `
             <div class="dashboard-goal-item ${urgentClass}">
@@ -3758,14 +3745,10 @@ class App {
             // 進捗率を計算（0-100%の範囲に制限）
             const progress = Math.max(0, Math.min(100, (elapsedDays / totalDays) * 100));
 
-            console.log(`📅 Progress calculation for "${goal.title}":`, {
-                createdAt: createdAt.toISOString().split('T')[0],
-                deadline: deadline.toISOString().split('T')[0],
-                now: now.toISOString().split('T')[0],
-                totalDays: totalDays.toFixed(1),
-                elapsedDays: elapsedDays.toFixed(1),
-                progress: progress.toFixed(1)
-            });
+            // デバッグ時のみ詳細ログ
+            if (window.DEBUG_GOALS) {
+                console.log(`📅 Progress: "${goal.title}" = ${Math.round(progress)}% (${elapsedDays.toFixed(1)}/${totalDays.toFixed(1)} days)`);
+            }
 
             return Math.round(progress);
         } catch (error) {
@@ -3775,21 +3758,21 @@ class App {
     }
     
     setupGoalsStorageListener() {
-        // LocalStorageの変更を監視
+        // 重複リスナー防止のフラグ
+        if (this.goalsListenerSetup) {
+            return;
+        }
+        this.goalsListenerSetup = true;
+
+        // LocalStorageの変更を監視（他のタブからの変更のみ）
         window.addEventListener('storage', (e) => {
             if (e.key === 'goals') {
+                console.log('🎯 Storage event detected from another tab');
                 this.loadDashboardGoals();
             }
         });
-        
-        // 同一タブ内での変更も監視
-        const originalSetItem = localStorage.setItem;
-        localStorage.setItem = (key, value) => {
-            originalSetItem.call(localStorage, key, value);
-            if (key === 'goals') {
-                setTimeout(() => this.loadDashboardGoals(), 100);
-            }
-        };
+
+        console.log('🎯 Goals storage listener setup completed');
     }
     
     updateNavigation(pageId) {
