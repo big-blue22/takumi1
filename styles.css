@@ -1812,6 +1812,18 @@ body {
   gap: var(--spacing-xs);
 }
 
+.game-notice {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-style: italic;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(233, 69, 96, 0.1);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--border-radius);
+  margin-top: var(--spacing-md);
+}
+}
+
 .game-name {
   color: var(--text-primary);
   font-size: var(--font-size-lg);

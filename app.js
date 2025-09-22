@@ -881,29 +881,7 @@ class App {
             });
         }
         
-        // ゲーム変更ボタン
-        const changeGameBtn = document.getElementById('change-game-btn');
-        if (changeGameBtn) {
-            changeGameBtn.addEventListener('click', () => {
-                this.showGameSelector();
-            });
-        }
-        
-        // ゲーム選択確定ボタン
-        const confirmGameBtn = document.getElementById('confirm-game-btn');
-        if (confirmGameBtn) {
-            confirmGameBtn.addEventListener('click', () => {
-                this.confirmGameSelection();
-            });
-        }
-        
-        // ゲーム選択キャンセルボタン
-        const cancelGameBtn = document.getElementById('cancel-game-btn');
-        if (cancelGameBtn) {
-            cancelGameBtn.addEventListener('click', () => {
-                this.hideGameSelector();
-            });
-        }
+        // Street Fighter 6専用アプリのため、ゲーム選択機能は無効化
 
         // スキルレベル変更ボタン
         const changeSkillBtn = document.getElementById('change-skill-btn');
@@ -1979,15 +1957,22 @@ class App {
     checkGameSelection() {
         const selectedGame = localStorage.getItem('selectedGame');
         const selectedGameData = localStorage.getItem('selectedGameData');
-        
+
         if (selectedGame && selectedGameData) {
             // ゲームが選択済み
             this.updateUIWithGameData(JSON.parse(selectedGameData));
-            this.hideGameSelectionGuidance();
         } else {
-            // ゲーム未選択
-            this.showGameSelectionGuidance();
-            this.clearGameData();
+            // Street Fighter 6専用なので、ゲームデータを自動設定
+            const sf6GameData = {
+                id: 'sf6',
+                name: 'Street Fighter 6',
+                icon: '👊',
+                category: '格闘ゲーム'
+            };
+
+            localStorage.setItem('selectedGame', sf6GameData.id);
+            localStorage.setItem('selectedGameData', JSON.stringify(sf6GameData));
+            this.updateUIWithGameData(sf6GameData);
         }
     }
     
@@ -2438,11 +2423,15 @@ class App {
             modal.classList.remove('hidden');
             modal.style.display = 'flex';
             this.currentSetupStep = 1;
-            this.selectedGameData = null;
-            this.selectedSkillLevel = null;
 
-            // ゲームリストを生成
-            this.generateGameOptions();
+            // Street Fighter 6固定なので、ゲーム選択をスキップ
+            this.selectedGameData = {
+                id: 'sf6',
+                name: 'Street Fighter 6',
+                icon: '👊',
+                category: '格闘ゲーム'
+            };
+            this.selectedSkillLevel = null;
 
             // 初期設定リスナーを設定
             this.setupInitialSetupListeners();
@@ -2590,7 +2579,15 @@ class App {
     }
 
     completeInitialSetup() {
-        if (!this.selectedGameData || !this.selectedSkillLevel) return;
+        if (!this.selectedSkillLevel) return;
+
+        // Street Fighter 6固定なので、ゲームデータを自動設定
+        this.selectedGameData = {
+            id: 'sf6',
+            name: 'Street Fighter 6',
+            icon: '👊',
+            category: '格闘ゲーム'
+        };
 
         // 設定を保存
         localStorage.setItem('selectedGame', this.selectedGameData.id);
@@ -2669,27 +2666,7 @@ class App {
         // 既存のリスナーをクリア（重複防止）
         this.clearInitialSetupListeners();
 
-        // ゲーム次へボタン
-        const gameNextBtn = document.getElementById('setup-game-next');
-        if (gameNextBtn) {
-            console.log('Found game next button');
-            this.gameNextHandler = () => {
-                console.log('Game next button clicked');
-                this.nextToSkillSelection();
-            };
-            gameNextBtn.addEventListener('click', this.gameNextHandler);
-        } else {
-            console.error('Game next button not found');
-        }
-
-        // スキル戻るボタン
-        const skillBackBtn = document.getElementById('setup-skill-back');
-        if (skillBackBtn) {
-            this.skillBackHandler = () => {
-                this.backToGameSelection();
-            };
-            skillBackBtn.addEventListener('click', this.skillBackHandler);
-        }
+        // Street Fighter 6専用なので、ゲーム選択ステップは不要
 
         // スキル完了ボタン
         const skillCompleteBtn = document.getElementById('setup-skill-complete');
@@ -2722,17 +2699,7 @@ class App {
     }
 
     clearInitialSetupListeners() {
-        // ゲーム次へボタンのリスナーを削除
-        const gameNextBtn = document.getElementById('setup-game-next');
-        if (gameNextBtn && this.gameNextHandler) {
-            gameNextBtn.removeEventListener('click', this.gameNextHandler);
-        }
-
-        // スキル戻るボタンのリスナーを削除
-        const skillBackBtn = document.getElementById('setup-skill-back');
-        if (skillBackBtn && this.skillBackHandler) {
-            skillBackBtn.removeEventListener('click', this.skillBackHandler);
-        }
+        // Street Fighter 6専用なので、ゲーム選択関連のリスナーは不要
 
         // スキル完了ボタンのリスナーを削除
         const skillCompleteBtn = document.getElementById('setup-skill-complete');
@@ -2775,7 +2742,7 @@ class App {
         console.log('=== End Button Debug ===');
     }
 
-    // 初回設定が必要かチェック
+    // 初回設定が必要かチェック（Street Fighter 6専用）
     needsInitialSetup() {
         const setupCompleted = localStorage.getItem('initialSetupCompleted');
         console.log('Setup check - setupCompleted:', setupCompleted);
@@ -2785,14 +2752,13 @@ class App {
             return false;
         }
 
-        // 初期設定フラグがない場合は、ゲームと スキルレベルの存在を確認
-        const hasGame = localStorage.getItem('selectedGame');
-        const hasSkill = localStorage.getItem('playerSkillLevel');
+        // Street Fighter 6専用なので、スキルレベルのみをチェック
+        const hasSkill = localStorage.getItem('skillLevel') || localStorage.getItem('playerSkillLevel');
 
-        console.log('Setup check - hasGame:', hasGame, 'hasSkill:', hasSkill);
+        console.log('Setup check - hasSkill:', hasSkill);
 
-        // いずれかが不足している場合のみ初期設定が必要
-        return !hasGame || !hasSkill;
+        // スキルレベルが設定されていない場合のみ初期設定が必要
+        return !hasSkill;
     }
 
     setupCoachingFeedbackListeners() {

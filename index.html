@@ -81,7 +81,7 @@
                         <div class="player-details">
                             <h3 id="player-name">プレイヤー</h3>
                             <p id="player-rank" class="rank-badge">ランク未設定</p>
-                            <p id="player-game">ゲーム未選択</p>
+                            <p id="player-game">Street Fighter 6</p>
                         </div>
                     </div>
                     <div class="stats-grid">
@@ -103,16 +103,6 @@
                         </div>
                     </div>
                     
-                    <!-- Game Selection Guidance -->
-                    <div class="game-selection-guidance" id="game-selection-guidance">
-                        <div class="guidance-content">
-                            <h4>🎮 ゲームを選択してください</h4>
-                            <p>パフォーマンス分析を開始するために、プレイしているゲームを設定しましょう</p>
-                            <button class="btn-primary guidance-btn" id="goto-game-selection">
-                                ゲームを選択する
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Performance Charts -->
@@ -491,23 +481,13 @@
                     <div class="game-selection">
                         <div class="current-game" id="current-game-display">
                             <div class="game-info">
-                                <span class="game-icon" id="current-game-icon">⚔️</span>
+                                <span class="game-icon">👊</span>
                                 <div class="game-details">
-                                    <span class="game-name" id="current-game-name">League of Legends</span>
-                                    <span class="game-category" id="current-game-category">MOBA</span>
+                                    <span class="game-name">Street Fighter 6</span>
+                                    <span class="game-category">格闘ゲーム</span>
                                 </div>
                             </div>
-                            <button id="change-game-btn" class="btn-secondary">ゲームを変更</button>
-                        </div>
-                        
-                        <div id="game-selector" class="game-selector hidden">
-                            <div class="game-categories" id="game-categories">
-                                <!-- Game categories will be populated here -->
-                            </div>
-                            <div class="game-selector-actions">
-                                <button id="confirm-game-btn" class="btn-primary">選択を確定</button>
-                                <button id="cancel-game-btn" class="btn-secondary">キャンセル</button>
-                            </div>
+                            <span class="game-notice">ゲームを変更→ストリートファイター６専用なので、ゲーム選択機能は不要です。</span>
                         </div>
                     </div>
                 </div>
@@ -826,32 +806,12 @@
                     <div class="progress-bar">
                         <div class="progress-fill" id="setup-progress-fill"></div>
                     </div>
-                    <span class="progress-text" id="setup-progress-text">ステップ 1 / 2</span>
+                    <span class="progress-text" id="setup-progress-text">ステップ 1 / 1</span>
                 </div>
             </div>
 
-            <!-- Step 1: Game Selection -->
+            <!-- Step 1: Skill Level Selection -->
             <div class="setup-step" id="setup-step-1">
-                <div class="step-content">
-                    <div class="step-title">
-                        <h2>🎮 メインゲームを選択</h2>
-                        <p>最も上達したいゲームを選択してください</p>
-                    </div>
-
-                    <div class="game-grid" id="setup-game-grid">
-                        <!-- ゲームオプションが動的に生成される -->
-                    </div>
-
-                    <div class="step-actions">
-                        <button id="setup-game-next" class="btn-primary" disabled>
-                            次へ進む
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 2: Skill Level Selection -->
-            <div class="setup-step hidden" id="setup-step-2">
                 <div class="step-content">
                     <div class="step-title">
                         <h2>📊 スキルレベルを選択</h2>
@@ -892,9 +852,6 @@
                     </div>
 
                     <div class="step-actions">
-                        <button id="setup-skill-back" class="btn-secondary">
-                            戻る
-                        </button>
                         <button id="setup-skill-complete" class="btn-primary" disabled>
                             設定完了
                         </button>
@@ -912,7 +869,7 @@
                     <div class="profile-summary">
                         <div class="summary-item">
                             <span class="summary-label">選択ゲーム:</span>
-                            <span class="summary-value" id="summary-game">League of Legends</span>
+                            <span class="summary-value" id="summary-game">Street Fighter 6</span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">スキルレベル:</span>
