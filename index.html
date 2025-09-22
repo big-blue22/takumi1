@@ -238,66 +238,319 @@
                     <p>SF6の試合データ入力と対戦分析</p>
                 </div>
 
-                <!-- Match Data Input Form -->
-                <div class="card">
-                    <h3>試合データ入力</h3>
-                    <form id="match-form" class="match-form">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="match-result">勝敗</label>
-                                <select id="match-result" required>
-                                    <option value="">選択してください</option>
-                                    <option value="WIN">WIN</option>
-                                    <option value="LOSS">LOSE</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="character-select">使用キャラクター</label>
-                                <select id="character-select" required>
-                                    <option value="">キャラクターを選択</option>
-                                    <option value="Luke">Luke</option>
-                                    <option value="Ryu">Ryu</option>
-                                    <option value="Ken">Ken</option>
-                                    <option value="Chun-Li">Chun-Li</option>
-                                    <option value="Cammy">Cammy</option>
-                                    <option value="Zangief">Zangief</option>
-                                    <option value="JP">JP</option>
-                                    <option value="Juri">Juri</option>
-                                    <option value="Kimberly">Kimberly</option>
-                                    <option value="Lily">Lily</option>
-                                    <option value="Manon">Manon</option>
-                                    <option value="Marisa">Marisa</option>
-                                    <option value="Jamie">Jamie</option>
-                                    <option value="Dhalsim">Dhalsim</option>
-                                    <option value="E.Honda">E.Honda</option>
-                                    <option value="Blanka">Blanka</option>
-                                    <option value="Guile">Guile</option>
-                                    <option value="Dee Jay">Dee Jay</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="player-character">使用キャラクター（詳細）</label>
-                                <input type="text" id="player-character" placeholder="Luke">
-                            </div>
-                            <div class="form-group">
-                                <label for="opponent-character">相手キャラクター</label>
-                                <input type="text" id="opponent-character" placeholder="Ryu" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="rounds-won">獲得ラウンド数</label>
-                                <input type="number" id="rounds-won" min="0" max="3" value="0" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="rounds-lost">失ったラウンド数</label>
-                                <input type="number" id="rounds-lost" min="0" max="3" value="0" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="match-duration">試合時間（分）</label>
-                                <input type="number" id="match-duration" min="1" step="0.1" value="3" required>
+                <!-- Quick Match Input -->
+                <div class="card quick-match-card">
+                    <h3>🥊 かんたん試合入力</h3>
+                    <p class="subtitle">数タップで試合結果を素早く記録</p>
+                    <form id="quick-match-form" class="quick-match-form">
+                        <!-- Character Selection Row -->
+                        <div class="match-section character-section">
+                            <h4>使用キャラクター</h4>
+                            <div class="character-grid" id="player-character-grid">
+                                <div class="char-option" data-char="Luke">
+                                    <div class="char-icon">👊</div>
+                                    <span class="char-name">Luke</span>
+                                </div>
+                                <div class="char-option" data-char="Ryu">
+                                    <div class="char-icon">🥋</div>
+                                    <span class="char-name">Ryu</span>
+                                </div>
+                                <div class="char-option" data-char="Ken">
+                                    <div class="char-icon">🔥</div>
+                                    <span class="char-name">Ken</span>
+                                </div>
+                                <div class="char-option" data-char="Chun-Li">
+                                    <div class="char-icon">💨</div>
+                                    <span class="char-name">Chun-Li</span>
+                                </div>
+                                <div class="char-option" data-char="Cammy">
+                                    <div class="char-icon">⚡</div>
+                                    <span class="char-name">Cammy</span>
+                                </div>
+                                <div class="char-option" data-char="Zangief">
+                                    <div class="char-icon">💪</div>
+                                    <span class="char-name">Zangief</span>
+                                </div>
+                                <div class="char-option" data-char="JP">
+                                    <div class="char-icon">🎭</div>
+                                    <span class="char-name">JP</span>
+                                </div>
+                                <div class="char-option" data-char="Juri">
+                                    <div class="char-icon">👁️</div>
+                                    <span class="char-name">Juri</span>
+                                </div>
+                                <div class="char-option" data-char="Kimberly">
+                                    <div class="char-icon">🌪️</div>
+                                    <span class="char-name">Kimberly</span>
+                                </div>
+                                <div class="char-option" data-char="Lily">
+                                    <div class="char-icon">🌸</div>
+                                    <span class="char-name">Lily</span>
+                                </div>
+                                <div class="char-option" data-char="Manon">
+                                    <div class="char-icon">🎭</div>
+                                    <span class="char-name">Manon</span>
+                                </div>
+                                <div class="char-option" data-char="Marisa">
+                                    <div class="char-icon">🛡️</div>
+                                    <span class="char-name">Marisa</span>
+                                </div>
+                                <div class="char-option" data-char="Jamie">
+                                    <div class="char-icon">🍷</div>
+                                    <span class="char-name">Jamie</span>
+                                </div>
+                                <div class="char-option" data-char="Dhalsim">
+                                    <div class="char-icon">🧘</div>
+                                    <span class="char-name">Dhalsim</span>
+                                </div>
+                                <div class="char-option" data-char="E.Honda">
+                                    <div class="char-icon">🍣</div>
+                                    <span class="char-name">E.Honda</span>
+                                </div>
+                                <div class="char-option" data-char="Blanka">
+                                    <div class="char-icon">⚡</div>
+                                    <span class="char-name">Blanka</span>
+                                </div>
+                                <div class="char-option" data-char="Guile">
+                                    <div class="char-icon">🪖</div>
+                                    <span class="char-name">Guile</span>
+                                </div>
+                                <div class="char-option" data-char="Dee Jay">
+                                    <div class="char-icon">🎵</div>
+                                    <span class="char-name">Dee Jay</span>
+                                </div>
                             </div>
                         </div>
-                        <button type="submit" class="btn-primary">分析を実行</button>
+
+                        <!-- VS Section -->
+                        <div class="vs-section">
+                            <div class="vs-label">VS</div>
+                        </div>
+
+                        <!-- Opponent Character Selection -->
+                        <div class="match-section opponent-section">
+                            <h4>相手キャラクター</h4>
+                            <div class="character-grid" id="opponent-character-grid">
+                                <div class="char-option opponent-char" data-char="Luke">
+                                    <div class="char-icon">👊</div>
+                                    <span class="char-name">Luke</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Ryu">
+                                    <div class="char-icon">🥋</div>
+                                    <span class="char-name">Ryu</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Ken">
+                                    <div class="char-icon">🔥</div>
+                                    <span class="char-name">Ken</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Chun-Li">
+                                    <div class="char-icon">💨</div>
+                                    <span class="char-name">Chun-Li</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Cammy">
+                                    <div class="char-icon">⚡</div>
+                                    <span class="char-name">Cammy</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Zangief">
+                                    <div class="char-icon">💪</div>
+                                    <span class="char-name">Zangief</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="JP">
+                                    <div class="char-icon">🎭</div>
+                                    <span class="char-name">JP</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Juri">
+                                    <div class="char-icon">👁️</div>
+                                    <span class="char-name">Juri</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Kimberly">
+                                    <div class="char-icon">🌪️</div>
+                                    <span class="char-name">Kimberly</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Lily">
+                                    <div class="char-icon">🌸</div>
+                                    <span class="char-name">Lily</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Manon">
+                                    <div class="char-icon">🎭</div>
+                                    <span class="char-name">Manon</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Marisa">
+                                    <div class="char-icon">🛡️</div>
+                                    <span class="char-name">Marisa</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Jamie">
+                                    <div class="char-icon">🍷</div>
+                                    <span class="char-name">Jamie</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Dhalsim">
+                                    <div class="char-icon">🧘</div>
+                                    <span class="char-name">Dhalsim</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="E.Honda">
+                                    <div class="char-icon">🍣</div>
+                                    <span class="char-name">E.Honda</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Blanka">
+                                    <div class="char-icon">⚡</div>
+                                    <span class="char-name">Blanka</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Guile">
+                                    <div class="char-icon">🪖</div>
+                                    <span class="char-name">Guile</span>
+                                </div>
+                                <div class="char-option opponent-char" data-char="Dee Jay">
+                                    <div class="char-icon">🎵</div>
+                                    <span class="char-name">Dee Jay</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Match Score Section -->
+                        <div class="match-section score-section">
+                            <h4>試合結果</h4>
+                            <div class="score-grid">
+                                <div class="score-option" data-score="3-0">
+                                    <div class="score-display">3-0</div>
+                                    <div class="score-label">完勝</div>
+                                </div>
+                                <div class="score-option" data-score="3-1">
+                                    <div class="score-display">3-1</div>
+                                    <div class="score-label">勝利</div>
+                                </div>
+                                <div class="score-option" data-score="3-2">
+                                    <div class="score-display">3-2</div>
+                                    <div class="score-label">接戦勝利</div>
+                                </div>
+                                <div class="score-option" data-score="2-3">
+                                    <div class="score-display">2-3</div>
+                                    <div class="score-label">接戦敗北</div>
+                                </div>
+                                <div class="score-option" data-score="1-3">
+                                    <div class="score-display">1-3</div>
+                                    <div class="score-label">敗北</div>
+                                </div>
+                                <div class="score-option" data-score="0-3">
+                                    <div class="score-display">0-3</div>
+                                    <div class="score-label">完敗</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Final Round Decision -->
+                        <div class="match-section decision-section">
+                            <h4>最終ラウンドの決着方法</h4>
+                            <div class="decision-grid">
+                                <div class="decision-option" data-decision="ko">
+                                    <div class="decision-icon">💥</div>
+                                    <span>KO</span>
+                                </div>
+                                <div class="decision-option" data-decision="timeout">
+                                    <div class="decision-icon">⏰</div>
+                                    <span>タイムアップ</span>
+                                </div>
+                                <div class="decision-option" data-decision="perfect">
+                                    <div class="decision-icon">✨</div>
+                                    <span>パーフェクト</span>
+                                </div>
+                                <div class="decision-option" data-decision="super">
+                                    <div class="decision-icon">🌟</div>
+                                    <span>スーパーアーツ</span>
+                                </div>
+                                <div class="decision-option" data-decision="critical">
+                                    <div class="decision-icon">💎</div>
+                                    <span>クリティカルアーツ</span>
+                                </div>
+                                <div class="decision-option" data-decision="drive-impact">
+                                    <div class="decision-icon">🚀</div>
+                                    <span>ドライブインパクト</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary quick-submit-btn" disabled>
+                                📊 試合を記録
+                            </button>
+                            <button type="button" class="btn-secondary" id="reset-quick-form">
+                                🔄 リセット
+                            </button>
+                        </div>
+
+                        <!-- Hidden inputs for form data -->
+                        <input type="hidden" id="selected-character" name="character">
+                        <input type="hidden" id="selected-opponent" name="opponent">
+                        <input type="hidden" id="selected-score" name="score">
+                        <input type="hidden" id="selected-decision" name="decision">
                     </form>
+                </div>
+
+                <!-- Traditional Match Input (Collapsible) -->
+                <div class="card detailed-match-card collapsed" id="detailed-match-card">
+                    <div class="card-header collapsible-header" onclick="toggleDetailedInput()">
+                        <h3>📝 詳細入力モード</h3>
+                        <span class="collapse-icon">▼</span>
+                    </div>
+                    <div class="card-content">
+                        <form id="match-form" class="match-form">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="match-result">勝敗</label>
+                                    <select id="match-result" required>
+                                        <option value="">選択してください</option>
+                                        <option value="WIN">WIN</option>
+                                        <option value="LOSS">LOSE</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="character-select">使用キャラクター</label>
+                                    <select id="character-select" required>
+                                        <option value="">キャラクターを選択</option>
+                                        <option value="Luke">Luke</option>
+                                        <option value="Ryu">Ryu</option>
+                                        <option value="Ken">Ken</option>
+                                        <option value="Chun-Li">Chun-Li</option>
+                                        <option value="Cammy">Cammy</option>
+                                        <option value="Zangief">Zangief</option>
+                                        <option value="JP">JP</option>
+                                        <option value="Juri">Juri</option>
+                                        <option value="Kimberly">Kimberly</option>
+                                        <option value="Lily">Lily</option>
+                                        <option value="Manon">Manon</option>
+                                        <option value="Marisa">Marisa</option>
+                                        <option value="Jamie">Jamie</option>
+                                        <option value="Dhalsim">Dhalsim</option>
+                                        <option value="E.Honda">E.Honda</option>
+                                        <option value="Blanka">Blanka</option>
+                                        <option value="Guile">Guile</option>
+                                        <option value="Dee Jay">Dee Jay</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-character">使用キャラクター（詳細）</label>
+                                    <input type="text" id="player-character" placeholder="Luke">
+                                </div>
+                                <div class="form-group">
+                                    <label for="opponent-character">相手キャラクター</label>
+                                    <input type="text" id="opponent-character" placeholder="Ryu" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rounds-won">獲得ラウンド数</label>
+                                    <input type="number" id="rounds-won" min="0" max="3" value="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rounds-lost">失ったラウンド数</label>
+                                    <input type="number" id="rounds-lost" min="0" max="3" value="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="match-duration">試合時間（分）</label>
+                                    <input type="number" id="match-duration" min="1" step="0.1" value="3" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary">分析を実行</button>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- Analysis Results -->

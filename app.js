@@ -815,6 +815,18 @@ class App {
                 this.handleMatchSubmit();
             });
         }
+
+        // クイック試合入力フォーム
+        const quickMatchForm = document.getElementById('quick-match-form');
+        if (quickMatchForm) {
+            quickMatchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickMatchSubmit();
+            });
+        }
+
+        // クイック入力のイベントリスナー
+        this.setupQuickMatchListeners();
         
         // 目標フォーム
         const goalForm = document.getElementById('goal-form');
@@ -1022,7 +1034,7 @@ class App {
             roundsLost: parseInt(document.getElementById('rounds-lost').value || 0),
             duration: parseFloat(document.getElementById('match-duration').value)
         };
-        
+
         // 1) 分析結果の表示
         this.analyzeMatch(matchData);
 
@@ -1030,6 +1042,182 @@ class App {
         this.storeMatchAndRefresh(matchData);
         document.getElementById('match-form').reset();
         this.showToast('分析を実行しています...', 'info');
+    }
+
+    // クイック試合入力のイベントリスナーを設定
+    setupQuickMatchListeners() {
+        // 自分のキャラクター選択
+        const characterOptions = document.querySelectorAll('#player-character-grid .char-option');
+        characterOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                this.selectCharacter(option);
+            });
+        });
+
+        // 相手キャラクター選択
+        const opponentOptions = document.querySelectorAll('#opponent-character-grid .char-option');
+        opponentOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                this.selectOpponent(option);
+            });
+        });
+
+        // スコア選択
+        const scoreOptions = document.querySelectorAll('.score-option');
+        scoreOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                this.selectScore(option);
+            });
+        });
+
+        // 決着方法選択
+        const decisionOptions = document.querySelectorAll('.decision-option');
+        decisionOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                this.selectDecision(option);
+            });
+        });
+
+        // リセットボタン
+        const resetBtn = document.getElementById('reset-quick-form');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetQuickForm();
+            });
+        }
+
+        // 詳細入力の折りたたみ
+        window.toggleDetailedInput = () => {
+            const detailedCard = document.getElementById('detailed-match-card');
+            detailedCard.classList.toggle('collapsed');
+        };
+    }
+
+    // 自分のキャラクター選択処理
+    selectCharacter(option) {
+        // 他の選択を解除（自分のキャラクターグリッドのみ）
+        document.querySelectorAll('#player-character-grid .char-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+
+        // 新しい選択をアクティブにする
+        option.classList.add('selected');
+
+        // hidden inputに値を設定
+        document.getElementById('selected-character').value = option.dataset.char;
+
+        this.updateSubmitButton();
+    }
+
+    // 相手キャラクター選択処理
+    selectOpponent(option) {
+        // 他の選択を解除（相手キャラクターグリッドのみ）
+        document.querySelectorAll('#opponent-character-grid .char-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+
+        // 新しい選択をアクティブにする
+        option.classList.add('selected');
+
+        // hidden inputに値を設定
+        document.getElementById('selected-opponent').value = option.dataset.char;
+
+        this.updateSubmitButton();
+    }
+
+    // スコア選択処理
+    selectScore(option) {
+        // 他の選択を解除
+        document.querySelectorAll('.score-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+
+        // 新しい選択をアクティブにする
+        option.classList.add('selected');
+
+        // hidden inputに値を設定
+        document.getElementById('selected-score').value = option.dataset.score;
+
+        this.updateSubmitButton();
+    }
+
+    // 決着方法選択処理
+    selectDecision(option) {
+        // 他の選択を解除
+        document.querySelectorAll('.decision-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+
+        // 新しい選択をアクティブにする
+        option.classList.add('selected');
+
+        // hidden inputに値を設定
+        document.getElementById('selected-decision').value = option.dataset.decision;
+
+        this.updateSubmitButton();
+    }
+
+    // 送信ボタンの状態を更新
+    updateSubmitButton() {
+        const submitBtn = document.querySelector('.quick-submit-btn');
+        const character = document.getElementById('selected-character').value;
+        const opponent = document.getElementById('selected-opponent').value;
+        const score = document.getElementById('selected-score').value;
+        const decision = document.getElementById('selected-decision').value;
+
+        const isComplete = character && opponent && score && decision;
+        submitBtn.disabled = !isComplete;
+    }
+
+    // クイックフォームをリセット
+    resetQuickForm() {
+        // 選択状態をリセット
+        document.querySelectorAll('.char-option, .score-option, .decision-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+
+        // hidden inputをリセット
+        document.getElementById('selected-character').value = '';
+        document.getElementById('selected-opponent').value = '';
+        document.getElementById('selected-score').value = '';
+        document.getElementById('selected-decision').value = '';
+
+        this.updateSubmitButton();
+    }
+
+    // クイック試合入力の送信処理
+    handleQuickMatchSubmit() {
+        const character = document.getElementById('selected-character').value;
+        const opponent = document.getElementById('selected-opponent').value;
+        const score = document.getElementById('selected-score').value;
+        const decision = document.getElementById('selected-decision').value;
+
+        // スコアを分解 (例: "3-1" → 勝利ラウンド3, 敗北ラウンド1)
+        const [roundsWon, roundsLost] = score.split('-').map(num => parseInt(num));
+        const result = roundsWon > roundsLost ? 'WIN' : 'LOSS';
+
+        const matchData = {
+            result: result,
+            character: character,
+            playerCharacter: character,
+            opponentCharacter: opponent,
+            roundsWon: roundsWon,
+            roundsLost: roundsLost,
+            duration: 3, // デフォルト3分
+            decision: decision, // 決着方法を追加
+            timestamp: Date.now()
+        };
+
+        // 分析結果の表示
+        this.analyzeMatch(matchData);
+
+        // 試合を保存し、ダッシュボード統計を更新
+        this.storeMatchAndRefresh(matchData);
+
+        // フォームをリセット
+        this.resetQuickForm();
+
+        this.showToast('🥊 試合が記録されました！', 'success');
     }
 
     // 分析ページの入力をローカルに保存し、ダッシュボードを更新

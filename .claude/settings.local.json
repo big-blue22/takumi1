@@ -4,7 +4,8 @@
       "Bash(python:*)",
       "Bash(node:*)",
       "mcp__gemini-search__gemini_web_search",
-      "Bash(start index.html)"
+      "Bash(start index.html)",
+      "Bash(dir)"
     ],
     "deny": [],
     "ask": []
