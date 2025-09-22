@@ -1130,14 +1130,16 @@ class App {
     
     // 目標追加
     handleGoalSubmit() {
+        const now = new Date();
         const goalData = {
             title: document.getElementById('goal-title').value,
             deadline: document.getElementById('goal-deadline').value,
             description: document.getElementById('goal-description').value,
             id: Date.now(),
+            createdAt: now.toISOString(),
             progress: 0
         };
-        
+
         this.addGoal(goalData);
         document.getElementById('goal-form').reset();
         this.showToast('目標を追加しました', 'success');
@@ -1344,7 +1346,9 @@ class App {
             return;
         }
 
-        container.innerHTML = goals.map(goal => `
+        container.innerHTML = goals.map(goal => {
+            const calculatedProgress = this.calculateProgressByDays(goal);
+            return `
             <div class="goal-item">
                 <div class="goal-header">
                     <h4>${goal.title}</h4>
@@ -1353,13 +1357,13 @@ class App {
                 <p class="goal-description">${goal.description}</p>
                 <div class="goal-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${goal.progress || 0}%"></div>
+                        <div class="progress-fill" style="width: ${calculatedProgress}%"></div>
                     </div>
-                    <span class="progress-text">${goal.progress || 0}%</span>
+                    <span class="progress-text">${calculatedProgress}% (日数ベース)</span>
                 </div>
                 <div class="goal-actions">
                     <div class="progress-update">
-                        <label for="progress-input-${goal.id}">進捗更新:</label>
+                        <label for="progress-input-${goal.id}">手動進捗:</label>
                         <input type="range"
                                id="progress-input-${goal.id}"
                                min="0"
@@ -1373,7 +1377,8 @@ class App {
                     <button class="btn-danger btn-sm" onclick="app.deleteGoal(${goal.id})">削除</button>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
     
     addGoal(goalData) {
@@ -1436,6 +1441,7 @@ class App {
             return false;
         }
     }
+
 
     deleteGoal(goalId) {
         try {
@@ -3550,6 +3556,8 @@ class App {
             const goals = JSON.parse(goalsData);
             let dataFixed = false;
 
+            console.log('🔧 Checking goals data integrity...');
+
             const fixedGoals = goals.map(goal => {
                 // 進捗値が不正な場合の修正
                 if (typeof goal.progress !== 'number' || isNaN(goal.progress) || goal.progress < 0 || goal.progress > 100) {
@@ -3561,6 +3569,26 @@ class App {
                 // IDが存在しない場合の修正
                 if (!goal.id) {
                     goal.id = Date.now() + Math.random();
+                    dataFixed = true;
+                }
+
+                // createdAtが存在しない場合、現在の日付から推定して設定
+                if (!goal.createdAt) {
+                    const deadline = new Date(goal.deadline);
+                    const now = new Date();
+
+                    // 期限から遡って適切な作成日を推定
+                    // 期限が未来の場合：今日から2週間前を作成日とする
+                    // 期限が過去の場合：期限の1ヶ月前を作成日とする
+                    let estimatedCreatedAt;
+                    if (deadline > now) {
+                        estimatedCreatedAt = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000)); // 2週間前
+                    } else {
+                        estimatedCreatedAt = new Date(deadline.getTime() - (30 * 24 * 60 * 60 * 1000)); // 1ヶ月前
+                    }
+
+                    goal.createdAt = estimatedCreatedAt.toISOString();
+                    console.log(`🔧 Setting estimated createdAt for goal "${goal.title}": ${goal.createdAt.split('T')[0]}`);
                     dataFixed = true;
                 }
 
@@ -3581,25 +3609,30 @@ class App {
             const goalsData = localStorage.getItem('goals');
             let goals = goalsData ? JSON.parse(goalsData) : [];
 
-            console.log('🎯 Loading dashboard goals:', goals);
+            console.log('🎯 Raw goals data from localStorage:', goalsData);
+            console.log('🎯 Parsed goals:', goals);
 
-            // 既存の目標で進捗が未定義の場合は0に初期化
-            const updatedGoals = goals.map(goal => {
-                const updatedGoal = {
-                    ...goal,
-                    progress: (typeof goal.progress === 'number') ? goal.progress : 0
-                };
-                console.log(`🎯 Goal "${goal.title}": progress = ${updatedGoal.progress}%`);
-                return updatedGoal;
+            // 目標データをクリーンアップして正規化
+            const cleanedGoals = goals.map(goal => {
+                // progressプロパティを明示的に数値として設定
+                if (typeof goal.progress !== 'number' || isNaN(goal.progress)) {
+                    goal.progress = 0;
+                }
+
+                console.log(`🎯 Goal: "${goal.title}"`, {
+                    originalProgress: goal.progress,
+                    type: typeof goal.progress,
+                    isNumber: typeof goal.progress === 'number',
+                    isNaN: isNaN(goal.progress)
+                });
+
+                return goal;
             });
 
-            // 修正されたデータを保存
-            if (JSON.stringify(goals) !== JSON.stringify(updatedGoals)) {
-                localStorage.setItem('goals', JSON.stringify(updatedGoals));
-                console.log('🎯 Updated goals data saved to localStorage');
-            }
+            // クリーンアップされたデータを保存
+            localStorage.setItem('goals', JSON.stringify(cleanedGoals));
 
-            this.renderDashboardGoals(updatedGoals);
+            this.renderDashboardGoals(cleanedGoals);
         } catch (error) {
             console.warn('Failed to load goals:', error);
             this.renderDashboardGoals([]);
@@ -3608,8 +3641,13 @@ class App {
     
     renderDashboardGoals(goals) {
         const goalsList = document.getElementById('dashboard-goals-list');
-        if (!goalsList) return;
-        
+        if (!goalsList) {
+            console.error('🎯 dashboard-goals-list element not found');
+            return;
+        }
+
+        console.log('🎯 renderDashboardGoals called with:', goals);
+
         if (goals.length === 0) {
             // 目標なし
             goalsList.innerHTML = `
@@ -3619,7 +3657,7 @@ class App {
                     <button class="add-goal-btn" id="add-first-goal">最初の目標を追加</button>
                 </div>
             `;
-            
+
             // イベントリスナー再設定
             const addFirstGoalBtn = document.getElementById('add-first-goal');
             if (addFirstGoalBtn) {
@@ -3628,40 +3666,44 @@ class App {
                     this.updateNavigation('goals');
                 });
             }
-            
+
             return;
         }
-        
+
         // 目標をソート（期限が近い順、進捗が低い順）
         const sortedGoals = goals.sort((a, b) => {
             const dateA = new Date(a.deadline);
             const dateB = new Date(b.deadline);
             const progressA = a.progress || 0;
             const progressB = b.progress || 0;
-            
+
             // 期限が近い順
             if (dateA !== dateB) {
                 return dateA - dateB;
             }
-            
+
             // 進捗が低い順
             return progressA - progressB;
         });
-        
+
         // 最大3件表示
         const displayGoals = sortedGoals.slice(0, 3);
-        
-        goalsList.innerHTML = displayGoals.map(goal => this.renderGoalItem(goal)).join('');
+
+        console.log('🎯 Displaying goals:', displayGoals);
+
+        // HTMLを生成して挿入
+        const html = displayGoals.map(goal => this.renderGoalItem(goal)).join('');
+        goalsList.innerHTML = html;
     }
     
     renderGoalItem(goal) {
-        // 進捗値が未定義またはnullの場合は0に初期化
-        const progress = (typeof goal.progress === 'number') ? goal.progress : 0;
+        // 日数ベースで進捗を計算
+        const progress = this.calculateProgressByDays(goal);
         const deadline = new Date(goal.deadline).toLocaleDateString('ja-JP');
         const isUrgent = this.isDeadlineUrgent(goal.deadline);
         const urgentClass = isUrgent ? 'urgent' : '';
 
-        console.log(`🎯 Rendering goal "${goal.title}" with progress: ${progress}%`);
+        console.log(`🎯 Rendering goal "${goal.title}" with calculated progress: ${progress}%`);
 
         return `
             <div class="dashboard-goal-item ${urgentClass}">
@@ -3671,7 +3713,7 @@ class App {
                 </div>
                 <div class="goal-progress-container">
                     <div class="goal-progress-bar">
-                        <div class="goal-progress-fill" style="width: ${progress}%"></div>
+                        <div class="goal-progress-fill" style="width: ${progress}%;"></div>
                     </div>
                     <div class="goal-progress-text">${progress}%</div>
                 </div>
@@ -3684,6 +3726,52 @@ class App {
         const deadlineDate = new Date(deadline);
         const diffDays = (deadlineDate - now) / (1000 * 60 * 60 * 24);
         return diffDays <= 7; // 7日以内は緊急
+    }
+
+    // 日数ベースの進捗計算
+    calculateProgressByDays(goal) {
+        try {
+            const now = new Date();
+            const createdAt = goal.createdAt ? new Date(goal.createdAt) : null;
+            const deadline = new Date(goal.deadline);
+
+            // 作成日が設定されていない場合は手動進捗を使用
+            if (!createdAt) {
+                return goal.progress || 0;
+            }
+
+            // 期限が過去の場合は100%
+            if (deadline <= now) {
+                return 100;
+            }
+
+            // 作成日が未来の場合（データエラー）は作成日を今日に修正
+            if (createdAt > now) {
+                console.warn(`⚠️ Goal "${goal.title}" has future createdAt, fixing to today`);
+                createdAt = now;
+            }
+
+            // 総日数と経過日数を計算
+            const totalDays = (deadline - createdAt) / (1000 * 60 * 60 * 24);
+            const elapsedDays = (now - createdAt) / (1000 * 60 * 60 * 24);
+
+            // 進捗率を計算（0-100%の範囲に制限）
+            const progress = Math.max(0, Math.min(100, (elapsedDays / totalDays) * 100));
+
+            console.log(`📅 Progress calculation for "${goal.title}":`, {
+                createdAt: createdAt.toISOString().split('T')[0],
+                deadline: deadline.toISOString().split('T')[0],
+                now: now.toISOString().split('T')[0],
+                totalDays: totalDays.toFixed(1),
+                elapsedDays: elapsedDays.toFixed(1),
+                progress: progress.toFixed(1)
+            });
+
+            return Math.round(progress);
+        } catch (error) {
+            console.error('Error calculating progress:', error);
+            return goal.progress || 0;
+        }
     }
     
     setupGoalsStorageListener() {
