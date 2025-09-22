@@ -1333,14 +1333,14 @@ class App {
     loadGoalsList() {
         const container = document.getElementById('goals-list');
         if (!container) return;
-        
+
         const goals = JSON.parse(localStorage.getItem('goals') || '[]');
-        
+
         if (goals.length === 0) {
             container.innerHTML = '<p class="no-data">目標がまだ設定されていません</p>';
             return;
         }
-        
+
         container.innerHTML = goals.map(goal => `
             <div class="goal-item">
                 <div class="goal-header">
@@ -1350,9 +1350,24 @@ class App {
                 <p class="goal-description">${goal.description}</p>
                 <div class="goal-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${goal.progress}%"></div>
+                        <div class="progress-fill" style="width: ${goal.progress || 0}%"></div>
                     </div>
-                    <span class="progress-text">${goal.progress}%</span>
+                    <span class="progress-text">${goal.progress || 0}%</span>
+                </div>
+                <div class="goal-actions">
+                    <div class="progress-update">
+                        <label for="progress-input-${goal.id}">進捗更新:</label>
+                        <input type="range"
+                               id="progress-input-${goal.id}"
+                               min="0"
+                               max="100"
+                               value="${goal.progress || 0}"
+                               class="progress-slider"
+                               oninput="document.getElementById('progress-value-${goal.id}').textContent = this.value + '%'"
+                               onchange="app.updateGoalProgress(${goal.id}, parseInt(this.value))">
+                        <span id="progress-value-${goal.id}" class="progress-value">${goal.progress || 0}%</span>
+                    </div>
+                    <button class="btn-danger btn-sm" onclick="app.deleteGoal(${goal.id})">削除</button>
                 </div>
             </div>
         `).join('');
@@ -1364,7 +1379,54 @@ class App {
         localStorage.setItem('goals', JSON.stringify(goals));
         this.loadGoalsList();
     }
-    
+
+    updateGoalProgress(goalId, newProgress) {
+        try {
+            const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+            const goalIndex = goals.findIndex(goal => goal.id === goalId);
+
+            if (goalIndex !== -1) {
+                // 進捗を0-100の範囲に制限
+                const clampedProgress = Math.max(0, Math.min(100, newProgress));
+                goals[goalIndex].progress = clampedProgress;
+
+                localStorage.setItem('goals', JSON.stringify(goals));
+
+                // ダッシュボードの目標リストを更新
+                this.loadGoalsList();
+                this.loadDashboardGoals();
+
+                this.showToast(`目標の進捗を${clampedProgress}%に更新しました`, 'success');
+                return true;
+            }
+
+            this.showToast('目標が見つかりませんでした', 'error');
+            return false;
+        } catch (error) {
+            console.error('Failed to update goal progress:', error);
+            this.showToast('進捗の更新に失敗しました', 'error');
+            return false;
+        }
+    }
+
+    deleteGoal(goalId) {
+        try {
+            const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+            const filteredGoals = goals.filter(goal => goal.id !== goalId);
+
+            localStorage.setItem('goals', JSON.stringify(filteredGoals));
+
+            // リストを更新
+            this.loadGoalsList();
+            this.loadDashboardGoals();
+
+            this.showToast('目標を削除しました', 'success');
+        } catch (error) {
+            console.error('Failed to delete goal:', error);
+            this.showToast('目標の削除に失敗しました', 'error');
+        }
+    }
+
     analyzeMatch(matchData) {
         const kda = ((matchData.kills + matchData.assists) / Math.max(matchData.deaths, 1)).toFixed(2);
         const csPerMin = (matchData.cs / matchData.duration).toFixed(1);
@@ -3451,8 +3513,17 @@ class App {
     loadDashboardGoals() {
         try {
             const goalsData = localStorage.getItem('goals');
-            const goals = goalsData ? JSON.parse(goalsData) : [];
-            
+            let goals = goalsData ? JSON.parse(goalsData) : [];
+
+            // 既存の目標で進捗が未定義の場合は0に初期化
+            goals = goals.map(goal => ({
+                ...goal,
+                progress: (typeof goal.progress === 'number') ? goal.progress : 0
+            }));
+
+            // 修正されたデータを保存
+            localStorage.setItem('goals', JSON.stringify(goals));
+
             this.renderDashboardGoals(goals);
         } catch (error) {
             console.warn('Failed to load goals:', error);
@@ -3509,11 +3580,12 @@ class App {
     }
     
     renderGoalItem(goal) {
-        const progress = goal.progress || 0;
+        // 進捗値が未定義またはnullの場合は0に初期化
+        const progress = (typeof goal.progress === 'number') ? goal.progress : 0;
         const deadline = new Date(goal.deadline).toLocaleDateString('ja-JP');
         const isUrgent = this.isDeadlineUrgent(goal.deadline);
         const urgentClass = isUrgent ? 'urgent' : '';
-        
+
         return `
             <div class="dashboard-goal-item ${urgentClass}">
                 <div class="goal-item-header">

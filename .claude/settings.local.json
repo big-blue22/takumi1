@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "mcp__gemini-search__gemini_web_search"
     ],
     "deny": [],
     "ask": []
