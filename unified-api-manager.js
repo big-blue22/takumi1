@@ -318,12 +318,6 @@ class UnifiedAPIManager {
                 model: 'gemini-2.5-flash',
                 available: true
             },
-            {
-                name: 'メディア解析',
-                description: 'Gemini 2.5 Pro で画像・動画解析',
-                model: 'gemini-2.5-pro',
-                available: true
-            },
         ];
     }
 }

@@ -9,7 +9,6 @@ class GeminiService {
         ];
     this.baseUrl = this.baseUrls[0]; // デフォルト
     this.chatModel = 'gemini-2.5-flash'; // 指定モデル：Gemini 2.5 Flash
-    this.visionModel = 'gemini-2.5-flash';
         this.chatHistory = [];
         this.retryDelay = 1000; // リトライ間隔を短縮
         this.maxRetries = 2; // リトライ回数を減らして即座に問題を特定
@@ -23,13 +22,6 @@ class GeminiService {
             maxOutputTokens: 8192, // より大きなトークン数に緩和
             topP: 0.9,
             topK: 40 // より幅広い回答生成
-        };
-        
-        this.visionParams = {
-            temperature: 0.4,
-            maxOutputTokens: 4096, // ビジョン分析用により大きなトークン数
-            topP: 0.95,
-            topK: 40
         };
         
         // フォールバック制御フラグ
@@ -588,274 +580,11 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         }
     }
 
-    // 画像分析
-    async analyzeImage(imageData, fileName, gameContext = null) {
-        if (!this.isConfigured()) {
-            throw new Error('Gemini APIキーが設定されていません');
-        }
 
-        try {
-            const context = gameContext || this.getGameContext();
-            
-            const analysisPrompt = `これは${context.game.name}のゲーム画面です。以下の点について詳細に分析してください：
 
-【分析項目】
-1. ゲーム状況の把握
-   - 試合の進行状況
-   - マップ上のポジション
-   - リソース状況
 
-2. プレイヤーのパフォーマンス
-   - 良いプレイポイント
-   - 改善すべき点
-   - ミスや問題点
 
-3. 戦術的アドバイス
-   - この場面での最適な行動
-   - リスク管理
-   - 次の展開への準備
 
-4. スキル向上のための提案
-   - 練習すべき要素
-   - 類似場面での対処法
-
-【回答形式】
-以下のJSON形式で回答してください：
-{
-  "gameTitle": "ゲームタイトル",
-  "matchStatus": "試合状況",
-  "playerPosition": "プレイヤーのポジション",
-  "strengths": ["良い点1", "良い点2", "良い点3"],
-  "weaknesses": ["改善点1", "改善点2", "改善点3"],
-  "suggestions": ["提案1", "提案2", "提案3"],
-  "overallScore": "10点満点の評価",
-  "summary": "総合評価コメント"
-}
-
-日本語で詳細な分析を行い、プレイヤーのスキル向上に役立つ具体的なアドバイスを提供してください。`;
-
-            const requestBody = {
-                contents: [{
-                    role: 'user',
-                    parts: [
-                        { text: analysisPrompt },
-                        {
-                            inline_data: {
-                                mime_type: this.getMimeType(fileName),
-                                data: imageData.split(',')[1] // base64データ部分のみ
-                            }
-                        }
-                    ]
-                }],
-                generationConfig: this.visionParams
-            };
-
-            const url = `${this.baseUrl}/models/${this.visionModel}:generateContent?key=${this.apiKey}`;
-            const response = await this.makeAPIRequest(url, requestBody);
-
-            const data = await response.json();
-            
-            if (!data.candidates || data.candidates.length === 0) {
-                throw new Error('APIから有効な応答が得られませんでした');
-            }
-
-            const analysisResult = data.candidates[0].content.parts[0].text;
-            
-            // JSON部分を抽出して解析
-            try {
-                const jsonMatch = analysisResult.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    const analysis = JSON.parse(jsonMatch[0]);
-                    return {
-                        ...analysis,
-                        fileName: fileName,
-                        timestamp: new Date().toLocaleString('ja-JP'),
-                        usage: data.usageMetadata || {}
-                    };
-                } else {
-                    // JSONが見つからない場合はテキストとして処理
-                    return {
-                        gameTitle: context.game.name,
-                        matchStatus: '分析完了',
-                        summary: analysisResult,
-                        fileName: fileName,
-                        timestamp: new Date().toLocaleString('ja-JP')
-                    };
-                }
-            } catch (parseError) {
-                // JSON解析エラーの場合もテキストとして処理
-                return {
-                    gameTitle: context.game.name,
-                    matchStatus: '分析完了',
-                    summary: analysisResult,
-                    fileName: fileName,
-                    timestamp: new Date().toLocaleString('ja-JP')
-                };
-            }
-
-        } catch (error) {
-            console.error('Gemini vision error:', error);
-            throw error;
-        }
-    }
-
-    // 動画分析（フレーム抽出）
-    async analyzeVideo(videoFile) {
-        if (!this.isConfigured()) {
-            throw new Error('Gemini APIキーが設定されていません');
-        }
-
-        try {
-            // 動画から5フレームを抽出
-            const frames = await this.extractVideoFrames(videoFile, 5);
-            const analyses = [];
-
-            // 各フレームを順次分析
-            for (let i = 0; i < frames.length; i++) {
-                const frame = frames[i];
-                try {
-                    const analysis = await this.analyzeImage(frame.data, `${videoFile.name}_frame_${i + 1}`);
-                    analysis.frameTime = frame.time;
-                    analysis.frameNumber = i + 1;
-                    analyses.push(analysis);
-                } catch (error) {
-                    console.warn(`Frame ${i + 1} analysis failed:`, error);
-                }
-            }
-
-            // 統合分析結果を生成
-            const summary = await this.generateVideoSummary(analyses, videoFile.name);
-            
-            return {
-                fileName: videoFile.name,
-                frameAnalyses: analyses,
-                summary: summary,
-                timestamp: new Date().toLocaleString('ja-JP')
-            };
-
-        } catch (error) {
-            console.error('Video analysis error:', error);
-            throw error;
-        }
-    }
-
-    // 動画フレーム抽出
-    async extractVideoFrames(videoFile, frameCount = 5) {
-        return new Promise((resolve, reject) => {
-            const video = document.createElement('video');
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const frames = [];
-
-            video.onloadedmetadata = () => {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                
-                const duration = video.duration;
-                const interval = duration / (frameCount + 1);
-                let currentFrame = 0;
-
-                const extractFrame = () => {
-                    if (currentFrame >= frameCount) {
-                        resolve(frames);
-                        return;
-                    }
-
-                    const time = interval * (currentFrame + 1);
-                    video.currentTime = time;
-
-                    video.onseeked = () => {
-                        ctx.drawImage(video, 0, 0);
-                        const frameData = canvas.toDataURL('image/jpeg', 0.8);
-                        
-                        frames.push({
-                            data: frameData,
-                            time: time,
-                            timeString: this.formatTime(time)
-                        });
-
-                        currentFrame++;
-                        setTimeout(extractFrame, 100); // 次のフレーム処理まで少し待機
-                    };
-                };
-
-                extractFrame();
-            };
-
-            video.onerror = () => reject(new Error('動画の読み込みに失敗しました'));
-            video.src = URL.createObjectURL(videoFile);
-        });
-    }
-
-    // 動画統合分析
-    async generateVideoSummary(frameAnalyses, fileName) {
-        const summaryPrompt = `以下の動画フレーム分析結果から、統合的な分析を行ってください：
-
-${frameAnalyses.map((analysis, index) => `
-フレーム ${index + 1} (${analysis.frameTime}秒):
-- 状況: ${analysis.matchStatus || '不明'}
-- 評価: ${analysis.overallScore || 'N/A'}点
-- 問題点: ${(analysis.weaknesses || []).join(', ')}
-- 良い点: ${(analysis.strengths || []).join(', ')}
-`).join('\n')}
-
-【統合分析要求】
-1. 動画全体を通してのパフォーマンス評価
-2. 一貫している問題点
-3. 時系列での変化や改善点
-4. 総合的な改善提案
-
-JSON形式で回答してください：
-{
-  "overallScore": "総合評価(10点満点)",
-  "timelineAnalysis": "時系列分析",
-  "consistentIssues": ["一貫した問題1", "問題2"],
-  "improvements": ["改善提案1", "提案2"],
-  "summary": "総合評価コメント"
-}`;
-
-        try {
-            const response = await this.sendChatMessage(summaryPrompt, false);
-            
-            const jsonMatch = response.response.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
-            } else {
-                return {
-                    summary: response.response,
-                    overallScore: 'N/A',
-                    timelineAnalysis: '統合分析完了'
-                };
-            }
-        } catch (error) {
-            console.warn('Summary generation failed:', error);
-            return {
-                summary: '統合分析中にエラーが発生しました',
-                overallScore: 'N/A',
-                timelineAnalysis: 'エラー'
-            };
-        }
-    }
-
-    // ファイルのMIMEタイプを取得
-    getMimeType(fileName) {
-        const extension = fileName.split('.').pop().toLowerCase();
-        const mimeTypes = {
-            'jpg': 'image/jpeg',
-            'jpeg': 'image/jpeg',
-            'png': 'image/png',
-            'gif': 'image/gif',
-            'webp': 'image/webp'
-        };
-        return mimeTypes[extension] || 'image/jpeg';
-    }
-
-    // 時間フォーマット
-    formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
 
     // チャット履歴クリア
     clearChatHistory() {
@@ -868,7 +597,6 @@ JSON形式で回答してください：
         return {
             isConfigured: this.isConfigured(),
             chatModel: this.chatModel,
-            visionModel: this.visionModel,
             baseUrl: this.baseUrl,
             chatHistoryLength: this.chatHistory.length,
             retrySettings: {

@@ -43,10 +43,6 @@
                         <span class="nav-icon">📋</span>
                         コーチングプラン
                     </button>
-                    <button class="nav-btn" data-page="media-analysis">
-                        <span class="nav-icon">📸</span>
-                        メディア分析
-                    </button>
                     <button class="nav-btn" data-page="settings">
                         <span class="nav-icon">⚙️</span>
                         設定
@@ -457,41 +453,6 @@
                 </div>
             </div>
 
-            <!-- Media Analysis Page -->
-            <div id="media-analysis" class="page">
-                <div class="page-header">
-                    <h2>📸 メディア解析</h2>
-                    <p>Gemini 2.5 Proでゲーム画面・動画を分析してパフォーマンスを向上させよう</p>
-                </div>
-
-                <!-- Upload Area -->
-                <div class="card">
-                    <h3>📁 ファイルアップロード</h3>
-                    <div class="upload-area" id="upload-area">
-                        <div class="upload-icon">🎮</div>
-                        <p><strong>ゲーム画面・動画をドラッグ＆ドロップ</strong></p>
-                        <p class="upload-hint">または下のボタンでファイル選択</p>
-                        <button class="btn-secondary" id="file-select-btn">ファイルを選択</button>
-                        <input type="file" id="file-input" accept="image/*,video/*" hidden multiple>
-                        <p class="upload-formats">対応形式: JPG, PNG, GIF, MP4, WebM (最大20MB)</p>
-                    </div>
-                    
-                    <div id="file-preview" class="file-preview hidden">
-                        <h4>📋 アップロードファイル</h4>
-                        <div id="file-list" class="file-grid">
-                            <!-- プレビューファイル -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Analysis Results -->
-                <div id="media-analysis-results" class="analysis-results hidden">
-                    <h3>🔍 解析結果</h3>
-                    <div id="analysis-cards-container">
-                        <!-- 解析結果カード -->
-                    </div>
-                </div>
-            </div>
 
             <!-- Settings Page -->
             <div id="settings" class="page">
@@ -779,11 +740,6 @@
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">📸</span>
-                            <div>
-                                <strong>メディア解析</strong>
-                                <p>スクリーンショット・動画分析</p>
-                                <small class="model-info">Gemini 2.5 Pro</small>
-                            </div>
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">🎯</span>
@@ -1050,7 +1006,6 @@
     <script src="api-service.js"></script>
     <script src="auth-service.js"></script>
     <script src="game-categories.js"></script>
-    <script src="media-analyzer.js"></script>
     <script src="theme-manager.js"></script>
     <script src="unified-api-manager.js"></script>
     <script src="gemini-service.js"></script>
