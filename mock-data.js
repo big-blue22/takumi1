@@ -99,11 +99,11 @@ const mockPlayerData = {
       priority: "high",
       createdAt: "2024-08-01"
     },
-    { 
-      id: 2, 
+    {
+      id: 2,
       title: "ドライブラッシュ成功率80%達成",
-      description: "ドライブラッシュの成功率を80%まで向上させる"
-      deadline: "2024-11-30", 
+      description: "ドライブラッシュの成功率を80%まで向上させる",
+      deadline: "2024-11-30",
       progress: 40,
       type: "skill",
       priority: "medium",
