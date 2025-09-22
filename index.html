@@ -68,8 +68,8 @@
             <!-- Dashboard Page -->
             <div id="dashboard" class="page active">
                 <div class="page-header">
-                    <h2>ダッシュボード</h2>
-                    <p>プレイヤーパフォーマンス概要</p>
+                    <h2>🥊 Street Fighter 6 ダッシュボード</h2>
+                    <p>SF6 プレイヤーパフォーマンス概要</p>
                 </div>
 
                 <!-- Player Profile Card -->
@@ -90,12 +90,12 @@
                             <span class="stat-value" id="win-rate">-</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">平均KDA</span>
-                            <span class="stat-value" id="avg-kda">-</span>
+                            <span class="stat-label">メインキャラ</span>
+                            <span class="stat-value" id="main-character">Luke</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">CS/分</span>
-                            <span class="stat-value" id="cs-per-min">-</span>
+                            <span class="stat-label">プレイ時間</span>
+                            <span class="stat-value" id="play-time">-</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">試合数</span>
@@ -118,12 +118,12 @@
                 <!-- Performance Charts -->
                 <div class="charts-grid">
                     <div class="card chart-card">
-                        <h3>パフォーマンストレンド</h3>
+                        <h3>勝率トレンド</h3>
                         <canvas id="performance-chart"></canvas>
                     </div>
                     <div class="card chart-card">
-                        <h3>KDA分布</h3>
-                        <canvas id="kda-chart"></canvas>
+                        <h3>キャラクター使用率</h3>
+                        <canvas id="sf6-metrics-chart"></canvas>
                     </div>
                 </div>
 
@@ -244,8 +244,8 @@
             <!-- Analysis Page -->
             <div id="analysis" class="page">
                 <div class="page-header">
-                    <h2>パフォーマンス分析</h2>
-                    <p>試合データの入力と詳細分析</p>
+                    <h2>🥊 Street Fighter 6 試合分析</h2>
+                    <p>SF6の試合データ入力と対戦分析</p>
                 </div>
 
                 <!-- Match Data Input Form -->
@@ -254,32 +254,56 @@
                     <form id="match-form" class="match-form">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="match-result">試合結果</label>
+                                <label for="match-result">勝敗</label>
                                 <select id="match-result" required>
                                     <option value="">選択してください</option>
-                                    <option value="WIN">勝利</option>
-                                    <option value="LOSS">敗北</option>
+                                    <option value="WIN">WIN</option>
+                                    <option value="LOSS">LOSE</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="kills">キル数</label>
-                                <input type="number" id="kills" min="0" required>
+                                <label for="character-select">使用キャラクター</label>
+                                <select id="character-select" required>
+                                    <option value="">キャラクターを選択</option>
+                                    <option value="Luke">Luke</option>
+                                    <option value="Ryu">Ryu</option>
+                                    <option value="Ken">Ken</option>
+                                    <option value="Chun-Li">Chun-Li</option>
+                                    <option value="Cammy">Cammy</option>
+                                    <option value="Zangief">Zangief</option>
+                                    <option value="JP">JP</option>
+                                    <option value="Juri">Juri</option>
+                                    <option value="Kimberly">Kimberly</option>
+                                    <option value="Lily">Lily</option>
+                                    <option value="Manon">Manon</option>
+                                    <option value="Marisa">Marisa</option>
+                                    <option value="Jamie">Jamie</option>
+                                    <option value="Dhalsim">Dhalsim</option>
+                                    <option value="E.Honda">E.Honda</option>
+                                    <option value="Blanka">Blanka</option>
+                                    <option value="Guile">Guile</option>
+                                    <option value="Dee Jay">Dee Jay</option>
+                                </select>
                             </div>
                             <div class="form-group">
-                                <label for="deaths">デス数</label>
-                                <input type="number" id="deaths" min="0" required>
+                                <label for="player-character">使用キャラクター（詳細）</label>
+                                <input type="text" id="player-character" placeholder="Luke">
                             </div>
                             <div class="form-group">
-                                <label for="assists">アシスト数</label>
-                                <input type="number" id="assists" min="0" required>
+                                <label for="opponent-character">相手キャラクター</label>
+                                <input type="text" id="opponent-character" placeholder="Ryu" required>
                             </div>
                             <div class="form-group">
-                                <label for="cs">CS数</label>
-                                <input type="number" id="cs" min="0" required>
+                                <label for="rounds-won">獲得ラウンド数</label>
+                                <input type="number" id="rounds-won" min="0" max="3" value="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="rounds-lost">失ったラウンド数</label>
+                                <input type="number" id="rounds-lost" min="0" max="3" value="0" required>
                             </div>
                             <div class="form-group">
                                 <label for="match-duration">試合時間（分）</label>
-                                <input type="number" id="match-duration" min="1" required>
+                                <input type="number" id="match-duration" min="1" step="0.1" value="3" required>
                             </div>
                         </div>
                         <button type="submit" class="btn-primary">分析を実行</button>
