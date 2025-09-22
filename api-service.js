@@ -286,13 +286,11 @@ class AICoachingService {
 ${gameSpecificInfo}
 パフォーマンス統計:
 - 勝率: ${data.stats?.winRate || 0}%
-- 平均KDA: ${data.stats?.avgKDA || 0}
-- CS/分: ${data.stats?.avgCSPerMin || 0}
 - 総試合数: ${data.stats?.gamesPlayed || 0}
 
 最近の試合結果:
 ${data.recentMatches ? data.recentMatches.map(match => 
-  `- ${match.result}: ${match.kda}, CS: ${match.cs} (${match.duration}分)`
+  `- ${match.result}: キャラ ${match.character}, ラウンド ${match.rounds} (${match.duration}分)`
 ).join('\n') : '情報なし'}
 
 以下のJSON形式で回答してください:

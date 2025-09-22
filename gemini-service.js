@@ -237,7 +237,8 @@ class GeminiService {
             // プレイヤー統計を取得
             const playerStats = {
                 winRate: document.getElementById('win-rate')?.textContent || '0%',
-                avgKda: document.getElementById('avg-kda')?.textContent || '0.0',
+                driveRushSuccess: document.getElementById('drive-rush-success')?.textContent || '0.0',
+                antiAirAccuracy: document.getElementById('anti-air-accuracy')?.textContent || '0.0%',
                 rank: document.getElementById('player-rank')?.textContent || 'Unranked',
                 gamesPlayed: document.getElementById('games-played')?.textContent || '0'
             };
@@ -254,7 +255,7 @@ class GeminiService {
             console.warn('Failed to get game context:', error);
             return {
                 game: { name: 'League of Legends', category: 'MOBA' },
-                stats: { winRate: '0%', avgKda: '0.0', rank: 'Unranked', gamesPlayed: '0' },
+                stats: { winRate: '0%', driveRushSuccess: '0.0', antiAirAccuracy: '0.0%', rank: 'Unranked', gamesPlayed: '0' },
                 goals: []
             };
         }
@@ -289,7 +290,8 @@ class GeminiService {
 - ゲーム: ${game.name} (${game.category})
 - 現在のランク: ${stats.rank}
 - 勝率: ${stats.winRate}
-- 平均KDA: ${stats.avgKda}
+- ドライブラッシュ成功: ${stats.driveRushSuccess}
+- 対空精度: ${stats.antiAirAccuracy}
 - 総試合数: ${stats.gamesPlayed}
 
 【設定目標】

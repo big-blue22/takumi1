@@ -1036,11 +1036,13 @@ class App {
     handleMatchSubmit() {
         const matchData = {
             result: document.getElementById('match-result').value,
-            kills: parseInt(document.getElementById('kills').value),
-            deaths: parseInt(document.getElementById('deaths').value),
-            assists: parseInt(document.getElementById('assists').value),
-            cs: parseInt(document.getElementById('cs').value),
-            duration: parseInt(document.getElementById('match-duration').value)
+            character: document.getElementById('character-select').value,
+            // キャラクター・ラウンド結果指標のみ
+            playerCharacter: document.getElementById('player-character').value,
+            opponentCharacter: document.getElementById('opponent-character').value,
+            roundsWon: parseInt(document.getElementById('rounds-won').value || 0),
+            roundsLost: parseInt(document.getElementById('rounds-lost').value || 0),
+            duration: parseFloat(document.getElementById('match-duration').value)
         };
         
         // 1) 分析結果の表示
@@ -1055,18 +1057,20 @@ class App {
     // 分析ページの入力をローカルに保存し、ダッシュボードを更新
     storeMatchAndRefresh(matchData) {
         try {
-            // 保存フォーマットへ整形
+            // 保存フォーマットへ整形（キャラクター・ラウンド情報のみ）
             const newMatch = {
                 id: Date.now(),
                 result: matchData.result || 'WIN',
-                kills: matchData.kills || 0,
-                deaths: matchData.deaths || 0,
-                assists: matchData.assists || 0,
-                cs: matchData.cs || 0,
+                character: matchData.character || 'Unknown',
+                // キャラクター・ラウンド結果指標
+                playerCharacter: matchData.playerCharacter || 'Unknown',
+                opponentCharacter: matchData.opponentCharacter || 'Unknown',
+                roundsWon: matchData.roundsWon || 0,
+                roundsLost: matchData.roundsLost || 0,
+                rounds: `${matchData.roundsWon || 0}-${matchData.roundsLost || 0}`,
                 duration: matchData.duration || 1,
-                kda: `${matchData.kills || 0}/${matchData.deaths || 0}/${matchData.assists || 0}`,
                 date: new Date().toISOString().split('T')[0],
-                gameMode: 'Custom'
+                gameMode: 'Ranked'
             };
 
             // 直近試合へ追加（最大50件）
@@ -1075,26 +1079,13 @@ class App {
             if (matches.length > 50) matches.length = 50;
             localStorage.setItem('recentMatches', JSON.stringify(matches));
 
-            // 集計してプレイヤー統計を更新
+            // 基本統計の計算（勝率のみ）
             const totalMatches = matches.length;
             const wins = matches.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
-            const totals = matches.reduce((acc, m) => {
-                acc.k += (m.kills || 0);
-                acc.d += (m.deaths || 0);
-                acc.a += (m.assists || 0);
-                acc.cs += (m.cs || 0);
-                acc.t += (m.duration || 0);
-                return acc;
-            }, { k:0, d:0, a:0, cs:0, t:0 });
-
             const winRate = totalMatches ? +(((wins / totalMatches) * 100).toFixed(1)) : 0;
-            const avgKDA = totals.d === 0 ? +(totals.k + totals.a).toFixed(2) : +(((totals.k + totals.a) / Math.max(totals.d, 1)).toFixed(2));
-            const csPerMin = totals.t ? +((totals.cs / totals.t).toFixed(1)) : 0;
 
             const updatedStats = {
                 winRate,
-                avgKDA,
-                csPerMin,
                 gamesPlayed: totalMatches
             };
 
@@ -1107,16 +1098,10 @@ class App {
                 localStorage.setItem('playerStats', JSON.stringify(updatedStats));
                 this.loadRecentMatches();
                 // 手動でUIへ反映
-                const mapping = {
-                    'win-rate': `${winRate}%`,
-                    'avg-kda': `${avgKDA}`,
-                    'cs-per-min': `${csPerMin}`,
-                    'games-played': `${totalMatches}`
-                };
-                Object.entries(mapping).forEach(([id, value]) => {
-                    const el = document.getElementById(id);
-                    if (el) el.textContent = value;
-                });
+                const winRateEl = document.getElementById('win-rate');
+                const gamesPlayedEl = document.getElementById('games-played');
+                if (winRateEl) winRateEl.textContent = `${winRate}%`;
+                if (gamesPlayedEl) gamesPlayedEl.textContent = `${totalMatches}`;
             }
         } catch (e) {
             console.warn('Failed to store match and refresh stats:', e);
@@ -1314,8 +1299,8 @@ class App {
         container.innerHTML = matches.map(match => `
             <div class="match-item ${match.result.toLowerCase()}">
                 <span class="match-result">${match.result}</span>
-                <span class="match-kda">KDA: ${match.kda}</span>
-                <span class="match-cs">CS: ${match.cs}</span>
+                <span class="match-character">キャラ: ${match.character}</span>
+                <span class="match-rounds">ラウンド: ${match.rounds}</span>
             </div>
         `).join('');
     }
@@ -1416,28 +1401,39 @@ class App {
     }
 
     analyzeMatch(matchData) {
-        const kda = ((matchData.kills + matchData.assists) / Math.max(matchData.deaths, 1)).toFixed(2);
-        const csPerMin = (matchData.cs / matchData.duration).toFixed(1);
-        
+        // キャラクター・ラウンド情報のみ保持
+        const playerCharacter = matchData.playerCharacter || 'Unknown';
+        const opponentCharacter = matchData.opponentCharacter || 'Unknown';
+        const roundsWon = matchData.roundsWon || 0;
+        const roundsLost = matchData.roundsLost || 0;
+
         const resultsContainer = document.getElementById('analysis-results');
         if (resultsContainer) {
             resultsContainer.innerHTML = `
                 <div class="card">
-                    <h3>分析結果</h3>
+                    <h3>試合分析結果</h3>
                     <div class="analysis-stats">
-                        <div class="stat-box">
-                            <span class="stat-label">KDA</span>
-                            <span class="stat-value">${kda}</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-label">CS/分</span>
-                            <span class="stat-value">${csPerMin}</span>
+                        <div class="stat-section">
+                            <h4>試合情報</h4>
+                            <div class="stat-row">
+                                <div class="stat-box">
+                                    <span class="stat-label">使用キャラ</span>
+                                    <span class="stat-value">${playerCharacter}</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">相手キャラ</span>
+                                    <span class="stat-value">${opponentCharacter}</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">ラウンド勝利</span>
+                                    <span class="stat-value">${roundsWon}/${roundsWon + roundsLost}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="analysis-feedback">
                         <h4>パフォーマンス評価</h4>
-                        <p>${kda >= 3 ? '優れたKDAです！' : 'KDAの改善余地があります。'}</p>
-                        <p>${csPerMin >= 7 ? 'CS精度は良好です。' : 'CSの精度を向上させましょう。'}</p>
+                        <p>試合データが記録されました。キャラクター対戦データを蓄積中...</p>
                     </div>
                 </div>
             `;
@@ -2099,8 +2095,11 @@ class App {
         if (stableStats) {
             const mapping = {
                 'win-rate': `${Number(stableStats.winRate).toFixed(0)}%`,
-                'avg-kda': `${Number(stableStats.avgKDA)}`,
-                'cs-per-min': `${Number(stableStats.csPerMin).toFixed(1)}`,
+                'avg-drive-rush-attempts': `${Number(stableStats.avgDriveRushAttempts || 0).toFixed(1)}`,
+                'drive-impact-success-rate': `${Number(stableStats.driveImpactSuccessRate || 0).toFixed(1)}%`,
+                'burnout-frequency': `${Number(stableStats.burnoutFrequency || 0).toFixed(1)}`,
+                'anti-air-success-rate': `${Number(stableStats.antiAirSuccessRate || 0).toFixed(1)}%`,
+                'throw-tech-rate': `${Number(stableStats.throwTechRate || 0).toFixed(1)}%`,
                 'games-played': `${parseInt(stableStats.gamesPlayed, 10)}`
             };
             Object.entries(mapping).forEach(([id, value]) => {
@@ -2127,7 +2126,7 @@ class App {
         if (currentGameName) currentGameName.textContent = 'ゲームを選択してください';
         
         // 統計を「-」に戻す
-        ['win-rate', 'avg-kda', 'cs-per-min', 'games-played'].forEach(id => {
+        ['win-rate', 'avg-drive-rush-attempts', 'drive-impact-success-rate', 'burnout-frequency', 'anti-air-success-rate', 'throw-tech-rate', 'games-played'].forEach(id => {
             const element = document.getElementById(id);
             if (element) element.textContent = '-';
         });
@@ -3098,7 +3097,7 @@ class App {
 
             // UI リセット
             this.clearGameData();
-            const statsIds = ['win-rate', 'avg-kda', 'cs-per-min', 'games-played'];
+            const statsIds = ['win-rate', 'avg-drive-rush-attempts', 'drive-impact-success-rate', 'burnout-frequency', 'anti-air-success-rate', 'throw-tech-rate', 'games-played'];
             statsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
             const matchesContainer = document.getElementById('recent-matches');
             if (matchesContainer) matchesContainer.innerHTML = '<p class="no-data">試合記録がまだありません</p>';

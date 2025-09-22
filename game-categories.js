@@ -125,35 +125,10 @@ class GameManager {
   getGameSpecificPrompt(gameId) {
     // ゲーム固有のプロンプトテンプレート
     const gamePrompts = {
-      valorant: {
-        stats: ['ACS', 'K/D', 'HS%', 'ADR', 'KAST'],
-        roles: ['デュエリスト', 'イニシエーター', 'コントローラー', 'センチネル'],
-        tips: 'エイム精度、エージェント選択、チーム連携を重視'
-      },
-      lol: {
-        stats: ['CS/分', 'KDA', 'Vision Score', 'Damage/分', 'Gold/分'],
-        roles: ['TOP', 'JG', 'MID', 'ADC', 'SUP'],
-        tips: 'ファーム効率、マップコントロール、オブジェクト管理を重視'
-      },
       sf6: {
-        stats: ['勝率', 'コンボ成功率', 'ガード成功率', '投げ抜け率', 'CA使用効率'],
-        characters: ['リュウ', 'ケン', '春麗', 'ルーク', 'ジェイミー'],
-        tips: 'フレーム知識、確定反撃、起き攻めセットプレイを重視'
-      },
-      cs2: {
-        stats: ['K/D', 'ADR', 'HS%', 'Rating', 'Impact'],
-        roles: ['エントリー', 'サポート', 'AWP', 'IGL', 'ラーカー'],
-        tips: 'マップコントロール、経済管理、チーム連携を重視'
-      },
-      apex: {
-        stats: ['K/D', 'Damage', 'Placement', 'Survival Time', 'Revives'],
-        roles: ['アサルト', 'ディフェンシブ', 'サポート', 'リーコン'],
-        tips: 'ポジショニング、チームワーク、第三者対策を重視'
-      },
-      dota2: {
-        stats: ['K/D/A', 'GPM', 'XPM', 'Last Hits', 'Damage'],
-        roles: ['Carry', 'Mid', 'Offlane', 'Support', 'Hard Support'],
-        tips: 'ファーム効率、アイテムビルド、チーム戦を重視'
+        stats: ['勝率', 'ドライブラッシュ成功率', '対空成功率', 'パーフェクト率', 'ドライブインパクト効率'],
+        characters: ['リュウ', 'ケン', '春麗', 'ルーク', 'ジェイミー', 'キンバリー', 'マノン', 'マリーザ'],
+        tips: 'フレーム知識、確定反撃、起き攻めセットプレイ、ドライブシステムの理解を重視'
       }
     };
     

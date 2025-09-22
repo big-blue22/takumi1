@@ -9,80 +9,83 @@ const mockPlayerData = {
   server: "JP",
   stats: {
     winRate: 58.5,
-    avgKDA: 3.5,
-    avgCSPerMin: 7.2,
-    mainRole: "ADC",
-    championPool: ["Jinx", "Kai'Sa", "Ezreal", "Jhin", "Aphelios"],
+    characterMain: "Luke",
+    masterRank: "Platinum",
     gamesPlayed: 256,
     totalPlayTime: 1024,
-    peakRank: "Master",
-    currentLP: 1847
+    peakRank: "Diamond",
+    leaguePoints: 1847
   },
   recentMatches: [
-    { 
-      id: 1, 
-      result: "WIN", 
-      kda: "8/2/11", 
-      kills: 8, 
-      deaths: 2, 
-      assists: 11,
-      cs: 285, 
-      duration: 32, 
-      champion: "Jinx",
+    {
+      id: 1,
+      result: "WIN",
+      character: "Luke",
+      // キャラクター・ラウンド結果
+      playerCharacter: "Luke",
+      opponentCharacter: "Ryu",
+      roundsWon: 2,
+      roundsLost: 0,
+      rounds: "2-0",
+      duration: 3.5,
       date: "2024-08-29",
-      gameMode: "Ranked Solo"
+      gameMode: "Ranked"
     },
-    { 
-      id: 2, 
-      result: "LOSS", 
-      kda: "5/6/8", 
-      kills: 5, 
-      deaths: 6, 
-      assists: 8,
-      cs: 243, 
-      duration: 28, 
-      champion: "Kai'Sa",
+    {
+      id: 2,
+      result: "LOSS",
+      character: "Ryu",
+      // キャラクター・ラウンド結果
+      playerCharacter: "Ryu",
+      opponentCharacter: "Ken",
+      roundsWon: 0,
+      roundsLost: 2,
+      rounds: "0-2",
+      duration: 2.8,
       date: "2024-08-29",
-      gameMode: "Ranked Solo"
+      gameMode: "Ranked"
     },
-    { 
-      id: 3, 
-      result: "WIN", 
-      kda: "12/3/7", 
-      kills: 12, 
-      deaths: 3, 
-      assists: 7,
-      cs: 312, 
-      duration: 35, 
-      champion: "Ezreal",
+    {
+      id: 3,
+      result: "WIN",
+      character: "Luke",
+      // キャラクター・ラウンド結果
+      playerCharacter: "Luke",
+      opponentCharacter: "Chun-Li",
+      roundsWon: 2,
+      roundsLost: 1,
+      rounds: "2-1",
+      duration: 4.2,
       date: "2024-08-28",
-      gameMode: "Ranked Solo"
+      gameMode: "Ranked"
     },
-    { 
-      id: 4, 
-      result: "WIN", 
-      kda: "7/1/15", 
-      kills: 7, 
-      deaths: 1, 
-      assists: 15,
-      cs: 268, 
-      duration: 30, 
-      champion: "Jhin",
+    {
+      id: 4,
+      result: "WIN",
+      character: "Ken",
+      // キャラクター・ラウンド結果
+      playerCharacter: "Ken",
+      opponentCharacter: "Jamie",
+      roundsWon: 2,
+      roundsLost: 0,
+      rounds: "2-0",
+      duration: 3.1,
       date: "2024-08-28",
-      gameMode: "Ranked Solo"
+      gameMode: "Ranked"
     },
-    { 
-      id: 5, 
-      result: "LOSS", 
-      kda: "3/5/9", 
-      kills: 3, 
-      deaths: 5, 
-      assists: 9,
-      cs: 198, 
-      duration: 25, 
-      champion: "Aphelios",
+    {
+      id: 5,
+      result: "LOSS",
+      character: "Chun-Li",
+      // キャラクター・ラウンド結果
+      playerCharacter: "Chun-Li",
+      opponentCharacter: "Guile",
+      roundsWon: 1,
+      roundsLost: 2,
+      rounds: "1-2",
+      duration: 3.8,
       date: "2024-08-27",
-      gameMode: "Ranked Solo"
+      gameMode: "Ranked"
     }
   ],
   goals: [
@@ -98,8 +101,8 @@ const mockPlayerData = {
     },
     { 
       id: 2, 
-      title: "CS/分 8.0達成", 
-      description: "平均CS/分を8.0まで向上させる",
+      title: "ドライブラッシュ成功率80%達成",
+      description: "ドライブラッシュの成功率を80%まで向上させる"
       deadline: "2024-11-30", 
       progress: 40,
       type: "skill",
@@ -132,18 +135,42 @@ const mockPerformanceData = {
   labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
   datasets: [
     {
-      label: 'KDA',
-      data: [2.8, 3.1, 2.9, 3.4, 3.7, 3.2, 3.5, 3.8],
+      label: 'ドライブラッシュ成功率',
+      data: [70, 74, 76, 78, 80, 77, 79, 82],
+      borderColor: '#ff6b35',
+      backgroundColor: 'rgba(255, 107, 53, 0.1)',
+      tension: 0.4,
+      fill: true
+    },
+    {
+      label: 'ドライブインパクト成功率',
+      data: [60, 65, 68, 70, 72, 68, 71, 75],
       borderColor: '#e94560',
       backgroundColor: 'rgba(233, 69, 96, 0.1)',
       tension: 0.4,
       fill: true
     },
     {
-      label: 'CS/min',
-      data: [6.5, 6.8, 6.9, 7.0, 7.1, 6.9, 7.2, 7.4],
+      label: '対空成功率',
+      data: [65, 68, 70, 73, 75, 72, 74, 77],
       borderColor: '#0f3460',
       backgroundColor: 'rgba(15, 52, 96, 0.1)',
+      tension: 0.4,
+      fill: true
+    },
+    {
+      label: '投げ抜け率',
+      data: [35, 38, 42, 45, 48, 46, 50, 52],
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+      tension: 0.4,
+      fill: true
+    },
+    {
+      label: 'ジャストパリィ平均回数',
+      data: [1.5, 1.8, 2.1, 2.3, 2.5, 2.2, 2.4, 2.7],
+      borderColor: '#8b5cf6',
+      backgroundColor: 'rgba(139, 92, 246, 0.1)',
       tension: 0.4,
       fill: true
     },
@@ -158,19 +185,18 @@ const mockPerformanceData = {
   ]
 };
 
-// KDA Distribution Chart Data
-const mockKDAData = {
-  labels: ['0-1', '1-2', '2-3', '3-4', '4-5', '5+'],
+// ドライブラッシュ成功率分布チャートデータ
+const mockDriveRushData = {
+  labels: ['0-20%', '20-40%', '40-60%', '60-80%', '80-100%'],
   datasets: [{
-    label: 'KDA分布',
-    data: [5, 12, 28, 35, 15, 5],
+    label: 'ドライブラッシュ成功率分布',
+    data: [2, 8, 25, 45, 20],
     backgroundColor: [
       '#ef4444',
       '#f59e0b',
       '#10b981',
       '#0f3460',
-      '#e94560',
-      '#8b5cf6'
+      '#e94560'
     ],
     borderColor: '#ffffff',
     borderWidth: 2
@@ -179,37 +205,37 @@ const mockKDAData = {
 
 // Mock AI Analysis Results
 const mockAIAnalysis = {
-  analysis: "プレイヤーは安定したパフォーマンスを示していますが、中盤の判断力とCS精度に改善の余地があります。特に、劣勢時の判断とチーム戦での立ち位置に課題が見られます。",
+  analysis: "プレイヤーは安定したパフォーマンスを示していますが、ドライブゲージ管理と対空の精度に改善の余地があります。特に、バーンアウト頻度の改善と投げ抜けの意識向上が必要です。ドライブインパクトの成功率は良好ですが、カウンターされるリスクも抱えています。",
   strengths: [
-    "高いKDA比率（平均3.5）を維持している",
-    "優れたマップコントロール意識",
-    "チーム戦での貢献度が高い",
-    "レーニング段階での優位性",
-    "アイテムビルドの適応力"
+    "高いドライブインパクト成功率（平均68.2%）を維持している",
+    "優れたニュートラルゲームの立ち回り",
+    "安定した対空意識（平均72.5%）",
+    "キャラクター対策の理解が深い",
+    "コンボ精度と安定性"
   ],
   weaknesses: [
-    "CS精度が目標値（8.0/分）を下回る",
-    "中盤のローミングタイミングが不適切",
-    "視界確保の意識が低い",
-    "劣勢時の判断ミス",
-    "チーム戦での立ち位置の問題"
+    "バーンアウト頻度が高い（平均0.8回/試合）",
+    "投げ抜け率が低い（平均45.8%）",
+    "ドライブインパクトのカウンター被害",
+    "プレッシャー状況での判断ミス",
+    "ゲージ管理の甘さ"
   ],
   improvements: [
-    "10分時点でのCS目標を80に設定し、練習を強化する",
-    "ミニマップの確認頻度を3秒に1回まで増やす",
-    "ワードの配置位置を最適化し、視界コントロールを向上",
-    "劣勢時の立ち回りパターンを習得する",
-    "チーム戦前のポジショニング練習を追加"
+    "ドライブゲージの節約意識を高める",
+    "投げ抜けのタイミング練習を強化する",
+    "ドライブインパクトの使い所を最適化する",
+    "対空の安定性をさらに向上させる",
+    "バーンアウト回避の練習を実施する"
   ],
   training: [
-    "カスタムゲームで10分間CSトレーニング（毎日30分）",
+    "トレーニングモードでドライブゲージ管理練習（毎日30分）",
     "プロの試合VOD分析（週3回、各1時間）",
-    "特定チャンピオンのコンボ練習（週5回）",
-    "ランク戦前のウォーミングアップルーティン導入",
-    "チーム戦シミュレーション練習"
+    "投げ抜け専用トレーニング（週5回）",
+    "対空コンボの安定性向上練習",
+    "バーンアウト回避シナリオ練習"
   ],
-  priority: "CS精度の向上 - 10分で80CS達成を最優先目標に設定",
-  estimatedImprovement: "2週間の集中練習で勝率5-8%向上、1ヶ月でCS/分0.5向上が期待できます",
+  priority: "ドライブゲージ管理の改善 - バーンアウト回数をゼロにすることを最優先目標に設定",
+  estimatedImprovement: "2週間の集中練習で勝率5-8%向上、1ヶ月でバーンアウト頻度50%減少・投げ抜け率15%向上が期待できます",
   confidence: 0.85,
   lastUpdated: "2024-08-30T10:30:00Z"
 };
@@ -218,42 +244,42 @@ const mockAIAnalysis = {
 const mockRecommendations = [
   {
     id: 1,
-    title: "CS精度向上",
-    type: "skill",
+    title: "ドライブゲージ管理向上",
+    type: "economy",
     priority: "high",
-    text: "カスタムゲームで毎日30分のCS練習を行い、10分時点で80CSを目標にしてください。現在の平均7.2/分から8.0/分への向上が期待できます。",
+    text: "ドライブゲージの効率的な使用とバーンアウト回避を重視してください。現在の平均0.8回/試合のバーンアウトを0回に減らすことで、大幅な勝率向上が期待できます。",
     actionItems: [
-      "カスタムゲームでのCS練習（毎日30分）",
-      "メトロノームを使用したラストヒット練習",
-      "複数チャンピオンでの練習"
+      "トレーニングモードでのゲージ管理練習（毎日30分）",
+      "ドライブインパクトの使用タイミング最適化",
+      "バーンアウト回避シナリオの練習"
     ],
     estimatedTime: "2-3週間",
     difficulty: "中"
   },
   {
     id: 2,
-    title: "視界コントロール",
-    type: "strategy",
+    title: "投げ抜け率向上",
+    type: "defense",
     priority: "medium",
-    text: "ワードの配置タイミングと位置を改善し、ミニマップ確認頻度を3秒に1回まで増やしてください。これにより死亡回数を20%削減できます。",
+    text: "投げ抜けのタイミングとリズムを習得してください。現在の45.8%から60%以上への向上で、近距離の攻防が大幅に改善されます。",
     actionItems: [
-      "3秒間隔でのミニマップ確認",
-      "ワード配置の最適化",
-      "敵ジャングラーの動向把握"
+      "投げ抜け専用トレーニングモード練習",
+      "相手の投げタイミングの研究",
+      "投げ抜け後の確反コンボ練習"
     ],
     estimatedTime: "1-2週間",
     difficulty: "易"
   },
   {
     id: 3,
-    title: "チーム戦ポジショニング",
-    type: "teamfight",
+    title: "対空精度の安定化",
+    type: "defense",
     priority: "medium",
-    text: "チーム戦での立ち位置を改善し、DPSを最大化しながら生存率を向上させてください。特にADCとしての最適な距離感を意識してください。",
+    text: "対空技の成功率をさらに向上させ、相手のジャンプ攻撃を封じてください。現在の72.5%から85%以上への向上で、試合の主導権をより確実に握れます。",
     actionItems: [
-      "チーム戦シミュレーション練習",
-      "ADCポジショニングガイド学習",
-      "プロ選手の立ち回り分析"
+      "各キャラクター別対空技の最適化練習",
+      "ジャンプタイミング読みの向上",
+      "対空後のコンボ確定練習"
     ],
     estimatedTime: "3-4週間",
     difficulty: "難"
@@ -300,14 +326,12 @@ const mockDataHelpers = {
     return { ...mockPlayerData.stats };
   },
 
-  // Get recent matches with calculated KDA
+  // Get recent matches with calculated stats
   getRecentMatches: (limit = 5) => {
     return mockPlayerData.recentMatches.slice(0, limit).map(match => ({
       ...match,
-      kdaRatio: match.deaths === 0 ? 
-        (match.kills + match.assists) : 
-        ((match.kills + match.assists) / match.deaths).toFixed(2),
-      csPerMin: (match.cs / match.duration).toFixed(1)
+      driveRushRate: match.driveRushLanded ? (match.driveRushLanded / 10 * 100).toFixed(1) : '0.0',
+      antiAirRate: match.antiAirSuccess ? (match.antiAirSuccess / 8 * 100).toFixed(1) : '0.0'
     }));
   },
 
@@ -334,18 +358,43 @@ const mockDataHelpers = {
     const matches = mockPlayerData.recentMatches;
     const totalMatches = matches.length;
     const wins = matches.filter(m => m.result === 'WIN').length;
-    const totalKills = matches.reduce((sum, m) => sum + m.kills, 0);
-    const totalDeaths = matches.reduce((sum, m) => sum + m.deaths, 0);
-    const totalAssists = matches.reduce((sum, m) => sum + m.assists, 0);
-    const totalCS = matches.reduce((sum, m) => sum + m.cs, 0);
-    const totalDuration = matches.reduce((sum, m) => sum + m.duration, 0);
+
+    // ドライブゲージ経済指標
+    const totalDriveRushAttempts = matches.reduce((sum, m) => sum + (m.driveRushAttempts || 0), 0);
+    const totalDriveRushSuccess = matches.reduce((sum, m) => sum + (m.driveRushSuccess || 0), 0);
+    const totalDriveImpactSuccess = matches.reduce((sum, m) => sum + (m.driveImpactSuccess || 0), 0);
+    const totalDriveImpactCounter = matches.reduce((sum, m) => sum + (m.driveImpactCounter || 0), 0);
+    const totalBurnoutCount = matches.reduce((sum, m) => sum + (m.burnoutCount || 0), 0);
+    const totalBurnoutDuration = matches.reduce((sum, m) => sum + (m.burnoutDuration || 0), 0);
+
+    // 対空・投げ指標
+    const totalOpponentJumps = matches.reduce((sum, m) => sum + (m.opponentJumps || 0), 0);
+    const totalAntiAirSuccess = matches.reduce((sum, m) => sum + (m.antiAirSuccess || 0), 0);
+    const totalThrowAttempts = matches.reduce((sum, m) => sum + (m.throwAttempts || 0), 0);
+    const totalThrowTechSuccess = matches.reduce((sum, m) => sum + (m.throwTechSuccess || 0), 0);
+
+    // ジャストパリィ・キャラクター指標
+    const totalJustParryCount = matches.reduce((sum, m) => sum + (m.justParryCount || 0), 0);
+    const totalRoundsWon = matches.reduce((sum, m) => sum + (m.roundsWon || 0), 0);
+    const totalRoundsLost = matches.reduce((sum, m) => sum + (m.roundsLost || 0), 0);
 
     return {
       winRate: ((wins / totalMatches) * 100).toFixed(1),
-      avgKDA: totalDeaths === 0 ? 
-        (totalKills + totalAssists).toFixed(2) : 
-        ((totalKills + totalAssists) / totalDeaths).toFixed(2),
-      avgCSPerMin: (totalCS / totalDuration).toFixed(1),
+      avgDriveRushAttempts: (totalDriveRushAttempts / totalMatches).toFixed(1),
+      driveRushSuccessRate: totalDriveRushAttempts > 0 ?
+        ((totalDriveRushSuccess / totalDriveRushAttempts) * 100).toFixed(1) : '0.0',
+      driveImpactSuccessRate: totalDriveImpactSuccess > 0 ?
+        ((totalDriveImpactSuccess / (totalDriveImpactSuccess + totalDriveImpactCounter)) * 100).toFixed(1) : '0.0',
+      burnoutFrequency: (totalBurnoutCount / totalMatches).toFixed(1),
+      avgBurnoutDuration: totalBurnoutCount > 0 ?
+        (totalBurnoutDuration / totalBurnoutCount).toFixed(1) : '0.0',
+      antiAirSuccessRate: totalOpponentJumps > 0 ?
+        ((totalAntiAirSuccess / totalOpponentJumps) * 100).toFixed(1) : '0.0',
+      throwTechRate: totalThrowAttempts > 0 ?
+        ((totalThrowTechSuccess / totalThrowAttempts) * 100).toFixed(1) : '0.0',
+      avgJustParryCount: (totalJustParryCount / totalMatches).toFixed(1),
+      roundWinRate: (totalRoundsWon + totalRoundsLost) > 0 ?
+        ((totalRoundsWon / (totalRoundsWon + totalRoundsLost)) * 100).toFixed(1) : '0.0',
       totalMatches,
       wins,
       losses: totalMatches - wins
@@ -405,7 +454,7 @@ const mockDataHelpers = {
     
     return {
       ...mockAIAnalysis,
-      analysis: `現在の勝率${metrics.winRate}%、平均KDA${metrics.avgKDA}のパフォーマンスを分析しました。${mockAIAnalysis.analysis}`,
+      analysis: `現在の勝率${metrics.winRate}%、ドライブインパクト成功率${metrics.driveImpactSuccessRate}%、バーンアウト頻度${metrics.burnoutFrequency}回/試合のパフォーマンスを分析しました。${mockAIAnalysis.analysis}`,
       lastUpdated: new Date().toISOString()
     };
   },
@@ -424,7 +473,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     mockPlayerData,
     mockPerformanceData,
-    mockKDAData,
+    mockDriveRushData,
     mockAIAnalysis,
     mockRecommendations,
     mockSettings,
@@ -435,7 +484,7 @@ if (typeof module !== 'undefined' && module.exports) {
   // Browser environment
   window.mockPlayerData = mockPlayerData;
   window.mockPerformanceData = mockPerformanceData;
-  window.mockKDAData = mockKDAData;
+  window.mockDriveRushData = mockDriveRushData;
   window.mockAIAnalysis = mockAIAnalysis;
   window.mockRecommendations = mockRecommendations;
   window.mockSettings = mockSettings;

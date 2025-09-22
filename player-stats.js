@@ -17,37 +17,25 @@ class PlayerStatsManager {
     // 統計値が存在するかチェック
     hasValidStats() {
         const stats = this.getPlayerStats();
-        return stats.winRate !== undefined && 
-               stats.avgKDA !== undefined && 
-               stats.csPerMin !== undefined && 
+        return stats.winRate !== undefined &&
                stats.gamesPlayed !== undefined;
     }
 
     // 統計データをダッシュボードに表示
     loadStatsToUI() {
         const stats = this.getPlayerStats();
-        
-        // 統計値の更新（データがある場合のみ）
+
+        // 統計値の更新（基本統計のみ）
         if (stats.winRate !== undefined) {
             const element = document.getElementById('win-rate');
             if (element) element.textContent = stats.winRate + '%';
         }
-        
-        if (stats.avgKDA !== undefined) {
-            const element = document.getElementById('avg-kda');
-            if (element) element.textContent = stats.avgKDA;
-        }
-        
-        if (stats.csPerMin !== undefined) {
-            const element = document.getElementById('cs-per-min');
-            if (element) element.textContent = stats.csPerMin;
-        }
-        
+
         if (stats.gamesPlayed !== undefined) {
             const element = document.getElementById('games-played');
             if (element) element.textContent = stats.gamesPlayed;
         }
-        
+
         // チャートの初期化（データがある場合のみ）
         this.initChartsIfDataExists(stats);
     }
@@ -58,8 +46,8 @@ class PlayerStatsManager {
             this.initPerformanceChart(stats.performanceData);
         }
         
-        if (stats.kdaData) {
-            this.initKDAChart(stats.kdaData);
+        if (stats.sf6MetricsData) {
+            this.initSF6MetricsChart(stats.sf6MetricsData);
         }
     }
 
@@ -97,19 +85,19 @@ class PlayerStatsManager {
         }
     }
 
-    // KDAチャート初期化
-    initKDAChart(data) {
-        const kdaCanvas = document.getElementById('kda-chart');
-        if (kdaCanvas && typeof Chart !== 'undefined') {
-            const ctx = kdaCanvas.getContext('2d');
+    // SF6指標チャート初期化
+    initSF6MetricsChart(data) {
+        const sf6Canvas = document.getElementById('sf6-metrics-chart');
+        if (sf6Canvas && typeof Chart !== 'undefined') {
+            const ctx = sf6Canvas.getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['キル', 'デス', 'アシスト'],
+                    labels: ['ドライブインパクト成功率', '対空成功率', '投げ抜け率'],
                     datasets: [{
-                        label: '平均',
-                        data: [data.kills, data.deaths, data.assists],
-                        backgroundColor: ['#4caf50', '#f44336', '#2196f3']
+                        label: '成功率 (%)',
+                        data: [data.driveImpact, data.antiAir, data.throwTech],
+                        backgroundColor: ['#e94560', '#0f3460', '#10b981']
                     }]
                 },
                 options: {
@@ -117,6 +105,12 @@ class PlayerStatsManager {
                     plugins: {
                         legend: {
                             display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
                         }
                     }
                 }
@@ -139,8 +133,8 @@ class PlayerStatsManager {
         container.innerHTML = matches.map(match => `
             <div class="match-item ${match.result.toLowerCase()}">
                 <span class="match-result">${match.result}</span>
-                <span class="match-kda">KDA: ${match.kda}</span>
-                <span class="match-cs">CS: ${match.cs}</span>
+                <span class="match-character">キャラ: ${match.character || 'Unknown'}</span>
+                <span class="match-rounds">ラウンド: ${match.rounds || '0-0'}</span>
             </div>
         `).join('');
     }
