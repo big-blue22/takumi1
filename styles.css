@@ -6062,23 +6062,47 @@ input, select, textarea {
 /* Character Selection Grid */
 .character-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--glass-border);
+}
+
+.character-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.character-grid::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.character-grid::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 3px;
+}
+
+.character-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
 
 .char-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   background: var(--bg-secondary);
-  border: 2px solid var(--glass-border);
-  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-small);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   text-align: center;
-  min-height: 80px;
+  min-height: 60px;
   justify-content: center;
 }
 
@@ -6095,14 +6119,15 @@ input, select, textarea {
 }
 
 .char-icon {
-  font-size: 24px;
-  margin-bottom: var(--spacing-xs);
+  font-size: 18px;
+  margin-bottom: 2px;
 }
 
 .char-name {
   color: var(--text-primary);
-  font-size: var(--font-size-sm);
+  font-size: 11px;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 /* VS Section */
@@ -6273,17 +6298,22 @@ input, select, textarea {
 /* Responsive Design */
 @media (max-width: 768px) {
   .character-grid {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: var(--spacing-sm);
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 6px;
+    max-height: 200px;
   }
 
   .char-option {
-    min-height: 70px;
-    padding: var(--spacing-sm);
+    min-height: 50px;
+    padding: 4px;
   }
 
   .char-icon {
-    font-size: 20px;
+    font-size: 16px;
+  }
+
+  .char-name {
+    font-size: 10px;
   }
 
   .score-grid {
