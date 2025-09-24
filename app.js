@@ -1062,6 +1062,9 @@ class App {
             });
         });
 
+        // キャラクター検索機能
+        this.setupCharacterFiltering();
+
         // スコア選択
         const scoreOptions = document.querySelectorAll('.score-option');
         scoreOptions.forEach(option => {
@@ -1091,6 +1094,78 @@ class App {
             const detailedCard = document.getElementById('detailed-match-card');
             detailedCard.classList.toggle('collapsed');
         };
+    }
+
+    // キャラクター検索フィルタリング機能の設定
+    setupCharacterFiltering() {
+        // プレイヤーキャラクター検索
+        const playerSearchInput = document.getElementById('player-character-search');
+        if (playerSearchInput) {
+            playerSearchInput.addEventListener('input', (e) => {
+                this.filterCharacters(e.target.value.toLowerCase(), '#player-character-grid');
+            });
+        }
+
+        // 相手キャラクター検索
+        const opponentSearchInput = document.getElementById('opponent-character-search');
+        if (opponentSearchInput) {
+            opponentSearchInput.addEventListener('input', (e) => {
+                this.filterCharacters(e.target.value.toLowerCase(), '#opponent-character-grid');
+            });
+        }
+    }
+
+    // キャラクターフィルタリング処理
+    filterCharacters(searchTerm, gridSelector) {
+        const grid = document.querySelector(gridSelector);
+        if (!grid) return;
+
+        const characters = grid.querySelectorAll('.char-option');
+        let visibleCount = 0;
+
+        characters.forEach(character => {
+            const characterName = character.dataset.char.toLowerCase();
+            const characterDisplayName = character.querySelector('.char-name').textContent.toLowerCase();
+
+            // キャラクター名（英語）または表示名（日本語）で検索
+            const matches = characterName.includes(searchTerm) ||
+                           characterDisplayName.includes(searchTerm);
+
+            if (matches || searchTerm === '') {
+                character.style.display = 'flex';
+                visibleCount++;
+            } else {
+                character.style.display = 'none';
+            }
+        });
+
+        // 結果が見つからない場合のメッセージ表示（オプション）
+        this.updateFilterMessage(gridSelector, visibleCount, searchTerm);
+    }
+
+    // フィルタリング結果メッセージの更新
+    updateFilterMessage(gridSelector, visibleCount, searchTerm) {
+        const grid = document.querySelector(gridSelector);
+        if (!grid) return;
+
+        // 既存のメッセージを削除
+        const existingMessage = grid.querySelector('.filter-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        // 検索結果が0件で検索語がある場合にメッセージを表示
+        if (visibleCount === 0 && searchTerm !== '') {
+            const message = document.createElement('div');
+            message.className = 'filter-message';
+            message.innerHTML = `
+                <div class="no-results-message">
+                    <span class="no-results-icon">🔍</span>
+                    <p>"${searchTerm}" に一致するキャラクターが見つかりません</p>
+                </div>
+            `;
+            grid.appendChild(message);
+        }
     }
 
     // 自分のキャラクター選択処理
