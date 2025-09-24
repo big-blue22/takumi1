@@ -6378,6 +6378,28 @@ input, select, textarea {
   transform: rotate(-90deg);
 }
 
+/* 詳細データ入力セクション */
+.detailed-data-section {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--glass-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--glass-border);
+}
+
+.detailed-data-section h4 {
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+[data-theme="light"] .detailed-data-section {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  backdrop-filter: var(--backdrop-blur);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .character-filter {
