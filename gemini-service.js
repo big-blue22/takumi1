@@ -48,6 +48,19 @@ class GeminiService {
         };
     }
 
+    // ブラウザ環境でのデバッグモード判定
+    isDebugMode() {
+        try {
+            return (typeof window !== 'undefined' &&
+                   (window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1' ||
+                    window.location.protocol === 'file:' ||
+                    window.location.search.includes('debug=true')));
+        } catch (error) {
+            return false;
+        }
+    }
+
     // 統一APIマネージャとの連携初期化
     initializeWithUnifiedAPI() {
         if (window.unifiedApiManager) {
@@ -682,8 +695,8 @@ ${refinedContent.extractedElements}
                 hasText: data.candidates?.[0]?.content?.parts?.[0]?.text ? 'exists' : 'undefined',
                 finishReason: data.candidates?.[0]?.finishReason,
                 safetyRatings: data.candidates?.[0]?.safetyRatings,
-                // 詳細ログは開発時のみ（本番では削除推奨）
-                fullResponse: process.env.NODE_ENV === 'development' ? JSON.stringify(data, null, 2) : '[hidden]'
+                // 詳細ログはローカル開発時のみ
+                fullResponse: this.isDebugMode() ? JSON.stringify(data, null, 2) : '[response hidden]'
             });
 
             if (!data.candidates || data.candidates.length === 0) {
