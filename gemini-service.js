@@ -24,9 +24,9 @@ class GeminiService {
             topK: 40 // より幅広い回答生成
         };
 
-        // グラウンディング設定
+        // グラウンディング設定（正しいAPI構造で再有効化）
         this.groundingConfig = {
-            enableWebSearch: true, // Web検索を有効化
+            enableWebSearch: true, // Web検索を再有効化
             enableDynamicRetrieval: true, // 動的な情報取得を有効化
             searchQueries: {
                 sf6: 'Street Fighter 6',
@@ -450,13 +450,23 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
                 const errorMessage = errorData?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-                
+
                 console.error(`❌ API Error:`, {
                     status: response.status,
                     errorData: errorData,
                     url: url
                 });
-                
+
+                // グラウンディング関連のエラーを検出
+                if (errorMessage.includes('Search Grounding') ||
+                    errorMessage.includes('grounding') ||
+                    errorMessage.includes('googleSearchRetrieval')) {
+                    // グラウンディングを無効化して再試行する可能性をユーザーに通知
+                    this.groundingConfig.enableWebSearch = false;
+                    console.warn('⚠️ グラウンディング機能が無効化されました。通常モードで続行します。');
+                    throw new Error('Search Grounding is not supported.');
+                }
+
                 if (response.status === 404) {
                     throw new Error('API エンドポイントが見つかりません。モデル名またはURLを確認してください。');
                 } else if (response.status === 401 || response.status === 403) {
@@ -671,16 +681,86 @@ ${refinedContent.extractedElements}
             // ハッシュタグを抽出
             const tags = this.extractTags(aiResponse);
 
+            // グラウンディングメタデータの処理
+            let groundingMetadata = null;
+            if (data.candidates && data.candidates[0] && data.candidates[0].groundingMetadata) {
+                groundingMetadata = this.processGroundingMetadata(data.candidates[0].groundingMetadata);
+                console.log('📚 引用ソース:', groundingMetadata);
+            }
+
             console.log('✅ 生成されたタグ:', tags);
             return {
                 tags: tags,
                 originalResponse: aiResponse,
                 refinedContent: refinedContent,
+                groundingSources: groundingMetadata,
                 usage: data.usageMetadata || {}
             };
 
         } catch (error) {
             console.error('気づきタグ生成エラー:', error);
+
+            // グラウンディングエラーの場合は通常モードで再試行
+            if (error.message.includes('Search Grounding is not supported')) {
+                console.log('🔄 グラウンディング無効化して再試行...');
+
+                try {
+                    // 通常のタグ生成プロンプト（グラウンディングなし）
+                    const fallbackPrompt = `以下の構造化された試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個生成してください。
+
+【推敲・構造化された試合内容】
+"${refinedContent.structuredContent}"
+
+【抽出された要素】
+${refinedContent.extractedElements}
+
+【SF6専門用語を使ったタグ例】
+技術: #対空失敗 #コンボミス #確反取れず #投げ抜け失敗 #パリィタイミング
+戦術: #立ち回り改善 #距離管理 #攻め継続 #守備重視 #読み合い勝利
+キャラ対策: #ジュリ対策 #ルーク対策 #ケン対策 #春麗対策 #ザンギエフ対策
+システム: #ドライブ管理 #バーンアウト回避 #ODアーツ有効活用 #ゲージ温存
+
+以下の形式でタグのみを出力してください（説明不要）：
+#タグ1 #タグ2 #タグ3 #タグ4 #タグ5`;
+
+                    const fallbackRequest = {
+                        contents: [{
+                            parts: [{ text: fallbackPrompt }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.3,
+                            maxOutputTokens: 300,
+                            topP: 0.8,
+                            topK: 20
+                        }
+                    };
+
+                    const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
+                    const response = await this.makeAPIRequest(url, fallbackRequest);
+                    const data = await response.json();
+
+                    if (!data.candidates || data.candidates.length === 0) {
+                        throw new Error('フォールバック時のタグ生成応答が得られませんでした');
+                    }
+
+                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    const tags = this.extractTags(aiResponse);
+
+                    console.log('✅ フォールバックでタグ生成成功:', tags);
+                    return {
+                        tags: tags,
+                        originalResponse: aiResponse,
+                        refinedContent: refinedContent,
+                        fallbackMode: true,
+                        usage: data.usageMetadata || {}
+                    };
+
+                } catch (fallbackError) {
+                    console.error('フォールバック失敗:', fallbackError);
+                    throw fallbackError;
+                }
+            }
+
             throw error;
         }
     }
@@ -716,7 +796,7 @@ ${refinedContent.extractedElements}
         return queries.slice(0, 5); // 最大5つのクエリに制限
     }
 
-    // グラウンディング設定を含むリクエストボディ生成
+    // グラウンディング設定を含むリクエストボディ生成（フォールバック対応）
     createGroundedRequest(prompt, rawInput, useGrounding = true) {
         const baseRequest = {
             contents: [{
@@ -730,33 +810,59 @@ ${refinedContent.extractedElements}
             }
         };
 
-        // グラウンディングが有効な場合は追加設定
+        // グラウンディングが有効な場合は正しいAPI構造でツール設定
         if (useGrounding && this.groundingConfig.enableWebSearch) {
             const searchQueries = this.generateSearchQueries(rawInput);
 
             if (searchQueries.length > 0) {
+                // Python例に基づく正しいGoogle Search Tool構造
                 baseRequest.tools = [{
-                    googleSearchRetrieval: {
-                        dynamicRetrievalConfig: {
-                            mode: "MODE_DYNAMIC",
-                            dynamicThreshold: 0.7
-                        }
-                    }
+                    googleSearch: {}  // Python例: google_search=types.GoogleSearch()
                 }];
 
-                // 検索クエリをプロンプトに組み込み
+                // 検索を活用するよう指示を追加
                 const enhancedPrompt = `${prompt}
 
-【参考情報検索クエリ】
-最新の情報を検索してください: ${searchQueries.join(', ')}
+【重要指示】
+以下のキーワードについて最新の情報を検索して参考にしてください:
+${searchQueries.map(query => `- ${query}`).join('\n')}
 
-上記の検索結果も参考にして、より正確で最新の情報に基づいた分析を行ってください。`;
+検索結果を踏まえて、最新で正確な情報に基づいた分析を行ってください。`;
 
                 baseRequest.contents[0].parts[0].text = enhancedPrompt;
+
+                console.log('🔍 グラウンディング有効化:', {
+                    searchQueries: searchQueries,
+                    toolsEnabled: true
+                });
             }
         }
 
         return baseRequest;
+    }
+
+    // グラウンディングメタデータ処理
+    processGroundingMetadata(metadata) {
+        if (!metadata || !metadata.groundingChunks) {
+            return null;
+        }
+
+        const sources = [];
+        metadata.groundingChunks.forEach(chunk => {
+            if (chunk.web) {
+                sources.push({
+                    title: chunk.web.title || 'タイトル不明',
+                    url: chunk.web.uri || '#',
+                    snippet: chunk.web.snippet || ''
+                });
+            }
+        });
+
+        return {
+            searchPerformed: metadata.searchQueries || [],
+            sources: sources,
+            totalSources: sources.length
+        };
     }
 
     // 入力文の推敲・構造化（グラウンディング対応）
@@ -989,7 +1095,8 @@ ${refinedContent.extractedElements}
             grounding: {
                 webSearchEnabled: this.groundingConfig.enableWebSearch,
                 dynamicRetrievalEnabled: this.groundingConfig.enableDynamicRetrieval,
-                availableSearchQueries: Object.keys(this.groundingConfig.searchQueries)
+                availableSearchQueries: Object.keys(this.groundingConfig.searchQueries),
+                status: this.groundingConfig.enableWebSearch ? 'enabled' : 'disabled (API不支持)'
             },
             apiKeyLength: this.apiKey ? this.apiKey.length : 0,
             apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'なし'

@@ -1329,13 +1329,25 @@ class App {
                 this.displayRefinedContent(result.refinedContent);
             }
 
+            // 検索ソース情報があれば表示
+            if (result.groundingSources) {
+                this.displayGroundingSources(result.groundingSources);
+            }
+
             // 生成されたタグを表示
             this.displayGeneratedTags(result.tags);
 
             // コンテナを表示
             generatedTagsContainer.style.display = 'block';
 
-            this.showToast('✅ 最新情報を検索してAI分析を完了しました', 'success');
+            // フォールバックモードかグラウンディング成功かに応じてメッセージを表示
+            if (result.fallbackMode) {
+                this.showToast('✅ AI分析を完了しました（通常モード）', 'success');
+            } else if (result.groundingSources && result.groundingSources.totalSources > 0) {
+                this.showToast(`✅ 最新情報（${result.groundingSources.totalSources}件）を参考にAI分析完了`, 'success');
+            } else {
+                this.showToast('✅ AI分析を完了しました', 'success');
+            }
 
         } catch (error) {
             console.error('タグ生成エラー:', error);
@@ -1400,6 +1412,49 @@ class App {
         `;
 
         refinedDisplay.style.display = 'block';
+    }
+
+    // 検索ソース情報を表示
+    displayGroundingSources(groundingSources) {
+        // 検索ソース表示要素を動的に作成
+        let sourcesDisplay = document.getElementById('grounding-sources-display');
+        if (!sourcesDisplay) {
+            sourcesDisplay = document.createElement('div');
+            sourcesDisplay.id = 'grounding-sources-display';
+            sourcesDisplay.className = 'grounding-sources-display';
+
+            // refined-content-displayの後に挿入
+            const refinedDisplay = document.getElementById('refined-content-display');
+            if (refinedDisplay) {
+                refinedDisplay.parentNode.insertBefore(sourcesDisplay, refinedDisplay.nextSibling);
+            } else {
+                const generatedContainer = document.getElementById('generated-tags-container');
+                generatedContainer.parentNode.insertBefore(sourcesDisplay, generatedContainer);
+            }
+        }
+
+        sourcesDisplay.innerHTML = `
+            <div class="sources-header">
+                <h5>📚 参考にした情報源 (${groundingSources.totalSources}件)</h5>
+                <button type="button" class="btn-text" onclick="this.parentElement.parentElement.style.display='none'">
+                    ✕ 閉じる
+                </button>
+            </div>
+            <div class="sources-content">
+                ${groundingSources.sources.map(source => `
+                    <div class="source-item">
+                        <div class="source-title">
+                            <a href="${source.url}" target="_blank" rel="noopener">
+                                ${source.title}
+                            </a>
+                        </div>
+                        ${source.snippet ? `<div class="source-snippet">${source.snippet}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        sourcesDisplay.style.display = 'block';
     }
 
     // 生成されたタグを表示
