@@ -672,19 +672,62 @@ ${refinedContent.extractedElements}
             const response = await this.makeAPIRequest(url, requestBody);
             const data = await response.json();
 
+            console.log('🔍 API レスポンス構造:', {
+                hasCandidates: !!data.candidates,
+                candidatesLength: data.candidates?.length,
+                firstCandidate: data.candidates?.[0] ? 'exists' : 'undefined',
+                hasContent: data.candidates?.[0]?.content ? 'exists' : 'undefined',
+                hasParts: data.candidates?.[0]?.content?.parts ? 'exists' : 'undefined',
+                partsLength: data.candidates?.[0]?.content?.parts?.length,
+                hasText: data.candidates?.[0]?.content?.parts?.[0]?.text ? 'exists' : 'undefined',
+                finishReason: data.candidates?.[0]?.finishReason,
+                safetyRatings: data.candidates?.[0]?.safetyRatings,
+                // 詳細ログは開発時のみ（本番では削除推奨）
+                fullResponse: process.env.NODE_ENV === 'development' ? JSON.stringify(data, null, 2) : '[hidden]'
+            });
+
             if (!data.candidates || data.candidates.length === 0) {
+                console.error('❌ No candidates in response:', data);
                 throw new Error('タグ生成の応答が得られませんでした');
             }
 
-            const aiResponse = data.candidates[0].content.parts[0].text;
+            const candidate = data.candidates[0];
+
+            // 安全性フィルタによるブロックをチェック
+            if (candidate.finishReason === 'SAFETY') {
+                console.warn('⚠️ コンテンツが安全性フィルタでブロックされました:', candidate.safetyRatings);
+                throw new Error('コンテンツが安全性フィルタによってブロックされました。より適切な表現で入力してください。');
+            }
+
+            if (candidate.finishReason === 'RECITATION') {
+                console.warn('⚠️ コンテンツが著作権フィルタでブロックされました');
+                throw new Error('コンテンツが著作権フィルタによってブロックされました。');
+            }
+
+            if (!candidate || !candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
+                console.error('❌ Invalid candidate structure:', {
+                    hasCandidate: !!candidate,
+                    hasContent: !!candidate?.content,
+                    hasParts: !!candidate?.content?.parts,
+                    hasFirstPart: !!candidate?.content?.parts?.[0],
+                    finishReason: candidate?.finishReason
+                });
+                throw new Error(`API応答の構造が無効です (finishReason: ${candidate?.finishReason || 'unknown'})`);
+            }
+
+            const aiResponse = candidate.content.parts[0].text;
+            if (!aiResponse) {
+                console.error('❌ No text in response:', candidate.content.parts[0]);
+                throw new Error('AIからのテキスト応答がありません');
+            }
 
             // ハッシュタグを抽出
             const tags = this.extractTags(aiResponse);
 
             // グラウンディングメタデータの処理
             let groundingMetadata = null;
-            if (data.candidates && data.candidates[0] && data.candidates[0].groundingMetadata) {
-                groundingMetadata = this.processGroundingMetadata(data.candidates[0].groundingMetadata);
+            if (candidate.groundingMetadata) {
+                groundingMetadata = this.processGroundingMetadata(candidate.groundingMetadata);
                 console.log('📚 引用ソース:', groundingMetadata);
             }
 
@@ -740,10 +783,22 @@ ${refinedContent.extractedElements}
                     const data = await response.json();
 
                     if (!data.candidates || data.candidates.length === 0) {
+                        console.error('❌ フォールバック: No candidates in response:', data);
                         throw new Error('フォールバック時のタグ生成応答が得られませんでした');
                     }
 
-                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    const fallbackCandidate = data.candidates[0];
+                    if (!fallbackCandidate || !fallbackCandidate.content ||
+                        !fallbackCandidate.content.parts || !fallbackCandidate.content.parts[0]) {
+                        console.error('❌ フォールバック: Invalid candidate structure:', fallbackCandidate);
+                        throw new Error('フォールバックAPI応答の構造が無効です');
+                    }
+
+                    const aiResponse = fallbackCandidate.content.parts[0].text;
+                    if (!aiResponse) {
+                        console.error('❌ フォールバック: No text in response:', fallbackCandidate.content.parts[0]);
+                        throw new Error('フォールバックAIからのテキスト応答がありません');
+                    }
                     const tags = this.extractTags(aiResponse);
 
                     console.log('✅ フォールバックでタグ生成成功:', tags);
@@ -904,11 +959,28 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
             const response = await this.makeAPIRequest(url, requestBody);
             const data = await response.json();
 
+            console.log('🔍 推敲API レスポンス構造:', {
+                hasCandidates: !!data.candidates,
+                candidatesLength: data.candidates?.length,
+                firstCandidate: data.candidates?.[0] ? 'exists' : 'undefined'
+            });
+
             if (!data.candidates || data.candidates.length === 0) {
+                console.error('❌ 推敲: No candidates in response:', data);
                 throw new Error('入力文推敲の応答が得られませんでした');
             }
 
-            const aiResponse = data.candidates[0].content.parts[0].text;
+            const candidate = data.candidates[0];
+            if (!candidate || !candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
+                console.error('❌ 推敲: Invalid candidate structure:', candidate);
+                throw new Error('推敲API応答の構造が無効です');
+            }
+
+            const aiResponse = candidate.content.parts[0].text;
+            if (!aiResponse) {
+                console.error('❌ 推敲: No text in response:', candidate.content.parts[0]);
+                throw new Error('推敲AIからのテキスト応答がありません');
+            }
 
             // JSONレスポンスをパース（フォールバック付き）
             try {
