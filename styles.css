@@ -6354,10 +6354,11 @@ input, select, textarea {
 }
 
 .detailed-match-card .card-content {
-  max-height: 1000px;
+  max-height: 80vh;
   transition: all 0.3s ease;
   opacity: 1;
   padding: var(--spacing-lg);
+  overflow-y: auto;
 }
 
 .collapsible-header {
@@ -6392,6 +6393,25 @@ input, select, textarea {
   margin-bottom: var(--spacing-lg);
   font-size: var(--font-size-lg);
   font-weight: 600;
+}
+
+.detailed-data-section .form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.detailed-data-section .form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.detailed-data-section .form-group label {
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.detailed-data-section .form-group input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
 }
 
 [data-theme="light"] .detailed-data-section {
