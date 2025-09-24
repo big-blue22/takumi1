@@ -1089,6 +1089,9 @@ class App {
             });
         }
 
+        // 気づきタグ機能
+        this.setupInsightTagsListeners();
+
         // 詳細入力の折りたたみ
         window.toggleDetailedInput = () => {
             const detailedCard = document.getElementById('detailed-match-card');
@@ -1245,6 +1248,223 @@ class App {
     }
 
     // クイックフォームをリセット
+    // 気づきタグ機能のイベントリスナー設定
+    setupInsightTagsListeners() {
+        // 感想入力のテキストカウンター
+        const feelingsInput = document.getElementById('match-feelings');
+        const charCountElement = document.getElementById('feelings-char-count');
+        const generateTagsBtn = document.getElementById('generate-tags-btn');
+
+        if (feelingsInput && charCountElement && generateTagsBtn) {
+            feelingsInput.addEventListener('input', (e) => {
+                const length = e.target.value.length;
+                charCountElement.textContent = length;
+
+                // 10文字以上で生成ボタン有効化
+                generateTagsBtn.disabled = length < 10;
+            });
+        }
+
+        // タグ生成ボタン
+        if (generateTagsBtn) {
+            generateTagsBtn.addEventListener('click', () => {
+                this.generateInsightTags();
+            });
+        }
+
+        // タグ再生成ボタン
+        const regenerateTagsBtn = document.getElementById('regenerate-tags-btn');
+        if (regenerateTagsBtn) {
+            regenerateTagsBtn.addEventListener('click', () => {
+                this.generateInsightTags();
+            });
+        }
+
+        // タグ採用ボタン
+        const acceptTagsBtn = document.getElementById('accept-tags-btn');
+        if (acceptTagsBtn) {
+            acceptTagsBtn.addEventListener('click', () => {
+                this.acceptGeneratedTags();
+            });
+        }
+
+        // タグクリアボタン
+        const clearTagsBtn = document.getElementById('clear-tags-btn');
+        if (clearTagsBtn) {
+            clearTagsBtn.addEventListener('click', () => {
+                this.clearGeneratedTags();
+            });
+        }
+
+        // タグ編集ボタン
+        const editTagsBtn = document.getElementById('edit-tags-btn');
+        if (editTagsBtn) {
+            editTagsBtn.addEventListener('click', () => {
+                this.editFinalTags();
+            });
+        }
+    }
+
+    // 気づきタグ生成
+    async generateInsightTags() {
+        const feelingsInput = document.getElementById('match-feelings');
+        const generatedTagsContainer = document.getElementById('generated-tags-container');
+        const tagsList = document.getElementById('generated-tags-list');
+        const generateBtn = document.getElementById('generate-tags-btn');
+
+        if (!feelingsInput || !feelingsInput.value.trim()) {
+            this.showToast('❌ 感想を入力してください', 'error');
+            return;
+        }
+
+        try {
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🔍 最新情報を検索して分析中...';
+
+            // Geminiサービスを使用してタグ生成（推敲付き・グラウンディング対応）
+            const result = await window.geminiService.generateInsightTags(feelingsInput.value.trim());
+
+            // 推敲結果があれば表示
+            if (result.refinedContent) {
+                this.displayRefinedContent(result.refinedContent);
+            }
+
+            // 生成されたタグを表示
+            this.displayGeneratedTags(result.tags);
+
+            // コンテナを表示
+            generatedTagsContainer.style.display = 'block';
+
+            this.showToast('✅ 最新情報を検索してAI分析を完了しました', 'success');
+
+        } catch (error) {
+            console.error('タグ生成エラー:', error);
+            this.showToast('❌ タグ生成に失敗しました: ' + error.message, 'error');
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🤖 AIでタグ生成';
+        }
+    }
+
+    // 推敲結果を表示
+    displayRefinedContent(refinedContent) {
+        // 推敲結果を表示する要素を動的に作成
+        let refinedDisplay = document.getElementById('refined-content-display');
+        if (!refinedDisplay) {
+            refinedDisplay = document.createElement('div');
+            refinedDisplay.id = 'refined-content-display';
+            refinedDisplay.className = 'refined-content-display';
+
+            // generated-tags-containerの前に挿入
+            const generatedContainer = document.getElementById('generated-tags-container');
+            generatedContainer.parentNode.insertBefore(refinedDisplay, generatedContainer);
+        }
+
+        refinedDisplay.innerHTML = `
+            <div class="refined-header">
+                <h5>🔍 AI分析結果</h5>
+                <button type="button" class="btn-text" onclick="this.parentElement.parentElement.style.display='none'">
+                    ✕ 閉じる
+                </button>
+            </div>
+            <div class="refined-content">
+                <div class="refined-section">
+                    <strong>構造化された内容:</strong>
+                    <p>${refinedContent.structuredContent}</p>
+                </div>
+                ${refinedContent.extractedElements && refinedContent.extractedElements.length > 0 ? `
+                <div class="refined-section">
+                    <strong>抽出された要素:</strong>
+                    <ul>
+                        ${refinedContent.extractedElements.map(element => `<li>${element}</li>`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+                ${refinedContent.keyPoints && refinedContent.keyPoints.length > 0 ? `
+                <div class="refined-section">
+                    <strong>重要ポイント:</strong>
+                    <ul>
+                        ${refinedContent.keyPoints.map(point => `<li>${point}</li>`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+                ${refinedContent.metaInsights && refinedContent.metaInsights.length > 0 ? `
+                <div class="refined-section">
+                    <strong>🌐 最新メタ情報:</strong>
+                    <ul>
+                        ${refinedContent.metaInsights.map(insight => `<li>${insight}</li>`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+            </div>
+        `;
+
+        refinedDisplay.style.display = 'block';
+    }
+
+    // 生成されたタグを表示
+    displayGeneratedTags(tags) {
+        const tagsList = document.getElementById('generated-tags-list');
+        if (!tagsList) return;
+
+        tagsList.innerHTML = '';
+
+        tags.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'insight-tag generated-tag';
+            tagElement.textContent = tag;
+            tagsList.appendChild(tagElement);
+        });
+    }
+
+    // 生成されたタグを採用
+    acceptGeneratedTags() {
+        const generatedTags = document.querySelectorAll('#generated-tags-list .generated-tag');
+        const tags = Array.from(generatedTags).map(tag => tag.textContent);
+
+        // 最終タグとして設定
+        this.setFinalTags(tags);
+
+        // コンテナを切り替え
+        document.getElementById('generated-tags-container').style.display = 'none';
+        document.getElementById('final-tags-container').style.display = 'block';
+
+        // hiddenフィールドに保存
+        document.getElementById('selected-tags').value = tags.join(',');
+        document.getElementById('match-feelings-hidden').value = document.getElementById('match-feelings').value;
+    }
+
+    // 生成されたタグをクリア
+    clearGeneratedTags() {
+        document.getElementById('generated-tags-container').style.display = 'none';
+        document.getElementById('generated-tags-list').innerHTML = '';
+    }
+
+    // 最終タグを設定
+    setFinalTags(tags) {
+        const finalTagsList = document.getElementById('final-tags-list');
+        if (!finalTagsList) return;
+
+        finalTagsList.innerHTML = '';
+
+        tags.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'insight-tag final-tag';
+            tagElement.textContent = tag;
+            finalTagsList.appendChild(tagElement);
+        });
+    }
+
+    // 最終タグを編集
+    editFinalTags() {
+        // 最終タグコンテナを非表示にして生成されたタグコンテナを再表示
+        document.getElementById('final-tags-container').style.display = 'none';
+        document.getElementById('generated-tags-container').style.display = 'block';
+
+        // hiddenフィールドをクリア
+        document.getElementById('selected-tags').value = '';
+    }
+
     resetQuickForm() {
         // 選択状態をリセット
         document.querySelectorAll('.char-option, .score-option, .decision-option').forEach(opt => {
@@ -1256,6 +1476,19 @@ class App {
         document.getElementById('selected-opponent').value = '';
         document.getElementById('selected-score').value = '';
         document.getElementById('selected-decision').value = '';
+        document.getElementById('selected-tags').value = '';
+        document.getElementById('match-feelings-hidden').value = '';
+
+        // 気づきタグ関連もリセット
+        const feelingsInput = document.getElementById('match-feelings');
+        if (feelingsInput) {
+            feelingsInput.value = '';
+            document.getElementById('feelings-char-count').textContent = '0';
+        }
+
+        document.getElementById('generated-tags-container').style.display = 'none';
+        document.getElementById('final-tags-container').style.display = 'none';
+        document.getElementById('generate-tags-btn').disabled = true;
 
         this.updateSubmitButton();
     }
@@ -1266,6 +1499,10 @@ class App {
         const opponent = document.getElementById('selected-opponent').value;
         const score = document.getElementById('selected-score').value;
         const decision = document.getElementById('selected-decision').value;
+
+        // 気づきタグデータを取得
+        const insightTags = document.getElementById('selected-tags').value;
+        const feelings = document.getElementById('match-feelings-hidden').value;
 
         // スコアを分解 (例: "3-1" → 勝利ラウンド3, 敗北ラウンド1)
         const [roundsWon, roundsLost] = score.split('-').map(num => parseInt(num));
@@ -1280,6 +1517,8 @@ class App {
             roundsLost: roundsLost,
             duration: 3, // デフォルト3分
             decision: decision, // 決着方法を追加
+            insightTags: insightTags ? insightTags.split(',').filter(tag => tag.trim()) : [], // 気づきタグ配列
+            feelings: feelings || '', // プレイヤーの感想
             timestamp: Date.now()
         };
 

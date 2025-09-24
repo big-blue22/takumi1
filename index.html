@@ -572,6 +572,62 @@
                             </div>
                         </div>
 
+                        <!-- Insight Tags Section -->
+                        <div class="match-section insight-section">
+                            <h4>💭 試合の気づき（任意）</h4>
+                            <p class="subtitle">感じたことを入力すると、AIが分析タグを生成します</p>
+                            <div class="insight-input-wrapper">
+                                <textarea
+                                    id="match-feelings"
+                                    name="feelings"
+                                    placeholder="例：相手の飛び込みに対空が間に合わなかった、コンボをドロップしてしまった、読み合いで勝てた瞬間があった..."
+                                    rows="3"
+                                    maxlength="300"></textarea>
+                                <div class="insight-actions">
+                                    <button type="button" id="generate-tags-btn" class="btn-secondary" disabled>
+                                        🤖 AIでタグ生成
+                                    </button>
+                                    <span class="char-counter">
+                                        <span id="feelings-char-count">0</span>/300文字
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Generated Tags Display -->
+                            <div class="generated-tags-container" id="generated-tags-container" style="display: none;">
+                                <div class="tags-header">
+                                    <h5>🏷️ 生成されたタグ</h5>
+                                    <button type="button" id="regenerate-tags-btn" class="btn-text" title="タグを再生成">
+                                        🔄
+                                    </button>
+                                </div>
+                                <div class="tags-list" id="generated-tags-list">
+                                    <!-- タグがここに表示される -->
+                                </div>
+                                <div class="tags-actions">
+                                    <button type="button" id="accept-tags-btn" class="btn-primary">
+                                        ✅ これらのタグを使用
+                                    </button>
+                                    <button type="button" id="clear-tags-btn" class="btn-secondary">
+                                        ❌ クリア
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Final Tags Display -->
+                            <div class="final-tags-container" id="final-tags-container" style="display: none;">
+                                <div class="final-tags-header">
+                                    <h5>📌 記録するタグ</h5>
+                                    <button type="button" id="edit-tags-btn" class="btn-text">
+                                        ✏️ 編集
+                                    </button>
+                                </div>
+                                <div class="final-tags-list" id="final-tags-list">
+                                    <!-- 最終確定されたタグがここに表示される -->
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Submit Button -->
                         <div class="form-actions">
                             <button type="submit" class="btn-primary quick-submit-btn" disabled>
@@ -587,6 +643,8 @@
                         <input type="hidden" id="selected-opponent" name="opponent">
                         <input type="hidden" id="selected-score" name="score">
                         <input type="hidden" id="selected-decision" name="decision">
+                        <input type="hidden" id="selected-tags" name="insightTags">
+                        <input type="hidden" id="match-feelings-hidden" name="feelings">
                     </form>
                 </div>
 

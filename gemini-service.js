@@ -23,6 +23,17 @@ class GeminiService {
             topP: 0.9,
             topK: 40 // より幅広い回答生成
         };
+
+        // グラウンディング設定
+        this.groundingConfig = {
+            enableWebSearch: true, // Web検索を有効化
+            enableDynamicRetrieval: true, // 動的な情報取得を有効化
+            searchQueries: {
+                sf6: 'Street Fighter 6',
+                tactics: 'fighting game tactics',
+                meta: 'tournament meta analysis'
+            }
+        };
         
         // フォールバック制御フラグ
         this.enableModelFallback = false;   // モデル変更はデフォルト無効（常に gemini-2.5-flash を使用）
@@ -588,13 +599,383 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 
 
 
+    // 気づきタグ生成
+    async generateInsightTags(feelings) {
+        if (!this.isConfigured()) {
+            throw new Error('Gemini APIキーが設定されていません');
+        }
+
+        try {
+            console.log('🤖 気づきタグ生成開始:', feelings);
+
+            // Step 1: 入力文の推敲・構造化
+            const refinedContent = await this.refineInputContent(feelings);
+            console.log('📝 推敲された内容:', refinedContent);
+
+            // Step 2: 推敲された内容からタグ生成
+            const tagPrompt = `以下の構造化された試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個生成してください。
+
+【推敲・構造化された試合内容】
+"${refinedContent.structuredContent}"
+
+【抽出された要素】
+${refinedContent.extractedElements}
+
+【要素抽出の重点ポイント】
+1. 具体的な技術・行動の特定
+   - 「対空が間に合わない」→ #対空反応遅れ
+   - 「コンボを落とした」→ #コンボドロップ
+   - 「投げを抜けられなかった」→ #投げ抜け失敗
+
+2. 戦術的状況の分析
+   - 「距離を詰められて困った」→ #接近戦対応
+   - 「起き攻めでやられた」→ #起き上がり対策
+   - 「読み合いで勝てた」→ #読み合い成功
+
+3. キャラクター固有要素
+   - 「ジュリの飛び道具が厳しい」→ #ジュリ対策
+   - 「ガイルの待ちゲーム」→ #対飛び道具
+   - 「ザンギエフの接近」→ #グラップラー対策
+
+4. システム面での気づき
+   - 「ドライブゲージがない時にやられた」→ #ドライブ管理
+   - 「バーンアウト状態で負けた」→ #バーンアウト回避
+   - 「OD技で反撃された」→ #確反対策
+
+【SF6専門用語を使ったタグ例】
+技術: #対空失敗 #コンボミス #確反取れず #投げ抜け失敗 #パリィタイミング #起き攻め対応 #中段見切り #下段ガード
+戦術: #立ち回り改善 #距離管理 #攻め継続 #守備重視 #読み合い勝利 #プレッシャー継続 #リズム変化
+キャラ対策: #ジュリ対策 #ルーク対策 #ケン対策 #春麗対策 #ザンギエフ対策 #対グラップラー #対飛び道具キャラ
+システム: #ドライブ管理 #バーンアウト回避 #ODアーツ有効活用 #ゲージ温存 #クリティカルアーツ
+
+以下の形式でタグのみを出力してください（説明不要）：
+#タグ1 #タグ2 #タグ3 #タグ4 #タグ5
+
+【重要】検索結果から最新のメタ情報、プロ選手の戦術、フレームデータなどを参考にして、より実践的で正確なタグを生成してください。`;
+
+            // グラウンディング対応のリクエストボディを生成
+            const requestBody = this.createGroundedRequest(tagPrompt, feelings, true);
+            // タグ生成では短めの出力に調整
+            requestBody.generationConfig.maxOutputTokens = 300;
+
+            const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
+            const response = await this.makeAPIRequest(url, requestBody);
+            const data = await response.json();
+
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error('タグ生成の応答が得られませんでした');
+            }
+
+            const aiResponse = data.candidates[0].content.parts[0].text;
+
+            // ハッシュタグを抽出
+            const tags = this.extractTags(aiResponse);
+
+            console.log('✅ 生成されたタグ:', tags);
+            return {
+                tags: tags,
+                originalResponse: aiResponse,
+                refinedContent: refinedContent,
+                usage: data.usageMetadata || {}
+            };
+
+        } catch (error) {
+            console.error('気づきタグ生成エラー:', error);
+            throw error;
+        }
+    }
+
+    // グラウンディング対応の検索クエリ生成
+    generateSearchQueries(rawInput) {
+        const queries = [];
+
+        // キャラクター名を検出して検索クエリを生成
+        const characters = ['ジュリ', 'ルーク', 'ケン', '春麗', 'チュンリー', 'ザンギエフ', 'ガイル', 'リュウ', 'キャミィ', 'JP', 'マリーザ', 'マノン', 'リリー'];
+        const foundChars = characters.filter(char => rawInput.includes(char));
+
+        foundChars.forEach(char => {
+            queries.push(`Street Fighter 6 ${char} 対策 攻略`);
+            queries.push(`SF6 ${char} フレームデータ 技性能`);
+        });
+
+        // 技術的要素の検出
+        if (rawInput.includes('対空')) {
+            queries.push('Street Fighter 6 対空技 タイミング コツ');
+        }
+        if (rawInput.includes('コンボ')) {
+            queries.push('Street Fighter 6 コンボ 精度 練習方法');
+        }
+        if (rawInput.includes('立ち回り')) {
+            queries.push('Street Fighter 6 立ち回り 距離管理 戦術');
+        }
+
+        // 最新メタ情報
+        queries.push('Street Fighter 6 最新 メタ 大会結果 2024');
+        queries.push('SF6 プロ選手 戦術 解説');
+
+        return queries.slice(0, 5); // 最大5つのクエリに制限
+    }
+
+    // グラウンディング設定を含むリクエストボディ生成
+    createGroundedRequest(prompt, rawInput, useGrounding = true) {
+        const baseRequest = {
+            contents: [{
+                parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 1000,
+                topP: 0.8,
+                topK: 20
+            }
+        };
+
+        // グラウンディングが有効な場合は追加設定
+        if (useGrounding && this.groundingConfig.enableWebSearch) {
+            const searchQueries = this.generateSearchQueries(rawInput);
+
+            if (searchQueries.length > 0) {
+                baseRequest.tools = [{
+                    googleSearchRetrieval: {
+                        dynamicRetrievalConfig: {
+                            mode: "MODE_DYNAMIC",
+                            dynamicThreshold: 0.7
+                        }
+                    }
+                }];
+
+                // 検索クエリをプロンプトに組み込み
+                const enhancedPrompt = `${prompt}
+
+【参考情報検索クエリ】
+最新の情報を検索してください: ${searchQueries.join(', ')}
+
+上記の検索結果も参考にして、より正確で最新の情報に基づいた分析を行ってください。`;
+
+                baseRequest.contents[0].parts[0].text = enhancedPrompt;
+            }
+        }
+
+        return baseRequest;
+    }
+
+    // 入力文の推敲・構造化（グラウンディング対応）
+    async refineInputContent(rawInput) {
+        try {
+            const refinePrompt = `以下のプレイヤーの試合感想を分析し、Street Fighter 6の戦術要素を明確にして構造化してください。
+
+【プレイヤーの生の感想】
+"${rawInput}"
+
+【分析・推敲の観点】
+1. 曖昧な表現を具体的な技術用語に変換
+2. 感情表現から技術的問題点を抽出
+3. 時系列や因果関係を整理
+4. 改善点と成功点を明確に区別
+5. キャラクター固有の要素を特定
+6. 最新のメタ情報や対策を考慮
+
+【出力形式】
+以下のJSONフォーマットで出力してください：
+{
+  "structuredContent": "推敲された試合内容（具体的で分析しやすい形式）",
+  "extractedElements": [
+    "技術面: 対空反応の遅れ、コンボの精度不足",
+    "戦術面: 距離管理、読み合いの成功/失敗",
+    "キャラ対策: 相手キャラ固有の対応",
+    "メンタル面: 判断力、集中力の状況"
+  ],
+  "keyPoints": ["改善すべき重要なポイント1", "改善すべき重要なポイント2", "良かった点1"],
+  "metaInsights": ["最新メタ情報に基づく追加の洞察"]
+}
+
+必ずJSONフォーマットで出力してください。`;
+
+            // グラウンディング対応のリクエストボディを生成
+            const requestBody = this.createGroundedRequest(refinePrompt, rawInput, true);
+
+            const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
+            const response = await this.makeAPIRequest(url, requestBody);
+            const data = await response.json();
+
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error('入力文推敲の応答が得られませんでした');
+            }
+
+            const aiResponse = data.candidates[0].content.parts[0].text;
+
+            // JSONレスポンスをパース（フォールバック付き）
+            try {
+                const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const parsedResponse = JSON.parse(jsonMatch[0]);
+                    return parsedResponse;
+                }
+            } catch (parseError) {
+                console.warn('JSON解析失敗、フォールバック実行:', parseError);
+            }
+
+            // フォールバック：シンプルな構造化
+            return this.createFallbackRefinement(rawInput, aiResponse);
+
+        } catch (error) {
+            console.warn('入力文推敲でエラー、フォールバック実行:', error);
+            return this.createFallbackRefinement(rawInput);
+        }
+    }
+
+    // フォールバック用の推敲
+    createFallbackRefinement(rawInput, aiResponse = '') {
+        return {
+            structuredContent: rawInput, // 元の入力をそのまま使用
+            extractedElements: this.extractBasicElements(rawInput),
+            keyPoints: this.identifyKeyPoints(rawInput)
+        };
+    }
+
+    // 基本要素抽出
+    extractBasicElements(text) {
+        const elements = [];
+
+        // 技術面の要素
+        const techKeywords = ['対空', 'コンボ', '投げ', '確反', 'パリィ'];
+        const foundTech = techKeywords.filter(keyword => text.includes(keyword));
+        if (foundTech.length > 0) {
+            elements.push(`技術面: ${foundTech.join('、')}に関する課題`);
+        }
+
+        // キャラクター要素
+        const charKeywords = ['ジュリ', 'ルーク', 'ケン', '春麗', 'ザンギエフ', 'ガイル'];
+        const foundChars = charKeywords.filter(keyword => text.includes(keyword));
+        if (foundChars.length > 0) {
+            elements.push(`キャラ対策: ${foundChars.join('、')}戦での課題`);
+        }
+
+        // 戦術面
+        const tacticKeywords = ['立ち回り', '距離', '読み', 'プレッシャー'];
+        const foundTactics = tacticKeywords.filter(keyword => text.includes(keyword));
+        if (foundTactics.length > 0) {
+            elements.push(`戦術面: ${foundTactics.join('、')}の調整が必要`);
+        }
+
+        return elements.length > 0 ? elements : ['一般的な試合振り返り'];
+    }
+
+    // キーポイント特定
+    identifyKeyPoints(text) {
+        const points = [];
+
+        // ネガティブな表現から改善点を抽出
+        if (text.includes('できなかった') || text.includes('失敗') || text.includes('やられた')) {
+            points.push('技術精度の向上が必要');
+        }
+
+        if (text.includes('勝てた') || text.includes('成功') || text.includes('良かった')) {
+            points.push('成功した戦術を継続');
+        }
+
+        if (text.includes('焦り') || text.includes('判断')) {
+            points.push('メンタル管理の改善');
+        }
+
+        return points.length > 0 ? points : ['総合的な実力向上'];
+    }
+
+    // テキストからハッシュタグを抽出（改良版）
+    extractTags(text) {
+        // ハッシュタグの正規表現を拡張（英数字、ひらがな、カタカナ、漢字、アンダースコア、ハイフンに対応）
+        const tagRegex = /#[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\w\-_]+/g;
+        const matches = text.match(tagRegex);
+
+        if (matches) {
+            // タグをクリーンアップし、重複削除
+            const cleanTags = matches
+                .map(tag => tag.trim())
+                .filter(tag => tag.length > 2) // 短すぎるタグを除外
+                .filter(tag => !tag.includes('例')) // 「例」を含むタグを除外
+                .slice(0, 5); // 最大5個
+
+            if (cleanTags.length > 0) {
+                return [...new Set(cleanTags)];
+            }
+        }
+
+        // フォールバック：AIが返したテキストから要素を推測してタグを生成
+        const fallbackTags = this.generateFallbackTags(text);
+        return fallbackTags;
+    }
+
+    // フォールバック用のタグ生成
+    generateFallbackTags(text) {
+        const defaultTags = [];
+
+        // キーワードベースでのタグ生成（拡充版）
+        const keywordMap = {
+            // 基本技術
+            '対空': '#対空反応遅れ',
+            'コンボ': '#コンボドロップ',
+            '投げ': '#投げ抜け失敗',
+            'パリィ': '#パリィタイミング',
+            '確反': '#確反取れず',
+            '起き攻め': '#起き攻め対応',
+            '中段': '#中段見切り',
+            '下段': '#下段ガード',
+
+            // 戦術面
+            '立ち回り': '#立ち回り改善',
+            '距離': '#距離管理',
+            '読み': '#読み合い成功',
+            'プレッシャー': '#プレッシャー継続',
+            '攻め': '#攻め継続',
+            '守り': '#守備重視',
+            'リズム': '#リズム変化',
+
+            // キャラクター対策
+            'ジュリ': '#ジュリ対策',
+            'ルーク': '#ルーク対策',
+            'ケン': '#ケン対策',
+            '春麗': '#春麗対策',
+            'チュンリー': '#春麗対策',
+            'ザンギエフ': '#ザンギエフ対策',
+            'ガイル': '#対飛び道具キャラ',
+            '飛び道具': '#対飛び道具',
+            'グラップラー': '#対グラップラー',
+
+            // システム要素
+            'ドライブ': '#ドライブ管理',
+            'バーンアウト': '#バーンアウト回避',
+            'OD': '#ODアーツ有効活用',
+            'ゲージ': '#ゲージ管理',
+            'クリティカル': '#クリティカルアーツ',
+
+            // メンタル・状況
+            '焦り': '#メンタル管理',
+            '冷静': '#冷静判断',
+            '判断': '#判断力向上',
+            '集中': '#集中力維持'
+        };
+
+        for (const [keyword, tag] of Object.entries(keywordMap)) {
+            if (text.includes(keyword) && defaultTags.length < 3) {
+                defaultTags.push(tag);
+            }
+        }
+
+        // デフォルトタグを追加
+        if (defaultTags.length === 0) {
+            defaultTags.push('#試合振り返り', '#気づき');
+        }
+
+        return defaultTags.slice(0, 5);
+    }
+
     // チャット履歴クリア
     clearChatHistory() {
         this.chatHistory = [];
         console.log('チャット履歴をクリアしました');
     }
 
-    // デバッグ情報取得
+    // デバッグ情報取得（グラウンディング情報追加）
     getDebugInfo() {
         return {
             isConfigured: this.isConfigured(),
@@ -604,6 +985,11 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             retrySettings: {
                 maxRetries: this.maxRetries,
                 retryDelay: this.retryDelay
+            },
+            grounding: {
+                webSearchEnabled: this.groundingConfig.enableWebSearch,
+                dynamicRetrievalEnabled: this.groundingConfig.enableDynamicRetrieval,
+                availableSearchQueries: Object.keys(this.groundingConfig.searchQueries)
             },
             apiKeyLength: this.apiKey ? this.apiKey.length : 0,
             apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'なし'

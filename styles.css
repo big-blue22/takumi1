@@ -6474,3 +6474,234 @@ input, select, textarea {
     width: 100%;
   }
 }
+
+/* 気づきタグ機能のスタイル */
+.insight-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px dashed var(--glass-border);
+}
+
+.insight-section .subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.insight-input-wrapper {
+    margin-bottom: 1rem;
+}
+
+.insight-input-wrapper textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.75rem;
+    border: 2px solid var(--glass-border);
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+.insight-input-wrapper textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.insight-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.char-counter {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.generated-tags-container,
+.final-tags-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--glass-bg);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--backdrop-blur);
+}
+
+.tags-header,
+.final-tags-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.tags-header h5,
+.final-tags-header h5 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.tags-list,
+.final-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.insight-tag {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-small);
+}
+
+.insight-tag.generated-tag {
+    background: var(--color-success);
+    cursor: pointer;
+}
+
+.insight-tag.generated-tag:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-medium);
+}
+
+.insight-tag.final-tag {
+    background: var(--color-accent);
+}
+
+.tags-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.btn-text:hover {
+    background-color: var(--glass-bg);
+}
+
+.btn-text:disabled {
+    color: var(--text-secondary);
+    cursor: not-allowed;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .insight-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .tags-actions {
+        flex-direction: column;
+    }
+
+    .tags-header,
+    .final-tags-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+
+/* 推敲結果表示のスタイル */
+.refined-content-display {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: linear-gradient(145deg, var(--bg-secondary), var(--glass-bg));
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    backdrop-filter: var(--backdrop-blur);
+    box-shadow: var(--shadow-small);
+    display: none;
+}
+
+.refined-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.refined-header h5 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.refined-content {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.refined-section {
+    margin-bottom: 1rem;
+}
+
+.refined-section:last-child {
+    margin-bottom: 0;
+}
+
+.refined-section strong {
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.refined-section p {
+    color: var(--text-secondary);
+    margin: 0;
+    padding-left: 1rem;
+    border-left: 3px solid var(--color-accent);
+}
+
+.refined-section ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.refined-section li {
+    margin-bottom: 0.25rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .refined-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .refined-section p {
+        padding-left: 0.5rem;
+    }
+}
