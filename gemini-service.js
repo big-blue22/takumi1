@@ -632,11 +632,13 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             console.log('🤖 気づきタグ生成開始:', feelings);
 
             // Step 1: 入力文の推敲・構造化
+            console.log('📝 Step 1: 入力文を推敲・構造化中...');
             const refinedContent = await this.refineInputContent(feelings);
-            console.log('📝 推敲された内容:', refinedContent);
+            console.log('✅ Step 1完了 - 推敲された内容:', refinedContent);
 
-            // Step 2: 推敲された内容からタグ生成
-            const tagPrompt = `以下の構造化された試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個生成してください。
+            // Step 2: 推敲内容からタグ生成
+            console.log('🏷️ Step 2: 推敲内容からタグ生成中...');
+            const tagPrompt = `以下の推敲・構造化された試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個生成してください。
 
 【推敲・構造化された試合内容】
 "${refinedContent.structuredContent}"
@@ -679,7 +681,7 @@ ${refinedContent.extractedElements}
             // グラウンディング対応のリクエストボディを生成
             const requestBody = this.createGroundedRequest(tagPrompt, feelings, true);
             // タグ生成では短めの出力に調整
-            requestBody.generationConfig.maxOutputTokens = 300;
+            requestBody.generationConfig.maxOutputTokens = 200;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
             const response = await this.makeAPIRequest(url, requestBody);
@@ -717,18 +719,44 @@ ${refinedContent.extractedElements}
                 throw new Error('コンテンツが著作権フィルタによってブロックされました。');
             }
 
-            if (!candidate || !candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
-                console.error('❌ Invalid candidate structure:', {
+            // MAX_TOKENSは警告のみで処理継続
+            if (candidate.finishReason === 'MAX_TOKENS') {
+                console.warn('⚠️ 応答がトークン制限で切り詰められました。部分的な内容で処理を継続します。');
+                // エラーを投げずに処理継続
+            }
+
+            // グラウンディング時の特殊な応答構造に対応
+            let aiResponse = '';
+
+            if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
+                aiResponse = candidate.content.parts[0].text;
+            } else {
+                // グラウンディング時や特殊な応答構造の場合
+                console.warn('⚠️ 標準的でない応答構造を検出:', {
                     hasCandidate: !!candidate,
                     hasContent: !!candidate?.content,
                     hasParts: !!candidate?.content?.parts,
                     hasFirstPart: !!candidate?.content?.parts?.[0],
-                    finishReason: candidate?.finishReason
+                    finishReason: candidate?.finishReason,
+                    contentStructure: candidate?.content
                 });
-                throw new Error(`API応答の構造が無効です (finishReason: ${candidate?.finishReason || 'unknown'})`);
-            }
 
-            const aiResponse = candidate.content.parts[0].text;
+                // 代替の応答テキスト抽出を試行
+                if (candidate.content && candidate.content.parts) {
+                    for (const part of candidate.content.parts) {
+                        if (part.text) {
+                            aiResponse = part.text;
+                            break;
+                        }
+                    }
+                }
+
+                // まだ応答が見つからない場合はフォールバック
+                if (!aiResponse) {
+                    console.error('❌ No text response found in any part');
+                    throw new Error(`API応答にテキストが含まれていません (finishReason: ${candidate?.finishReason || 'unknown'})`);
+                }
+            }
             if (!aiResponse) {
                 console.error('❌ No text in response:', candidate.content.parts[0]);
                 throw new Error('AIからのテキスト応答がありません');
@@ -744,13 +772,14 @@ ${refinedContent.extractedElements}
                 console.log('📚 引用ソース:', groundingMetadata);
             }
 
-            console.log('✅ 生成されたタグ:', tags);
+            console.log('✅ Step 2完了 - 生成されたタグ:', tags);
             return {
                 tags: tags,
                 originalResponse: aiResponse,
                 refinedContent: refinedContent,
                 groundingSources: groundingMetadata,
-                usage: data.usageMetadata || {}
+                usage: data.usageMetadata || {},
+                processingSteps: ['推敲', 'タグ生成']
             };
 
         } catch (error) {
@@ -909,6 +938,7 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
         return baseRequest;
     }
 
+
     // グラウンディングメタデータ処理
     processGroundingMetadata(metadata) {
         if (!metadata || !metadata.groundingChunks) {
@@ -967,6 +997,8 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 
             // グラウンディング対応のリクエストボディを生成
             const requestBody = this.createGroundedRequest(refinePrompt, rawInput, true);
+            // 推敲処理では短めのトークン制限（JSONパースのため）
+            requestBody.generationConfig.maxOutputTokens = 500;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
             const response = await this.makeAPIRequest(url, requestBody);
@@ -984,14 +1016,38 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
             }
 
             const candidate = data.candidates[0];
-            if (!candidate || !candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
-                console.error('❌ 推敲: Invalid candidate structure:', candidate);
-                throw new Error('推敲API応答の構造が無効です');
+
+            // 推敲処理でのfinishReasonチェック
+            if (candidate.finishReason === 'SAFETY') {
+                console.warn('⚠️ 推敲: コンテンツが安全性フィルタでブロックされました');
+                throw new Error('推敲処理でコンテンツが安全性フィルタによってブロックされました。');
             }
 
-            const aiResponse = candidate.content.parts[0].text;
+            if (candidate.finishReason === 'MAX_TOKENS') {
+                console.warn('⚠️ 推敲: 応答がトークン制限で切り詰められました。部分的な内容で処理を継続します。');
+            }
+
+            // 推敲処理での応答テキスト抽出（柔軟な構造に対応）
+            let aiResponse = '';
+
+            if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
+                aiResponse = candidate.content.parts[0].text;
+            } else if (candidate.content && candidate.content.parts) {
+                // 代替の応答テキスト抽出を試行
+                for (const part of candidate.content.parts) {
+                    if (part.text) {
+                        aiResponse = part.text;
+                        break;
+                    }
+                }
+            }
+
             if (!aiResponse) {
-                console.error('❌ 推敲: No text in response:', candidate.content.parts[0]);
+                console.error('❌ 推敲: No text in response:', {
+                    hasContent: !!candidate?.content,
+                    hasParts: !!candidate?.content?.parts,
+                    finishReason: candidate?.finishReason
+                });
                 throw new Error('推敲AIからのテキスト応答がありません');
             }
 

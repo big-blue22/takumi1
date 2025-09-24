@@ -1319,9 +1319,9 @@ class App {
 
         try {
             generateBtn.disabled = true;
-            generateBtn.textContent = '🔍 最新情報を検索して分析中...';
+            generateBtn.textContent = '🤖 推敲・分析中...';
 
-            // Geminiサービスを使用してタグ生成（推敲付き・グラウンディング対応）
+            // Geminiサービスを使用してタグ生成（推敲付き）
             const result = await window.geminiService.generateInsightTags(feelingsInput.value.trim());
 
             // 推敲結果があれば表示
@@ -1329,7 +1329,7 @@ class App {
                 this.displayRefinedContent(result.refinedContent);
             }
 
-            // 検索ソース情報があれば表示
+            // グラウンディングソース情報があれば表示
             if (result.groundingSources) {
                 this.displayGroundingSources(result.groundingSources);
             }
@@ -1342,11 +1342,11 @@ class App {
 
             // フォールバックモードかグラウンディング成功かに応じてメッセージを表示
             if (result.fallbackMode) {
-                this.showToast('✅ AI分析を完了しました（通常モード）', 'success');
+                this.showToast('✅ 推敲・AI分析を完了しました（通常モード）', 'success');
             } else if (result.groundingSources && result.groundingSources.totalSources > 0) {
-                this.showToast(`✅ 最新情報（${result.groundingSources.totalSources}件）を参考にAI分析完了`, 'success');
+                this.showToast(`✅ 推敲・分析完了（参考情報${result.groundingSources.totalSources}件）`, 'success');
             } else {
-                this.showToast('✅ AI分析を完了しました', 'success');
+                this.showToast('✅ 推敲・AI分析を完了しました', 'success');
             }
 
         } catch (error) {
