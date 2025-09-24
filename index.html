@@ -664,6 +664,91 @@
                                     <input type="number" id="match-duration" min="1" step="0.1" value="3" required>
                                 </div>
                             </div>
+
+                            <!-- 詳細データ入力セクション -->
+                            <div class="detailed-data-section">
+                                <h4>詳細データ (オプション)</h4>
+                                <div class="form-grid">
+                                    <!-- ドライブシステム関連 -->
+                                    <div class="form-group">
+                                        <label for="drive-rush-count">ドライブラッシュ使用回数</label>
+                                        <input type="number" id="drive-rush-count" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="drive-impact-count">ドライブインパクト使用回数</label>
+                                        <input type="number" id="drive-impact-count" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="drive-reversal-count">ドライブリバーサル使用回数</label>
+                                        <input type="number" id="drive-reversal-count" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="overdrive-count">オーバードライブ技使用回数</label>
+                                        <input type="number" id="overdrive-count" min="0" value="0">
+                                    </div>
+
+                                    <!-- 投げ関連 -->
+                                    <div class="form-group">
+                                        <label for="throw-attempts">投げ試行回数</label>
+                                        <input type="number" id="throw-attempts" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="throw-success">投げ成功回数</label>
+                                        <input type="number" id="throw-success" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="throw-escaped">投げ抜け回数</label>
+                                        <input type="number" id="throw-escaped" min="0" value="0">
+                                    </div>
+
+                                    <!-- 必殺技・スーパーアーツ関連 -->
+                                    <div class="form-group">
+                                        <label for="special-moves-hit">必殺技ヒット数</label>
+                                        <input type="number" id="special-moves-hit" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="special-moves-blocked">必殺技ガード数</label>
+                                        <input type="number" id="special-moves-blocked" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="super-arts-used">スーパーアーツ使用回数</label>
+                                        <input type="number" id="super-arts-used" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="critical-arts-used">クリティカルアーツ使用回数</label>
+                                        <input type="number" id="critical-arts-used" min="0" value="0">
+                                    </div>
+
+                                    <!-- 防御関連 -->
+                                    <div class="form-group">
+                                        <label for="perfect-parries">パーフェクトパリィ成功回数</label>
+                                        <input type="number" id="perfect-parries" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="parry-attempts">パリィ試行回数</label>
+                                        <input type="number" id="parry-attempts" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="burnout-count">バーンアウト回数</label>
+                                        <input type="number" id="burnout-count" min="0" value="0">
+                                    </div>
+
+                                    <!-- コンボ関連 -->
+                                    <div class="form-group">
+                                        <label for="max-combo-hits">最大コンボヒット数</label>
+                                        <input type="number" id="max-combo-hits" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="combo-damage">最大コンボダメージ</label>
+                                        <input type="number" id="combo-damage" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="combo-dropped">コンボドロップ回数</label>
+                                        <input type="number" id="combo-dropped" min="0" value="0">
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="submit" class="btn-primary">分析を実行</button>
                         </form>
                     </div>
