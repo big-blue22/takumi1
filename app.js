@@ -351,6 +351,9 @@ class App {
 
         // コーチング機能のフィードバックボタンを設定
         this.setupCoachingFeedbackListeners();
+
+        // 気づきタグ機能のイベントリスナー設定
+        this.setupInsightTagsListeners();
     }
     
     // 初期APIセットアップモーダルを表示
