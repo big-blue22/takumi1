@@ -1265,14 +1265,24 @@ class App {
 
                 // 10文字以上で生成ボタン有効化
                 generateTagsBtn.disabled = length < 10;
+                console.log(`入力文字数: ${length}, ボタン状態: ${generateTagsBtn.disabled ? '無効' : '有効'}`);
+            });
+        } else {
+            console.warn('感想入力の必要な要素が見つかりません:', {
+                feelingsInput: !!feelingsInput,
+                charCountElement: !!charCountElement,
+                generateTagsBtn: !!generateTagsBtn
             });
         }
 
         // タグ生成ボタン
         if (generateTagsBtn) {
             generateTagsBtn.addEventListener('click', () => {
+                console.log('タグ生成ボタンがクリックされました');
                 this.generateInsightTags();
             });
+        } else {
+            console.warn('generate-tags-btn要素が見つかりません');
         }
 
         // タグ再生成ボタン
@@ -1310,13 +1320,28 @@ class App {
 
     // 気づきタグ生成
     async generateInsightTags() {
+        console.log('generateInsightTags関数が呼び出されました');
         const feelingsInput = document.getElementById('match-feelings');
         const generatedTagsContainer = document.getElementById('generated-tags-container');
         const tagsList = document.getElementById('generated-tags-list');
         const generateBtn = document.getElementById('generate-tags-btn');
 
+        console.log('要素の状態:', {
+            feelingsInput: !!feelingsInput,
+            feelingsValue: feelingsInput?.value,
+            generatedTagsContainer: !!generatedTagsContainer,
+            tagsList: !!tagsList,
+            generateBtn: !!generateBtn,
+            geminiService: !!this.geminiService
+        });
+
         if (!feelingsInput || !feelingsInput.value.trim()) {
             this.showToast('❌ 感想を入力してください', 'error');
+            return;
+        }
+
+        if (!this.geminiService) {
+            this.showToast('❌ AIサービスが初期化されていません', 'error');
             return;
         }
 
