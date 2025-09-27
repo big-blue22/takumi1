@@ -725,41 +725,53 @@ ${refinedContent.extractedElements}
                 // エラーを投げずに処理継続
             }
 
-            // グラウンディング時の特殊な応答構造に対応
+            // より堅牢な応答テキスト抽出
             let aiResponse = '';
 
-            if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
-                aiResponse = candidate.content.parts[0].text;
+            // 標準的な応答構造を確認
+            if (candidate.content && candidate.content.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
+                // partsが存在する場合は標準処理
+                for (const part of candidate.content.parts) {
+                    if (part && part.text) {
+                        aiResponse = part.text;
+                        break;
+                    }
+                }
+            } else if (candidate.content && candidate.content.text) {
+                // 直接textプロパティがある場合（まれな構造）
+                aiResponse = candidate.content.text;
             } else {
-                // グラウンディング時や特殊な応答構造の場合
+                // 構造情報をログ出力
                 console.warn('⚠️ 標準的でない応答構造を検出:', {
                     hasCandidate: !!candidate,
                     hasContent: !!candidate?.content,
                     hasParts: !!candidate?.content?.parts,
+                    isPartsArray: Array.isArray(candidate?.content?.parts),
+                    partsLength: candidate?.content?.parts?.length,
                     hasFirstPart: !!candidate?.content?.parts?.[0],
                     finishReason: candidate?.finishReason,
-                    contentStructure: candidate?.content
+                    contentKeys: candidate?.content ? Object.keys(candidate.content) : []
                 });
 
-                // 代替の応答テキスト抽出を試行
-                if (candidate.content && candidate.content.parts) {
-                    for (const part of candidate.content.parts) {
-                        if (part.text) {
-                            aiResponse = part.text;
-                            break;
-                        }
-                    }
-                }
-
-                // まだ応答が見つからない場合はフォールバック
-                if (!aiResponse) {
-                    console.error('❌ No text response found in any part');
+                // MAX_TOKENSの場合は部分的な応答を受け入れてフォールバックタグを生成
+                if (candidate.finishReason === 'MAX_TOKENS') {
+                    console.warn('⚠️ MAX_TOKENSエラーのため、フォールバック処理に移行します');
+                    // フォールバック処理に進む（aiResponseは空のまま）
+                } else {
                     throw new Error(`API応答にテキストが含まれていません (finishReason: ${candidate?.finishReason || 'unknown'})`);
                 }
             }
+
+            // aiResponseが空の場合（MAX_TOKENSエラーなど）はフォールバック処理へ
             if (!aiResponse) {
-                console.error('❌ No text in response:', candidate.content.parts[0]);
-                throw new Error('AIからのテキスト応答がありません');
+                if (candidate.finishReason === 'MAX_TOKENS') {
+                    console.warn('⚠️ MAX_TOKENSエラーにより、フォールバック処理でタグを生成します');
+                    // フォールバック処理（下のcatchブロックに処理を移譲）
+                    throw new Error('MAX_TOKENS_FALLBACK');
+                } else {
+                    console.error('❌ No text in response, candidate:', candidate);
+                    throw new Error('AIからのテキスト応答がありません');
+                }
             }
 
             // ハッシュタグを抽出
@@ -784,6 +796,21 @@ ${refinedContent.extractedElements}
 
         } catch (error) {
             console.error('気づきタグ生成エラー:', error);
+
+            // MAX_TOKENSエラーの場合は直接フォールバックタグを生成
+            if (error.message === 'MAX_TOKENS_FALLBACK') {
+                console.log('🔄 MAX_TOKENSエラーによりフォールバックタグを生成します...');
+                const fallbackTags = this.generateFallbackTags(feelings);
+                return {
+                    tags: fallbackTags,
+                    originalResponse: '',
+                    refinedContent: refinedContent,
+                    groundingSources: null,
+                    usage: {},
+                    processingSteps: ['推敲', 'フォールバックタグ生成'],
+                    fallbackMode: true
+                };
+            }
 
             // グラウンディングエラーの場合は通常モードで再試行
             if (error.message.includes('Search Grounding is not supported')) {
