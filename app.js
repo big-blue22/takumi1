@@ -1325,7 +1325,7 @@ class App {
             generateBtn.textContent = '🤖 推敲・分析中...';
 
             // Geminiサービスを使用してタグ生成（推敲付き）
-            const result = await window.geminiService.generateInsightTags(feelingsInput.value.trim());
+            const result = await this.geminiService.generateInsightTags(feelingsInput.value.trim());
 
             // 推敲結果があれば表示
             if (result.refinedContent) {
