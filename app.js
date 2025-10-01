@@ -3192,7 +3192,6 @@ class App {
     showSetupCompletion() {
         // すべてのステップを非表示にして完了画面を表示
         document.getElementById('setup-step-1').classList.add('hidden');
-        document.getElementById('setup-step-2').classList.add('hidden');
         document.getElementById('setup-step-complete').classList.remove('hidden');
 
         // プログレスバーを完了状態に
