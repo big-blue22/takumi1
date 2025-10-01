@@ -67,23 +67,20 @@ class App {
         
         // 統一APIマネージャーの初期化完了を待つ
         await this.waitForUnifiedAPIManager();
+
+        // 1. 最優先で初回設定（スキルレベルなど）が必要かチェック
+        if (this.needsInitialSetup()) {
+            console.log('初回設定が必要です。初期設定画面を表示します。');
+            this.showInitialSetupModal();
+            return; // 初期設定が完了するまで他の処理を中断
+        }
         
-        // API設定チェックと初期化（非同期）- この結果によって画面遷移が決まる
+        // 2. 初回設定が完了していれば、次にAPI設定をチェック
         const apiCheckResult = await this.performBackgroundAPICheck();
 
         if (apiCheckResult.success) {
             console.log('バックグラウンドAPI接続成功');
-
-            // API接続成功時のみ初回設定チェック
-            if (this.needsInitialSetup()) {
-                console.log('初回設定が必要です。初期設定画面を表示します。');
-                this.showInitialSetupModal();
-                return; // 初期設定完了まで他の処理をスキップ
-            } else {
-                console.log('初期設定は完了済みです。初期設定モーダルを非表示にします。');
-                // 初期設定完了済みの場合は、モーダルが表示されていても強制的に非表示にする
-                this.closeInitialSetupModal();
-            }
+            this.closeInitialSetupModal(); // 不要なモーダルを閉じる
 
             // メイン画面へ遷移
             console.log('メイン画面へ遷移');
@@ -3238,11 +3235,11 @@ class App {
         // 初期設定モーダルを閉じる
         this.closeInitialSetupModal();
 
-        // メインアプリを初期化
-        await this.initializeMainApp();
-
-        // 完了メッセージ
-        this.showToast('e-Bridgeへようこそ！設定が完了しました', 'success');
+        // 完了メッセージを表示し、ページをリロードして初期化プロセスを再実行
+        this.showToast('設定を保存しました。アプリを起動します...', 'success');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000); // 1秒待ってからリロード
     }
 
     setupInitialSetupListeners() {
