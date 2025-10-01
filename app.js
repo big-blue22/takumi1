@@ -3660,6 +3660,7 @@ class App {
             // スキルレベル関連のデータを削除
             localStorage.removeItem('playerSkillLevel');
             localStorage.removeItem('playerSkillLevelData');
+            localStorage.removeItem('skillLevel');
 
             // コーチング関連のデータを削除
             localStorage.removeItem('coaching_user_progress');
