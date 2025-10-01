@@ -3018,15 +3018,6 @@ class App {
             };
             this.selectedSkillLevel = null;
 
-            // ステップ1を表示、完了画面を非表示
-            const step1 = document.getElementById('setup-step-1');
-            const stepComplete = document.getElementById('setup-step-complete');
-            if (step1) step1.classList.remove('hidden');
-            if (stepComplete) stepComplete.classList.add('hidden');
-
-            // プログレスバーを初期化
-            this.updateSetupProgress(1);
-
             // 初期設定リスナーを設定
             this.setupInitialSetupListeners();
 
@@ -3207,7 +3198,7 @@ class App {
         document.getElementById('setup-step-complete').classList.remove('hidden');
 
         // プログレスバーを完了状態に
-        this.updateSetupProgress(2);
+        this.updateSetupProgress(3);
 
         // サマリーを更新
         const summaryGame = document.getElementById('summary-game');
@@ -3227,10 +3218,14 @@ class App {
         if (progressFill && progressText) {
             switch (step) {
                 case 1:
-                    progressFill.style.width = '50%';
-                    progressText.textContent = 'ステップ 1 / 2';
+                    progressFill.style.width = '33%';
+                    progressText.textContent = 'ステップ 1 / 3';
                     break;
                 case 2:
+                    progressFill.style.width = '66%';
+                    progressText.textContent = 'ステップ 2 / 3';
+                    break;
+                case 3:
                     progressFill.style.width = '100%';
                     progressText.textContent = '完了';
                     break;
