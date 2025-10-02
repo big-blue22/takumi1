@@ -43,6 +43,10 @@
                         <span class="nav-icon">📋</span>
                         コーチングプラン
                     </button>
+                    <button class="nav-btn" data-page="data-source">
+                        <span class="nav-icon">📁</span>
+                        データソース
+                    </button>
                     <button class="nav-btn" data-page="settings">
                         <span class="nav-icon">⚙️</span>
                         設定
@@ -576,6 +580,25 @@
                         <div class="match-section insight-section">
                             <h4>💭 試合の気づき（任意）</h4>
                             <p class="subtitle">感じたことを入力すると、AIが分析タグを生成します</p>
+
+                            <!-- Analysis Source Selection -->
+                            <div class="analysis-source-selector">
+                                <h5>情報ソースを選択</h5>
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="analysis-source" value="browsing" checked>
+                                        <span>🌐 ブラウジング</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="analysis-source" value="file" id="source-file-radio" disabled>
+                                        <span>📁 アップロードしたファイル</span>
+                                    </label>
+                                </div>
+                                <div id="source-file-selector-container" style="display: none; margin-top: 10px;">
+                                    <select id="source-file-selector" class="form-control"></select>
+                                </div>
+                            </div>
+
                             <div class="insight-input-wrapper">
                                 <textarea
                                     id="match-feelings"
@@ -1102,6 +1125,44 @@
                     </div>
                     <div id="all-plans-container" class="plans-container">
                         <!-- All plans will be displayed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Source Page -->
+            <div id="data-source" class="page">
+                <div class="page-header">
+                    <h2>📁 データソース管理</h2>
+                    <p>AI分析の基になる情報ソースをアップロード・管理します</p>
+                </div>
+
+                <!-- File Upload Card -->
+                <div class="card">
+                    <h3>新しいソースをアップロード</h3>
+                    <form id="upload-form" class="upload-form">
+                        <div class="form-group">
+                            <label for="file-input">ファイルを選択</label>
+                            <input type="file" id="file-input" name="file" accept=".txt,.md,.json,.csv" required>
+                            <p class="subtitle">対応形式: .txt, .md, .json, .csv. (最大5MB)</p>
+                        </div>
+                        <button type="submit" id="upload-btn" class="btn-primary" disabled>アップロード</button>
+                    </form>
+                    <div id="upload-progress-container" style="display: none; margin-top: 15px;">
+                        <div class="progress-bar">
+                            <div id="upload-progress-bar" class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <span id="upload-progress-text">0%</span>
+                    </div>
+                </div>
+
+                <!-- Uploaded Files List Card -->
+                <div class="card">
+                    <h3>アップロード済みソース一覧</h3>
+                    <div id="data-source-list" class="data-source-list">
+                        <div class="no-files-message">
+                            <p>まだアップロードされたファイルがありません。</p>
+                        </div>
+                        <!-- File list will be populated here -->
                     </div>
                 </div>
             </div>
