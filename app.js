@@ -1356,17 +1356,26 @@ class App {
 
             if (analysisSource === 'file') {
                 analysisMode = 'file';
-                const fileSelector = document.getElementById('source-file-selector');
-                const filename = fileSelector.value;
-                if (!filename || filename.includes('...')) {
-                    throw new Error('分析に使用するファイルを選択してください。');
+                const selectedCheckboxes = document.querySelectorAll('input[name="source-file"]:checked');
+
+                if (selectedCheckboxes.length === 0) {
+                    throw new Error('分析に使用するファイルを1つ以上選択してください。');
                 }
 
-                fileContent = localStorage.getItem(`datasource-${filename}`);
+                const fileContents = [];
+                selectedCheckboxes.forEach(checkbox => {
+                    const filename = checkbox.value;
+                    const content = localStorage.getItem(`datasource-${filename}`);
+                    if (content) {
+                        fileContents.push(`--- Content from ${filename} ---\n${content}`);
+                    }
+                });
 
-                if (fileContent === null) {
-                    throw new Error(`ローカルストレージからファイル「${filename}」を読み込めませんでした。`);
+                if (fileContents.length === 0) {
+                    throw new Error('選択されたファイルの読み込みに失敗しました。');
                 }
+
+                fileContent = fileContents.join('\n\n');
             }
 
             // Geminiサービスを使用してタグ生成
@@ -1851,20 +1860,46 @@ class App {
     }
     
     loadAnalysis() {
-        // Initialize analysis source selector
         const sourceRadios = document.querySelectorAll('input[name="analysis-source"]');
         const fileRadio = document.getElementById('source-file-radio');
         const fileSelectorContainer = document.getElementById('source-file-selector-container');
-        const fileSelector = document.getElementById('source-file-selector');
+        const fileListContainer = document.getElementById('source-file-list');
 
         const files = this.getLocalDataSources();
 
         if (files.length > 0) {
             fileRadio.disabled = false;
-            fileSelector.innerHTML = files.map(f => `<option value="${f}">${f}</option>`).join('');
+
+            // "Select All" checkbox
+            const selectAllHtml = `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="select-all-files">
+                    <label for="select-all-files">すべてのファイルを選択</label>
+                </div>
+            `;
+
+            // File checkboxes
+            const filesHtml = files.map(f => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="file-${f}" value="${f}" name="source-file">
+                    <label for="file-${f}">${f}</label>
+                </div>
+            `).join('');
+
+            fileListContainer.innerHTML = selectAllHtml + filesHtml;
+
+            // Add event listener for "Select All"
+            const selectAllCheckbox = document.getElementById('select-all-files');
+            selectAllCheckbox.addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('input[name="source-file"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+            });
+
         } else {
             fileRadio.disabled = true;
-            fileSelector.innerHTML = '<option>アップロードされたファイルはありません</option>';
+            fileListContainer.innerHTML = '<p>アップロードされたファイルはありません</p>';
         }
 
         // Add event listeners for radio buttons
