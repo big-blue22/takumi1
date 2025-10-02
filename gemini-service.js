@@ -623,22 +623,22 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 
 
     // 気づきタグ生成
-    async generateInsightTags(feelings) {
+    async generateInsightTags(feelings, analysisMode = 'browsing', fileContent = null) {
         if (!this.isConfigured()) {
             throw new Error('Gemini APIキーが設定されていません');
         }
 
         try {
-            console.log('🤖 気づきタグ生成開始:', feelings);
+            console.log('🤖 気づきタグ生成開始:', { feelings, analysisMode });
 
             // Step 1: 入力文の推敲・構造化
             console.log('📝 Step 1: 入力文を推敲・構造化中...');
-            const refinedContent = await this.refineInputContent(feelings);
+            const refinedContent = await this.refineInputContent(feelings, analysisMode, fileContent);
             console.log('✅ Step 1完了 - 推敲された内容:', refinedContent);
 
             // Step 2: 推敲内容からタグ生成
             console.log('🏷️ Step 2: 推敲内容からタグ生成中...');
-            const tagPrompt = `以下の推敲・構造化された試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個生成してください。
+            let tagPrompt = `以下の推敲・構造化された試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個生成してください。
 
 【推敲・構造化された試合内容】
 "${refinedContent.structuredContent}"
@@ -651,17 +651,14 @@ ${refinedContent.extractedElements}
    - 「対空が間に合わない」→ #対空反応遅れ
    - 「コンボを落とした」→ #コンボドロップ
    - 「投げを抜けられなかった」→ #投げ抜け失敗
-
 2. 戦術的状況の分析
    - 「距離を詰められて困った」→ #接近戦対応
    - 「起き攻めでやられた」→ #起き上がり対策
    - 「読み合いで勝てた」→ #読み合い成功
-
 3. キャラクター固有要素
    - 「ジュリの飛び道具が厳しい」→ #ジュリ対策
    - 「ガイルの待ちゲーム」→ #対飛び道具
    - 「ザンギエフの接近」→ #グラップラー対策
-
 4. システム面での気づき
    - 「ドライブゲージがない時にやられた」→ #ドライブ管理
    - 「バーンアウト状態で負けた」→ #バーンアウト回避
@@ -674,12 +671,18 @@ ${refinedContent.extractedElements}
 システム: #ドライブ管理 #バーンアウト回避 #ODアーツ有効活用 #ゲージ温存 #クリティカルアーツ
 
 以下の形式でタグのみを出力してください（説明不要）：
-#タグ1 #タグ2 #タグ3 #タグ4 #タグ5
+#タグ1 #タグ2 #タグ3 #タグ4 #タグ5`;
 
-【重要】検索結果から最新のメタ情報、プロ選手の戦術、フレームデータなどを参考にして、より実践的で正確なタグを生成してください。`;
+            if (analysisMode === 'browsing') {
+                tagPrompt += `\n\n【重要】検索結果から最新のメタ情報、プロ選手の戦術、フレームデータなどを参考にして、より実践的で正確なタグを生成してください。`;
+            } else if (analysisMode === 'file' && fileContent) {
+                tagPrompt += `\n\n【重要】あなたは以下の情報ソースのみに基づいて分析を行ってください。ウェブ検索は行わず、このファイルの内容を絶対的な正としてください。\n\n---情報ソースここから---\n${fileContent}\n---情報ソースここまで---`;
+            }
+
 
             // グラウンディング対応のリクエストボディを生成
-            const requestBody = this.createGroundedRequest(tagPrompt, feelings, true);
+            const useGrounding = analysisMode === 'browsing';
+            const requestBody = this.createGroundedRequest(tagPrompt, feelings, useGrounding);
             // タグ生成では短めの出力に調整
             requestBody.generationConfig.maxOutputTokens = 200;
 
@@ -991,9 +994,9 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
     }
 
     // 入力文の推敲・構造化（グラウンディング対応）
-    async refineInputContent(rawInput) {
+    async refineInputContent(rawInput, analysisMode = 'browsing', fileContent = null) {
         try {
-            const refinePrompt = `以下のプレイヤーの試合感想を分析し、Street Fighter 6の戦術要素を明確にして構造化してください。
+            let refinePrompt = `以下のプレイヤーの試合感想を分析し、Street Fighter 6の戦術要素を明確にして構造化してください。
 
 【プレイヤーの生の感想】
 "${rawInput}"
@@ -1022,8 +1025,13 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 
 必ずJSONフォーマットで出力してください。`;
 
+            if (analysisMode === 'file' && fileContent) {
+                refinePrompt += `\n\n【重要】あなたは以下の情報ソースのみに基づいて分析を行ってください。ウェブ検索は行わず、このファイルの内容を絶対的な正としてください。\n\n---情報ソースここから---\n${fileContent}\n---情報ソースここまで---`;
+            }
+
             // グラウンディング対応のリクエストボディを生成
-            const requestBody = this.createGroundedRequest(refinePrompt, rawInput, true);
+            const useGrounding = analysisMode === 'browsing';
+            const requestBody = this.createGroundedRequest(refinePrompt, rawInput, useGrounding);
             // 推敲処理では短めのトークン制限（JSONパースのため）
             requestBody.generationConfig.maxOutputTokens = 500;
 

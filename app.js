@@ -756,6 +756,9 @@ class App {
             case 'goals':
                 this.loadGoals();
                 break;
+            case 'data-source':
+                this.loadDataSourcePage();
+                break;
             case 'settings':
                 this.loadSettings();
                 break;
@@ -924,6 +927,20 @@ class App {
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
                 this.resetAppData();
+            });
+        }
+
+        // Data Source Page Listeners
+        const uploadForm = document.getElementById('upload-form');
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', (e) => this.handleFileUpload(e));
+        }
+
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        if (fileInput && uploadBtn) {
+            fileInput.addEventListener('change', () => {
+                uploadBtn.disabled = fileInput.files.length === 0;
             });
         }
     }
@@ -1317,37 +1334,53 @@ class App {
 
     // 気づきタグ生成
     async generateInsightTags() {
-        console.log('generateInsightTags関数が呼び出されました');
         const feelingsInput = document.getElementById('match-feelings');
-        const generatedTagsContainer = document.getElementById('generated-tags-container');
-        const tagsList = document.getElementById('generated-tags-list');
         const generateBtn = document.getElementById('generate-tags-btn');
-
-        console.log('要素の状態:', {
-            feelingsInput: !!feelingsInput,
-            feelingsValue: feelingsInput?.value,
-            generatedTagsContainer: !!generatedTagsContainer,
-            tagsList: !!tagsList,
-            generateBtn: !!generateBtn,
-            geminiService: !!this.geminiService
-        });
+        const analysisSource = document.querySelector('input[name="analysis-source"]:checked').value;
 
         if (!feelingsInput || !feelingsInput.value.trim()) {
             this.showToast('❌ 感想を入力してください', 'error');
             return;
         }
-
         if (!this.geminiService) {
             this.showToast('❌ AIサービスが初期化されていません', 'error');
             return;
         }
 
+        let fileContent = null;
+        let analysisMode = 'browsing';
+
         try {
             generateBtn.disabled = true;
-            generateBtn.textContent = '🤖 推敲・分析中...';
+            generateBtn.textContent = '🤖 分析中...';
 
-            // Geminiサービスを使用してタグ生成（推敲付き）
-            const result = await this.geminiService.generateInsightTags(feelingsInput.value.trim());
+            if (analysisSource === 'file') {
+                analysisMode = 'file';
+                const fileSelector = document.getElementById('source-file-selector');
+                const filename = fileSelector.value;
+                if (!filename) {
+                    throw new Error('分析に使用するファイルを選択してください。');
+                }
+
+                generateBtn.textContent = '🤖 ファイル読込中...';
+                const username = this.currentUser ? this.currentUser.username : 'guest';
+                const response = await fetch(`/api/user-file?filename=${encodeURIComponent(filename)}`, {
+                    headers: { 'x-username': username }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`ファイル「${filename}」の読み込みに失敗しました。`);
+                }
+                fileContent = await response.text();
+                generateBtn.textContent = '🤖 推敲・分析中...';
+            }
+
+            // Geminiサービスを使用してタグ生成
+            const result = await this.geminiService.generateInsightTags(
+                feelingsInput.value.trim(),
+                analysisMode,
+                fileContent
+            );
 
             // 推敲結果があれば表示
             if (result.refinedContent) {
@@ -1823,8 +1856,46 @@ class App {
         this.loadDashboardGoals();
     }
     
-    loadAnalysis() {
-        // 分析ページの初期化
+    async loadAnalysis() {
+        // Initialize analysis source selector
+        const sourceRadios = document.querySelectorAll('input[name="analysis-source"]');
+        const fileRadio = document.getElementById('source-file-radio');
+        const fileSelectorContainer = document.getElementById('source-file-selector-container');
+        const fileSelector = document.getElementById('source-file-selector');
+
+        // Fetch user files to populate selector
+        try {
+            const username = this.currentUser ? this.currentUser.username : 'guest';
+            const response = await fetch('/api/user-files', {
+                headers: { 'x-username': username }
+            });
+            if (!response.ok) throw new Error('Failed to fetch user files');
+
+            const files = await response.json();
+
+            if (files.length > 0) {
+                fileRadio.disabled = false;
+                fileSelector.innerHTML = files.map(f => `<option value="${f}">${f}</option>`).join('');
+            } else {
+                fileRadio.disabled = true;
+                fileSelector.innerHTML = '<option>アップロードされたファイルはありません</option>';
+            }
+        } catch (error) {
+            console.error("Could not load user files for analysis selector:", error);
+            fileRadio.disabled = true;
+            fileSelector.innerHTML = '<option>ファイルの読み込みに失敗</option>';
+        }
+
+        // Add event listeners for radio buttons
+        sourceRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.value === 'file' && !fileRadio.disabled) {
+                    fileSelectorContainer.style.display = 'block';
+                } else {
+                    fileSelectorContainer.style.display = 'none';
+                }
+            });
+        });
     }
     
     loadGoals() {
@@ -3962,6 +4033,147 @@ class App {
         
         // AI用目標設定ボタン
     }
+
+    // === データソース管理機能 ===
+    async loadDataSourcePage() {
+        try {
+            const username = this.currentUser ? this.currentUser.username : 'guest';
+            const response = await fetch('/api/user-files', {
+                headers: { 'x-username': username }
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch user files');
+            }
+            const files = await response.json();
+            this.renderDataSources(files);
+        } catch (error) {
+            console.error('Error loading data source page:', error);
+            this.showToast('ファイル一覧の取得に失敗しました', 'error');
+            this.renderDataSources([]); // Render empty state on error
+        }
+    }
+
+    renderDataSources(files) {
+        const listContainer = document.getElementById('data-source-list');
+        if (!listContainer) return;
+
+        if (files.length === 0) {
+            listContainer.innerHTML = `
+                <div class="no-files-message">
+                    <p>まだアップロードされたファイルがありません。</p>
+                </div>`;
+            return;
+        }
+
+        listContainer.innerHTML = files.map(file => `
+            <div class="data-source-item" data-filename="${file}">
+                <span class="file-icon">📄</span>
+                <span class="file-name">${file}</span>
+                <div class="file-actions">
+                    <button class="btn-secondary btn-sm view-file-btn">表示</button>
+                    <button class="btn-danger btn-sm delete-file-btn">削除</button>
+                </div>
+            </div>
+        `).join('');
+
+        // Add event listeners for the new buttons
+        listContainer.querySelectorAll('.view-file-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleViewFile(e));
+        });
+        listContainer.querySelectorAll('.delete-file-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleDeleteFile(e));
+        });
+    }
+
+    async handleFileUpload(event) {
+        event.preventDefault();
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            this.showToast('ファイルを選択してください', 'warning');
+            return;
+        }
+
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'アップロード中...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const username = this.currentUser ? this.currentUser.username : 'guest';
+            const response = await fetch('/upload', {
+                method: 'POST',
+                headers: { 'x-username': username },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'File upload failed');
+            }
+
+            this.showToast('ファイルが正常にアップロードされました', 'success');
+            form.reset();
+            uploadBtn.disabled = true;
+            this.loadDataSourcePage(); // Refresh the list
+        } catch (error) {
+            console.error('File upload error:', error);
+            this.showToast(`アップロード失敗: ${error.message}`, 'error');
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'アップロード';
+        }
+    }
+
+    async handleViewFile(event) {
+        const filename = event.target.closest('.data-source-item').dataset.filename;
+        try {
+            const username = this.currentUser ? this.currentUser.username : 'guest';
+            const response = await fetch(`/api/user-file?filename=${encodeURIComponent(filename)}`, {
+                headers: { 'x-username': username }
+            });
+            if (!response.ok) {
+                throw new Error('File not found');
+            }
+            const content = await response.text();
+            // For now, just log to console. A modal could be used in the future.
+            console.log(`--- Content of ${filename} ---`);
+            console.log(content);
+            alert(`Content of ${filename}:\n\n${content}`);
+        } catch (error) {
+            this.showToast('ファイルの表示に失敗しました', 'error');
+        }
+    }
+
+    async handleDeleteFile(event) {
+        const filename = event.target.closest('.data-source-item').dataset.filename;
+        if (!confirm(`本当に「${filename}」を削除しますか？`)) {
+            return;
+        }
+
+        try {
+            const username = this.currentUser ? this.currentUser.username : 'guest';
+            const response = await fetch(`/api/user-file?filename=${encodeURIComponent(filename)}`, {
+                method: 'DELETE',
+                headers: { 'x-username': username }
+            });
+
+            if (!response.ok) {
+                throw new Error('File deletion failed');
+            }
+            this.showToast('ファイルを削除しました', 'success');
+            this.loadDataSourcePage(); // Refresh the list
+        } catch (error) {
+            console.error('File deletion error:', error);
+            this.showToast('ファイルの削除に失敗しました', 'error');
+        }
+    }
+
 
     // === 目標管理支援機能（コーチング用） ===
 

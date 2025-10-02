@@ -6807,3 +6807,101 @@ input, select, textarea {
         padding: 0.5rem;
     }
 }
+
+/* Analysis Source Selector */
+.analysis-source-selector {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--glass-border);
+}
+
+.analysis-source-selector h5 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.radio-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.radio-label:hover {
+    color: var(--text-primary);
+}
+
+.radio-label input[type="radio"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: var(--bg-primary);
+    margin: 0;
+    font: inherit;
+    color: var(--text-secondary);
+    width: 1.15em;
+    height: 1.15em;
+    border: 0.15em solid var(--text-secondary);
+    border-radius: 50%;
+    transform: translateY(-0.075em);
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+}
+
+.radio-label input[type="radio"]::before {
+    content: "";
+    width: 0.65em;
+    height: 0.65em;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em var(--color-accent);
+}
+
+.radio-label input[type="radio"]:checked::before {
+    transform: scale(1);
+}
+
+.radio-label input[type="radio"]:checked {
+    border-color: var(--color-accent);
+}
+
+.radio-label input[type="radio"]:disabled {
+    border-color: var(--text-muted);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.radio-label input[type="radio"]:disabled + span {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+#source-file-selector {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.5rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-small);
+}
+
+#source-file-selector:disabled {
+    opacity: 0.6;
+    background: var(--bg-secondary);
+}
