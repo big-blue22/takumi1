@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { URLSearchParams } = require('url');
+const mammoth = require('mammoth');
 
 // MIMEタイプマッピング
 const mimeTypes = {
@@ -94,19 +95,43 @@ const server = http.createServer((req, res) => {
 
         if (files && files.file) {
             const file = files.file;
-            const safeFilename = path.basename(file.filename); // Sanitize filename
-            const filePath = path.join(userUploadsDir, safeFilename);
+            const originalFilename = path.basename(file.filename); // Sanitize filename
+            const extension = path.extname(originalFilename).toLowerCase();
 
-            fs.writeFile(filePath, file.content, (err) => {
-                if (err) {
-                    console.error("File save error:", err);
-                    res.writeHead(500, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ message: 'Error saving file' }));
-                    return;
-                }
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ message: 'File uploaded successfully', filename: safeFilename }));
-            });
+            if (extension === '.docx') {
+                mammoth.extractRawText({ buffer: file.content })
+                    .then(result => {
+                        const txtFilename = originalFilename.replace(/\.docx$/i, '.txt');
+                        const filePath = path.join(userUploadsDir, txtFilename);
+                        fs.writeFile(filePath, result.value, (err) => {
+                            if (err) {
+                                console.error("File save error (docx->txt):", err);
+                                res.writeHead(500, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ message: 'Error saving converted file' }));
+                                return;
+                            }
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ message: 'File uploaded and converted successfully', filename: txtFilename }));
+                        });
+                    })
+                    .catch(err => {
+                        console.error("DOCX parsing error:", err);
+                        res.writeHead(500, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ message: 'Error parsing .docx file' }));
+                    });
+            } else {
+                const filePath = path.join(userUploadsDir, originalFilename);
+                fs.writeFile(filePath, file.content, (err) => {
+                    if (err) {
+                        console.error("File save error:", err);
+                        res.writeHead(500, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ message: 'Error saving file' }));
+                        return;
+                    }
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ message: 'File uploaded successfully', filename: originalFilename }));
+                });
+            }
         } else {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'No file uploaded or file field is not named "file"' }));
