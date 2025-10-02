@@ -1358,21 +1358,15 @@ class App {
                 analysisMode = 'file';
                 const fileSelector = document.getElementById('source-file-selector');
                 const filename = fileSelector.value;
-                if (!filename) {
+                if (!filename || filename.includes('...')) {
                     throw new Error('分析に使用するファイルを選択してください。');
                 }
 
-                generateBtn.textContent = '🤖 ファイル読込中...';
-                const username = this.currentUser ? this.currentUser.username : 'guest';
-                const response = await fetch(`/api/user-file?filename=${encodeURIComponent(filename)}`, {
-                    headers: { 'x-username': username }
-                });
+                fileContent = localStorage.getItem(`datasource-${filename}`);
 
-                if (!response.ok) {
-                    throw new Error(`ファイル「${filename}」の読み込みに失敗しました。`);
+                if (fileContent === null) {
+                    throw new Error(`ローカルストレージからファイル「${filename}」を読み込めませんでした。`);
                 }
-                fileContent = await response.text();
-                generateBtn.textContent = '🤖 推敲・分析中...';
             }
 
             // Geminiサービスを使用してタグ生成
@@ -1856,34 +1850,21 @@ class App {
         this.loadDashboardGoals();
     }
     
-    async loadAnalysis() {
+    loadAnalysis() {
         // Initialize analysis source selector
         const sourceRadios = document.querySelectorAll('input[name="analysis-source"]');
         const fileRadio = document.getElementById('source-file-radio');
         const fileSelectorContainer = document.getElementById('source-file-selector-container');
         const fileSelector = document.getElementById('source-file-selector');
 
-        // Fetch user files to populate selector
-        try {
-            const username = this.currentUser ? this.currentUser.username : 'guest';
-            const response = await fetch('/api/user-files', {
-                headers: { 'x-username': username }
-            });
-            if (!response.ok) throw new Error('Failed to fetch user files');
+        const files = this.getLocalDataSources();
 
-            const files = await response.json();
-
-            if (files.length > 0) {
-                fileRadio.disabled = false;
-                fileSelector.innerHTML = files.map(f => `<option value="${f}">${f}</option>`).join('');
-            } else {
-                fileRadio.disabled = true;
-                fileSelector.innerHTML = '<option>アップロードされたファイルはありません</option>';
-            }
-        } catch (error) {
-            console.error("Could not load user files for analysis selector:", error);
+        if (files.length > 0) {
+            fileRadio.disabled = false;
+            fileSelector.innerHTML = files.map(f => `<option value="${f}">${f}</option>`).join('');
+        } else {
             fileRadio.disabled = true;
-            fileSelector.innerHTML = '<option>ファイルの読み込みに失敗</option>';
+            fileSelector.innerHTML = '<option>アップロードされたファイルはありません</option>';
         }
 
         // Add event listeners for radio buttons
@@ -4034,23 +4015,21 @@ class App {
         // AI用目標設定ボタン
     }
 
-    // === データソース管理機能 ===
-    async loadDataSourcePage() {
-        try {
-            const username = this.currentUser ? this.currentUser.username : 'guest';
-            const response = await fetch('/api/user-files', {
-                headers: { 'x-username': username }
-            });
-            if (!response.ok) {
-                throw new Error('Failed to fetch user files');
+    // === データソース管理機能 (Client-Side) ===
+    loadDataSourcePage() {
+        const files = this.getLocalDataSources();
+        this.renderDataSources(files);
+    }
+
+    getLocalDataSources() {
+        const sources = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('datasource-')) {
+                sources.push(key.replace('datasource-', ''));
             }
-            const files = await response.json();
-            this.renderDataSources(files);
-        } catch (error) {
-            console.error('Error loading data source page:', error);
-            this.showToast('ファイル一覧の取得に失敗しました', 'error');
-            this.renderDataSources([]); // Render empty state on error
         }
+        return sources;
     }
 
     renderDataSources(files) {
@@ -4058,10 +4037,7 @@ class App {
         if (!listContainer) return;
 
         if (files.length === 0) {
-            listContainer.innerHTML = `
-                <div class="no-files-message">
-                    <p>まだアップロードされたファイルがありません。</p>
-                </div>`;
+            listContainer.innerHTML = `<div class="no-files-message"><p>まだアップロードされたファイルがありません。</p></div>`;
             return;
         }
 
@@ -4076,7 +4052,6 @@ class App {
             </div>
         `).join('');
 
-        // Add event listeners for the new buttons
         listContainer.querySelectorAll('.view-file-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.handleViewFile(e));
         });
@@ -4087,7 +4062,6 @@ class App {
 
     async handleFileUpload(event) {
         event.preventDefault();
-        const form = document.getElementById('upload-form');
         const fileInput = document.getElementById('file-input');
         const uploadBtn = document.getElementById('upload-btn');
         const file = fileInput.files[0];
@@ -4098,79 +4072,70 @@ class App {
         }
 
         uploadBtn.disabled = true;
-        uploadBtn.textContent = 'アップロード中...';
+        uploadBtn.textContent = '処理中...';
 
-        const formData = new FormData();
-        formData.append('file', file);
+        const reader = new FileReader();
 
-        try {
-            const username = this.currentUser ? this.currentUser.username : 'guest';
-            const response = await fetch('/upload', {
-                method: 'POST',
-                headers: { 'x-username': username },
-                body: formData
-            });
+        reader.onload = async (e) => {
+            try {
+                let textContent;
+                let filename = file.name;
 
-            const result = await response.json();
+                if (file.name.toLowerCase().endsWith('.docx')) {
+                    if (typeof mammoth === 'undefined') {
+                        throw new Error('DOCXパーサーがロードされていません。');
+                    }
+                    const arrayBuffer = e.target.result;
+                    const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                    textContent = result.value;
+                    filename = file.name.replace(/\.docx$/i, '.txt');
+                } else {
+                    textContent = e.target.result;
+                }
 
-            if (!response.ok) {
-                throw new Error(result.message || 'File upload failed');
+                localStorage.setItem(`datasource-${filename}`, textContent);
+                this.showToast(`「${filename}」をローカルに保存しました`, 'success');
+                fileInput.value = ''; // Reset file input
+                uploadBtn.disabled = true;
+                this.loadDataSourcePage();
+            } catch (err) {
+                console.error('File processing error:', err);
+                this.showToast(`ファイル処理エラー: ${err.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'アップロード';
             }
+        };
 
-            this.showToast('ファイルが正常にアップロードされました', 'success');
-            form.reset();
-            uploadBtn.disabled = true;
-            this.loadDataSourcePage(); // Refresh the list
-        } catch (error) {
-            console.error('File upload error:', error);
-            this.showToast(`アップロード失敗: ${error.message}`, 'error');
-        } finally {
+        reader.onerror = () => {
+            this.showToast('ファイルの読み込みに失敗しました', 'error');
             uploadBtn.disabled = false;
             uploadBtn.textContent = 'アップロード';
+        };
+
+        if (file.name.toLowerCase().endsWith('.docx')) {
+            reader.readAsArrayBuffer(file);
+        } else {
+            reader.readAsText(file);
         }
     }
 
-    async handleViewFile(event) {
+    handleViewFile(event) {
         const filename = event.target.closest('.data-source-item').dataset.filename;
-        try {
-            const username = this.currentUser ? this.currentUser.username : 'guest';
-            const response = await fetch(`/api/user-file?filename=${encodeURIComponent(filename)}`, {
-                headers: { 'x-username': username }
-            });
-            if (!response.ok) {
-                throw new Error('File not found');
-            }
-            const content = await response.text();
-            // For now, just log to console. A modal could be used in the future.
-            console.log(`--- Content of ${filename} ---`);
-            console.log(content);
-            alert(`Content of ${filename}:\n\n${content}`);
-        } catch (error) {
-            this.showToast('ファイルの表示に失敗しました', 'error');
+        const content = localStorage.getItem(`datasource-${filename}`);
+        if (content) {
+            alert(`Content of ${filename}:\n\n${content.substring(0, 1000)}...`);
+        } else {
+            this.showToast('ファイルの内容が見つかりませんでした', 'error');
         }
     }
 
-    async handleDeleteFile(event) {
+    handleDeleteFile(event) {
         const filename = event.target.closest('.data-source-item').dataset.filename;
-        if (!confirm(`本当に「${filename}」を削除しますか？`)) {
-            return;
-        }
-
-        try {
-            const username = this.currentUser ? this.currentUser.username : 'guest';
-            const response = await fetch(`/api/user-file?filename=${encodeURIComponent(filename)}`, {
-                method: 'DELETE',
-                headers: { 'x-username': username }
-            });
-
-            if (!response.ok) {
-                throw new Error('File deletion failed');
-            }
+        if (confirm(`本当にローカルストレージから「${filename}」を削除しますか？`)) {
+            localStorage.removeItem(`datasource-${filename}`);
             this.showToast('ファイルを削除しました', 'success');
-            this.loadDataSourcePage(); // Refresh the list
-        } catch (error) {
-            console.error('File deletion error:', error);
-            this.showToast('ファイルの削除に失敗しました', 'error');
+            this.loadDataSourcePage();
         }
     }
 
