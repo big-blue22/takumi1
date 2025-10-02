@@ -628,62 +628,41 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             throw new Error('Gemini APIキーが設定されていません');
         }
 
+        // refinedContent を try...catch ブロックの外で宣言
+        let refinedContent;
+
         try {
             console.log('🤖 気づきタグ生成開始:', { feelings, analysisMode });
 
             // Step 1: 入力文の推敲・構造化
             console.log('📝 Step 1: 入力文を推敲・構造化中...');
-            const refinedContent = await this.refineInputContent(feelings, analysisMode, fileContent);
+            refinedContent = await this.refineInputContent(feelings, analysisMode, fileContent);
             console.log('✅ Step 1完了 - 推敲された内容:', refinedContent);
 
             // Step 2: 推敲内容からタグ生成
             console.log('🏷️ Step 2: 推敲内容からタグ生成中...');
-            let tagPrompt = `以下の推敲・構造化された試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個生成してください。
+            let tagPrompt = `以下の試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個、日本語で生成してください。
 
-【推敲・構造化された試合内容】
+【試合内容の要約】
 "${refinedContent.structuredContent}"
 
-【抽出された要素】
-${refinedContent.extractedElements}
+【タグ生成のヒント】
+- #対空反応 #コンボミス #投げ抜け失敗 のような具体的な課題
+- #立ち回り改善 #起き攻め対策 のような戦術的な課題
+- #ジュリ対策 #対空キャラ のようなキャラクターに関する課題
+- #ドライブ管理 #バーンアウト のようなシステムに関する課題
 
-【要素抽出の重点ポイント】
-1. 具体的な技術・行動の特定
-   - 「対空が間に合わない」→ #対空反応遅れ
-   - 「コンボを落とした」→ #コンボドロップ
-   - 「投げを抜けられなかった」→ #投げ抜け失敗
-2. 戦術的状況の分析
-   - 「距離を詰められて困った」→ #接近戦対応
-   - 「起き攻めでやられた」→ #起き上がり対策
-   - 「読み合いで勝てた」→ #読み合い成功
-3. キャラクター固有要素
-   - 「ジュリの飛び道具が厳しい」→ #ジュリ対策
-   - 「ガイルの待ちゲーム」→ #対飛び道具
-   - 「ザンギエフの接近」→ #グラップラー対策
-4. システム面での気づき
-   - 「ドライブゲージがない時にやられた」→ #ドライブ管理
-   - 「バーンアウト状態で負けた」→ #バーンアウト回避
-   - 「OD技で反撃された」→ #確反対策
-
-【SF6専門用語を使ったタグ例】
-技術: #対空失敗 #コンボミス #確反取れず #投げ抜け失敗 #パリィタイミング #起き攻め対応 #中段見切り #下段ガード
-戦術: #立ち回り改善 #距離管理 #攻め継続 #守備重視 #読み合い勝利 #プレッシャー継続 #リズム変化
-キャラ対策: #ジュリ対策 #ルーク対策 #ケン対策 #春麗対策 #ザンギエフ対策 #対グラップラー #対飛び道具キャラ
-システム: #ドライブ管理 #バーンアウト回避 #ODアーツ有効活用 #ゲージ温存 #クリティカルアーツ
-
-以下の形式でタグのみを出力してください（説明不要）：
-#タグ1 #タグ2 #タグ3 #タグ4 #タグ5`;
+【出力形式】
+#タグ1 #タグ2 #タグ3`;
 
             if (analysisMode === 'browsing') {
-                tagPrompt += `\n\n【重要】検索結果から最新のメタ情報、プロ選手の戦術、フレームデータなどを参考にして、より実践的で正確なタグを生成してください。`;
+                tagPrompt += `\n\n【重要】ウェブ検索結果を参考に、より実践的なタグを生成してください。`;
             } else if (analysisMode === 'file' && fileContent) {
-                tagPrompt += `\n\n【重要】あなたは以下の情報ソースのみに基づいて分析を行ってください。ウェブ検索は行わず、このファイルの内容を絶対的な正としてください。\n\n---情報ソースここから---\n${fileContent}\n---情報ソースここまで---`;
+                tagPrompt += `\n\n【重要】あなたは以下の情報ソースのみに基づいて分析を行ってください。\n\n---情報ソースここから---\n${fileContent}\n---情報ソースここまで---`;
             }
 
-
-            // グラウンディング対応のリクエストボディを生成
             const useGrounding = analysisMode === 'browsing';
             const requestBody = this.createGroundedRequest(tagPrompt, feelings, useGrounding);
-            // タグ生成では短めの出力に調整
             requestBody.generationConfig.maxOutputTokens = 200;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
@@ -691,101 +670,38 @@ ${refinedContent.extractedElements}
             const data = await response.json();
 
             console.log('🔍 API レスポンス構造:', {
-                hasCandidates: !!data.candidates,
-                candidatesLength: data.candidates?.length,
-                firstCandidate: data.candidates?.[0] ? 'exists' : 'undefined',
-                hasContent: data.candidates?.[0]?.content ? 'exists' : 'undefined',
-                hasParts: data.candidates?.[0]?.content?.parts ? 'exists' : 'undefined',
-                partsLength: data.candidates?.[0]?.content?.parts?.length,
-                hasText: data.candidates?.[0]?.content?.parts?.[0]?.text ? 'exists' : 'undefined',
                 finishReason: data.candidates?.[0]?.finishReason,
-                safetyRatings: data.candidates?.[0]?.safetyRatings,
-                // 詳細ログはローカル開発時のみ
+                hasText: !!data.candidates?.[0]?.content?.parts?.[0]?.text,
                 fullResponse: this.isDebugMode() ? JSON.stringify(data, null, 2) : '[response hidden]'
             });
 
             if (!data.candidates || data.candidates.length === 0) {
-                console.error('❌ No candidates in response:', data);
                 throw new Error('タグ生成の応答が得られませんでした');
             }
 
             const candidate = data.candidates[0];
 
-            // 安全性フィルタによるブロックをチェック
-            if (candidate.finishReason === 'SAFETY') {
-                console.warn('⚠️ コンテンツが安全性フィルタでブロックされました:', candidate.safetyRatings);
-                throw new Error('コンテンツが安全性フィルタによってブロックされました。より適切な表現で入力してください。');
+            if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'RECITATION') {
+                throw new Error(`コンテンツがフィルタによってブロックされました (Reason: ${candidate.finishReason})`);
             }
 
-            if (candidate.finishReason === 'RECITATION') {
-                console.warn('⚠️ コンテンツが著作権フィルタでブロックされました');
-                throw new Error('コンテンツが著作権フィルタによってブロックされました。');
-            }
-
-            // MAX_TOKENSは警告のみで処理継続
             if (candidate.finishReason === 'MAX_TOKENS') {
-                console.warn('⚠️ 応答がトークン制限で切り詰められました。部分的な内容で処理を継続します。');
-                // エラーを投げずに処理継続
+                console.warn('⚠️ 応答がトークン制限で切り詰められました。');
+                // MAX_TOKENSエラーの場合は、部分的な応答でも処理を試みる
             }
 
-            // より堅牢な応答テキスト抽出
-            let aiResponse = '';
+            let aiResponse = candidate.content?.parts?.[0]?.text || '';
 
-            // 標準的な応答構造を確認
-            if (candidate.content && candidate.content.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
-                // partsが存在する場合は標準処理
-                for (const part of candidate.content.parts) {
-                    if (part && part.text) {
-                        aiResponse = part.text;
-                        break;
-                    }
-                }
-            } else if (candidate.content && candidate.content.text) {
-                // 直接textプロパティがある場合（まれな構造）
-                aiResponse = candidate.content.text;
-            } else {
-                // 構造情報をログ出力
-                console.warn('⚠️ 標準的でない応答構造を検出:', {
-                    hasCandidate: !!candidate,
-                    hasContent: !!candidate?.content,
-                    hasParts: !!candidate?.content?.parts,
-                    isPartsArray: Array.isArray(candidate?.content?.parts),
-                    partsLength: candidate?.content?.parts?.length,
-                    hasFirstPart: !!candidate?.content?.parts?.[0],
-                    finishReason: candidate?.finishReason,
-                    contentKeys: candidate?.content ? Object.keys(candidate.content) : []
-                });
-
-                // MAX_TOKENSの場合は部分的な応答を受け入れてフォールバックタグを生成
-                if (candidate.finishReason === 'MAX_TOKENS') {
-                    console.warn('⚠️ MAX_TOKENSエラーのため、フォールバック処理に移行します');
-                    // フォールバック処理に進む（aiResponseは空のまま）
-                } else {
-                    throw new Error(`API応答にテキストが含まれていません (finishReason: ${candidate?.finishReason || 'unknown'})`);
-                }
-            }
-
-            // aiResponseが空の場合（MAX_TOKENSエラーなど）はフォールバック処理へ
             if (!aiResponse) {
                 if (candidate.finishReason === 'MAX_TOKENS') {
                     console.warn('⚠️ MAX_TOKENSエラーにより、フォールバック処理でタグを生成します');
-                    // フォールバック処理（下のcatchブロックに処理を移譲）
                     throw new Error('MAX_TOKENS_FALLBACK');
-                } else {
-                    console.error('❌ No text in response, candidate:', candidate);
-                    throw new Error('AIからのテキスト応答がありません');
                 }
+                throw new Error('AIからのテキスト応答がありません');
             }
 
-            // ハッシュタグを抽出
             const tags = this.extractTags(aiResponse);
-
-            // グラウンディングメタデータの処理
-            let groundingMetadata = null;
-            if (candidate.groundingMetadata) {
-                groundingMetadata = this.processGroundingMetadata(candidate.groundingMetadata);
-                console.log('📚 引用ソース:', groundingMetadata);
-            }
+            let groundingMetadata = candidate.groundingMetadata ? this.processGroundingMetadata(candidate.groundingMetadata) : null;
 
             console.log('✅ Step 2完了 - 生成されたタグ:', tags);
             return {
@@ -799,96 +715,8 @@ ${refinedContent.extractedElements}
 
         } catch (error) {
             console.error('気づきタグ生成エラー:', error);
-
-            // MAX_TOKENSエラーの場合は直接フォールバックタグを生成
-            if (error.message === 'MAX_TOKENS_FALLBACK') {
-                console.log('🔄 MAX_TOKENSエラーによりフォールバックタグを生成します...');
-                const fallbackTags = this.generateFallbackTags(feelings);
-                return {
-                    tags: fallbackTags,
-                    originalResponse: '',
-                    refinedContent: refinedContent,
-                    groundingSources: null,
-                    usage: {},
-                    processingSteps: ['推敲', 'フォールバックタグ生成'],
-                    fallbackMode: true
-                };
-            }
-
-            // グラウンディングエラーの場合は通常モードで再試行
-            if (error.message.includes('Search Grounding is not supported')) {
-                console.log('🔄 グラウンディング無効化して再試行...');
-
-                try {
-                    // 通常のタグ生成プロンプト（グラウンディングなし）
-                    const fallbackPrompt = `以下の構造化された試合分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3-5個生成してください。
-
-【推敲・構造化された試合内容】
-"${refinedContent.structuredContent}"
-
-【抽出された要素】
-${refinedContent.extractedElements}
-
-【SF6専門用語を使ったタグ例】
-技術: #対空失敗 #コンボミス #確反取れず #投げ抜け失敗 #パリィタイミング
-戦術: #立ち回り改善 #距離管理 #攻め継続 #守備重視 #読み合い勝利
-キャラ対策: #ジュリ対策 #ルーク対策 #ケン対策 #春麗対策 #ザンギエフ対策
-システム: #ドライブ管理 #バーンアウト回避 #ODアーツ有効活用 #ゲージ温存
-
-以下の形式でタグのみを出力してください（説明不要）：
-#タグ1 #タグ2 #タグ3 #タグ4 #タグ5`;
-
-                    const fallbackRequest = {
-                        contents: [{
-                            parts: [{ text: fallbackPrompt }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.3,
-                            maxOutputTokens: 300,
-                            topP: 0.8,
-                            topK: 20
-                        }
-                    };
-
-                    const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
-                    const response = await this.makeAPIRequest(url, fallbackRequest);
-                    const data = await response.json();
-
-                    if (!data.candidates || data.candidates.length === 0) {
-                        console.error('❌ フォールバック: No candidates in response:', data);
-                        throw new Error('フォールバック時のタグ生成応答が得られませんでした');
-                    }
-
-                    const fallbackCandidate = data.candidates[0];
-                    if (!fallbackCandidate || !fallbackCandidate.content ||
-                        !fallbackCandidate.content.parts || !fallbackCandidate.content.parts[0]) {
-                        console.error('❌ フォールバック: Invalid candidate structure:', fallbackCandidate);
-                        throw new Error('フォールバックAPI応答の構造が無効です');
-                    }
-
-                    const aiResponse = fallbackCandidate.content.parts[0].text;
-                    if (!aiResponse) {
-                        console.error('❌ フォールバック: No text in response:', fallbackCandidate.content.parts[0]);
-                        throw new Error('フォールバックAIからのテキスト応答がありません');
-                    }
-                    const tags = this.extractTags(aiResponse);
-
-                    console.log('✅ フォールバックでタグ生成成功:', tags);
-                    return {
-                        tags: tags,
-                        originalResponse: aiResponse,
-                        refinedContent: refinedContent,
-                        fallbackMode: true,
-                        usage: data.usageMetadata || {}
-                    };
-
-                } catch (fallbackError) {
-                    console.error('フォールバック失敗:', fallbackError);
-                    throw fallbackError;
-                }
-            }
-
-            throw error;
+            // ユーザーの指示に基づき、フォールバックせずにエラーをスローする
+            throw new Error('タグの生成に失敗しました。時間をおいて再試行してください。');
         }
     }
 
@@ -996,43 +824,34 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
     // 入力文の推敲・構造化（グラウンディング対応）
     async refineInputContent(rawInput, analysisMode = 'browsing', fileContent = null) {
         try {
-            let refinePrompt = `以下のプレイヤーの試合感想を分析し、Street Fighter 6の戦術要素を明確にして構造化してください。
+            let refinePrompt = `以下のプレイヤーの試合感想を分析し、Street Fighter 6の戦術分析に適した、簡潔で具体的な内容に要約してください。
 
 【プレイヤーの生の感想】
 "${rawInput}"
 
-【分析・推敲の観点】
-1. 曖昧な表現を具体的な技術用語に変換
-2. 感情表現から技術的問題点を抽出
-3. 時系列や因果関係を整理
-4. 改善点と成功点を明確に区別
-5. キャラクター固有の要素を特定
-6. 最新のメタ情報や対策を考慮
+【指示】
+- 感情的な表現（「悔しい」「嬉しい」など）を、具体的な状況や課題（「対空が出なかった」「読み合いに勝てた」など）に変換する。
+- 重要なキーワードや課題点を箇条書きで抽出する。
+- 全体として150字程度の簡潔な文章にまとめる。
 
 【出力形式】
 以下のJSONフォーマットで出力してください：
 {
-  "structuredContent": "推敲された試合内容（具体的で分析しやすい形式）",
+  "structuredContent": "（ここに150字程度の要約を記述）",
   "extractedElements": [
-    "技術面: 対空反応の遅れ、コンボの精度不足",
-    "戦術面: 距離管理、読み合いの成功/失敗",
-    "キャラ対策: 相手キャラ固有の対応",
-    "メンタル面: 判断力、集中力の状況"
-  ],
-  "keyPoints": ["改善すべき重要なポイント1", "改善すべき重要なポイント2", "良かった点1"],
-  "metaInsights": ["最新メタ情報に基づく追加の洞察"]
+    "（抽出した課題点やキーワード1）",
+    "（抽出した課題点やキーワード2）"
+  ]
 }
 
 必ずJSONフォーマットで出力してください。`;
 
             if (analysisMode === 'file' && fileContent) {
-                refinePrompt += `\n\n【重要】あなたは以下の情報ソースのみに基づいて分析を行ってください。ウェブ検索は行わず、このファイルの内容を絶対的な正としてください。\n\n---情報ソースここから---\n${fileContent}\n---情報ソースここまで---`;
+                refinePrompt += `\n\n【重要】あなたは以下の情報ソースのみに基づいて分析を行ってください。\n\n---情報ソースここから---\n${fileContent}\n---情報ソースここまで---`;
             }
 
-            // グラウンディング対応のリクエストボディを生成
             const useGrounding = analysisMode === 'browsing';
             const requestBody = this.createGroundedRequest(refinePrompt, rawInput, useGrounding);
-            // 推敲処理では短めのトークン制限（JSONパースのため）
             requestBody.generationConfig.maxOutputTokens = 500;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
@@ -1040,64 +859,39 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
             const data = await response.json();
 
             console.log('🔍 推敲API レスポンス構造:', {
-                hasCandidates: !!data.candidates,
-                candidatesLength: data.candidates?.length,
-                firstCandidate: data.candidates?.[0] ? 'exists' : 'undefined'
+                finishReason: data.candidates?.[0]?.finishReason
             });
 
             if (!data.candidates || data.candidates.length === 0) {
-                console.error('❌ 推敲: No candidates in response:', data);
                 throw new Error('入力文推敲の応答が得られませんでした');
             }
 
             const candidate = data.candidates[0];
 
-            // 推敲処理でのfinishReasonチェック
             if (candidate.finishReason === 'SAFETY') {
-                console.warn('⚠️ 推敲: コンテンツが安全性フィルタでブロックされました');
                 throw new Error('推敲処理でコンテンツが安全性フィルタによってブロックされました。');
             }
 
             if (candidate.finishReason === 'MAX_TOKENS') {
-                console.warn('⚠️ 推敲: 応答がトークン制限で切り詰められました。部分的な内容で処理を継続します。');
+                console.warn('⚠️ 推敲: 応答がトークン制限で切り詰められました。');
             }
 
-            // 推敲処理での応答テキスト抽出（柔軟な構造に対応）
-            let aiResponse = '';
-
-            if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
-                aiResponse = candidate.content.parts[0].text;
-            } else if (candidate.content && candidate.content.parts) {
-                // 代替の応答テキスト抽出を試行
-                for (const part of candidate.content.parts) {
-                    if (part.text) {
-                        aiResponse = part.text;
-                        break;
-                    }
-                }
-            }
+            let aiResponse = candidate.content?.parts?.[0]?.text || '';
 
             if (!aiResponse) {
-                console.error('❌ 推敲: No text in response:', {
-                    hasContent: !!candidate?.content,
-                    hasParts: !!candidate?.content?.parts,
-                    finishReason: candidate?.finishReason
-                });
                 throw new Error('推敲AIからのテキスト応答がありません');
             }
 
-            // JSONレスポンスをパース（フォールバック付き）
             try {
                 const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
-                    const parsedResponse = JSON.parse(jsonMatch[0]);
-                    return parsedResponse;
+                    return JSON.parse(jsonMatch[0]);
                 }
+                console.warn('推敲応答がJSON形式でないため、フォールバックします。');
             } catch (parseError) {
                 console.warn('JSON解析失敗、フォールバック実行:', parseError);
             }
 
-            // フォールバック：シンプルな構造化
             return this.createFallbackRefinement(rawInput, aiResponse);
 
         } catch (error) {
