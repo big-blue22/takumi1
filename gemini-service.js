@@ -657,23 +657,23 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             console.log('🏷️ Step 3: コンテキストからタグ生成中...');
             processingSteps.push('タグ生成');
 
-            let tagPrompt = `以下の分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3～5個、日本語で生成してください。
+            // コンテキストを短縮してトークンエラーを回避
+            const truncatedContext = context.length > 200 ? context.substring(0, 200) : context;
 
-【分析内容】
-"${context}"
+            let tagPrompt = `SF6の戦術分析用タグを3～5個生成。必ず#で始めてください。
 
-【タグ生成のヒント】
-- #対空反応 #コンボミス #投げ抜け失敗 のような具体的な課題
-- #立ち回り改善 #起き攻め対策 のような戦術的な課題
-- #ジュリ対策 #対空キャラ のようなキャラクターに関する課題
-- #ドライブ管理 #バーンアウト のようなシステムに関する課題
+分析内容: "${truncatedContext}"
 
-【出力形式】
-#タグ1 #タグ2 #タグ3`;
+例: #対空反応 #コンボミス #立ち回り改善 #ドライブ管理
+
+タグのみ出力:`;
 
             const useGrounding = analysisMode === 'browsing';
-            const requestBody = this.createGroundedRequest(tagPrompt, context, useGrounding);
-            requestBody.generationConfig.maxOutputTokens = 200;
+            const requestBody = this.createGroundedRequest(tagPrompt, truncatedContext, useGrounding);
+            requestBody.generationConfig.maxOutputTokens = 100; // タグ生成は短いので100で十分
+            requestBody.generationConfig.temperature = 0.5; // 予測可能な出力
+            requestBody.generationConfig.topK = 20;
+            requestBody.generationConfig.topP = 0.9;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
             const response = await this.makeAPIRequest(url, requestBody);
@@ -686,12 +686,42 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             const candidate = data.candidates[0];
             const aiResponse = candidate.content?.parts?.[0]?.text || '';
 
-            if (!aiResponse || candidate.finishReason === 'SAFETY' || candidate.finishReason === 'RECITATION') {
-                 throw new Error('AIからの応答が無効か、コンテンツがブロックされました。');
+            // デバッグログを追加
+            console.log('🔍 Step 3 レスポンス詳細:', {
+                finishReason: candidate.finishReason,
+                hasResponse: !!aiResponse,
+                responseLength: aiResponse.length,
+                responsePreview: aiResponse.substring(0, 200)
+            });
+
+            // SAFETYエラーの場合
+            if (candidate.finishReason === 'SAFETY') {
+                console.error('❌ Step 3: 安全性フィルタによりブロックされました。');
+                throw new Error('AIの安全性フィルタにより、この内容は処理できませんでした。入力内容を確認してください。');
+            }
+
+            if (candidate.finishReason === 'RECITATION') {
+                console.warn('⚠️ Step 3: RECITATION検出。部分応答を使用します。');
+            }
+
+            if (candidate.finishReason === 'MAX_TOKENS') {
+                console.warn('⚠️ Step 3: トークン制限。部分応答を使用します。');
+            }
+
+            // 応答がない場合はエラー
+            if (!aiResponse) {
+                console.error('❌ Step 3: AIからテキスト応答がありません。');
+                throw new Error('AIから応答が得られませんでした。時間をおいて再試行してください。');
             }
 
             const tags = this.extractTags(aiResponse);
             console.log('✅ Step 3完了 - 生成されたタグ:', tags);
+            
+            // タグが生成できなかった場合はエラー
+            if (!tags || tags.length === 0) {
+                console.error('❌ タグ抽出失敗。AI応答:', aiResponse);
+                throw new Error('タグを抽出できませんでした。AIの応答: ' + aiResponse.substring(0, 100));
+            }
 
             return {
                 tags: tags,
@@ -703,8 +733,8 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             };
 
         } catch (error) {
-            console.error('気づきタグ生成エラー:', error);
-            throw new Error('タグの生成に失敗しました。入力内容やファイルを確認して、時間をおいて再試行してください。');
+            console.error('❌ 気づきタグ生成エラー:', error);
+            throw new Error('タグの生成に失敗しました: ' + error.message);
         }
     }
 
@@ -715,28 +745,27 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         }
 
         console.log('🔎 Step 2: ファイルから関連コンテキストを検索中...');
-        const MAX_FILE_CHUNK_SIZE = 8000; // APIに渡すファイル内容の最大文字数
+        const MAX_FILE_CHUNK_SIZE = 6000; // APIに渡すファイル内容を削減してトークンエラーを回避
         const truncatedFileContent = fileContent.length > MAX_FILE_CHUNK_SIZE
-            ? fileContent.substring(0, MAX_FILE_CHUNK_SIZE)
+            ? fileContent.substring(0, MAX_FILE_CHUNK_SIZE) + '\n...(以下省略)'
             : fileContent;
 
-        const searchPrompt = `以下の「検索クエリ」に最も関連する部分を、「ドキュメント」から最大300文字で抽出してください。関連部分がない場合は「関連情報なし」とだけ出力してください。
+        const searchPrompt = `クエリに関連する情報を文書から200文字以内で抽出。なければ「関連情報なし」とだけ返答。
 
-【検索クエリ】
-"${query}"
+クエリ: "${query}"
 
-【ドキュメント】
----
+文書:
 ${truncatedFileContent}
----
 
-【抽出結果】`;
+抽出結果:`;
 
         const requestBody = {
             contents: [{ parts: [{ text: searchPrompt }] }],
             generationConfig: {
                 temperature: 0.1,
-                maxOutputTokens: 300, // 抽出するテキストは短く
+                maxOutputTokens: 250, // さらに削減
+                topK: 1,
+                topP: 0.8,
             }
         };
 
@@ -859,31 +888,27 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
     // 入力文の推敲・構造化
     async refineInputContent(rawInput) {
         try {
-            let refinePrompt = `以下のプレイヤーの試合感想を分析し、Street Fighter 6の戦術分析に適した、簡潔で具体的な内容に要約してください。
+            // 入力を制限して、トークン制限エラーを回避
+            const truncatedInput = rawInput.length > 300 ? rawInput.substring(0, 300) + '...' : rawInput;
+            
+            let refinePrompt = `試合感想を分析用に要約してください。
 
-【プレイヤーの生の感想】
-"${rawInput}"
+入力: "${truncatedInput}"
 
-【指示】
-- 感情的な表現（「悔しい」「嬉しい」など）を、具体的な状況や課題（「対空が出なかった」「読み合いに勝てた」など）に変換する。
-- 重要なキーワードや課題点を箇条書きで抽出する。
-- 全体として150字程度の簡潔な文章にまとめる。
+指示:
+- 感情表現を具体的な状況に変換
+- キーワードを抽出
+- 150字以内で要約
 
-【出力形式】
-以下のJSONフォーマットで出力してください：
-{
-  "structuredContent": "（ここに150字程度の要約を記述）",
-  "extractedElements": [
-    "（抽出した課題点やキーワード1）",
-    "（抽出した課題点やキーワード2）"
-  ]
-}
-
-必ずJSONフォーマットで出力してください。`;
+出力形式(JSON):
+{"structuredContent":"要約文","extractedElements":["キーワード1","キーワード2"]}`;
 
             // ブラウジングモードは推敲では使用しないため、useGroundingは常にfalse
-            const requestBody = this.createGroundedRequest(refinePrompt, rawInput, false);
-            requestBody.generationConfig.maxOutputTokens = 500;
+            const requestBody = this.createGroundedRequest(refinePrompt, truncatedInput, false);
+            // トークン制限を300に削減してMAX_TOKENSエラーを回避
+            requestBody.generationConfig.maxOutputTokens = 300;
+            // 温度を下げて、より予測可能な出力にする
+            requestBody.generationConfig.temperature = 0.3;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
             const response = await this.makeAPIRequest(url, requestBody);
@@ -895,27 +920,39 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 
             const candidate = data.candidates[0];
 
+            // デバッグログを追加
+            console.log('🔍 推敲レスポンス詳細:', {
+                finishReason: candidate.finishReason,
+                hasContent: !!candidate.content?.parts?.[0]?.text,
+                contentLength: candidate.content?.parts?.[0]?.text?.length || 0
+            });
+
             if (candidate.finishReason === 'SAFETY') {
-                throw new Error('推敲処理でコンテンツが安全性フィルタによってブロックされました。');
+                console.warn('⚠️ 推敲: 安全性フィルタによってブロックされました。フォールバック実行。');
+                return this.createFallbackRefinement(rawInput);
             }
+            
             if (candidate.finishReason === 'MAX_TOKENS') {
-                console.warn('⚠️ 推敲: 応答がトークン制限で切り詰められました。');
+                console.warn('⚠️ 推敲: 応答がトークン制限で切り詰められました。部分応答を使用します。');
             }
 
             let aiResponse = candidate.content?.parts?.[0]?.text || '';
 
             if (!aiResponse) {
-                throw new Error('推敲AIからのテキスト応答がありません');
+                console.warn('⚠️ 推敲: AIからのテキスト応答がありません。フォールバック実行。');
+                return this.createFallbackRefinement(rawInput);
             }
 
             try {
                 const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
-                    return JSON.parse(jsonMatch[0]);
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    console.log('✅ 推敲: JSON解析成功');
+                    return parsed;
                 }
-                console.warn('推敲応答がJSON形式でないため、フォールバックします。');
+                console.warn('⚠️ 推敲: 応答がJSON形式でないため、フォールバックします。');
             } catch (parseError) {
-                console.warn('JSON解析失敗、フォールバック実行:', parseError);
+                console.warn('⚠️ 推敲: JSON解析失敗、フォールバック実行:', parseError);
             }
 
             return this.createFallbackRefinement(rawInput, aiResponse);
@@ -985,9 +1022,13 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 
     // テキストからハッシュタグを抽出（改良版）
     extractTags(text) {
+        console.log('🔍 タグ抽出開始:', { inputText: text.substring(0, 200), textLength: text.length });
+        
         // ハッシュタグの正規表現を拡張（英数字、ひらがな、カタカナ、漢字、アンダースコア、ハイフンに対応）
         const tagRegex = /#[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\w\-_]+/g;
         const matches = text.match(tagRegex);
+
+        console.log('🔍 正規表現マッチ結果:', matches);
 
         if (matches) {
             // タグをクリーンアップし、重複削除
@@ -997,78 +1038,16 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
                 .filter(tag => !tag.includes('例')) // 「例」を含むタグを除外
                 .slice(0, 5); // 最大5個
 
+            console.log('🔍 クリーンアップ後のタグ:', cleanTags);
+
             if (cleanTags.length > 0) {
                 return [...new Set(cleanTags)];
             }
         }
 
-        // フォールバック：AIが返したテキストから要素を推測してタグを生成
-        const fallbackTags = this.generateFallbackTags(text);
-        return fallbackTags;
-    }
-
-    // フォールバック用のタグ生成
-    generateFallbackTags(text) {
-        const defaultTags = [];
-
-        // キーワードベースでのタグ生成（拡充版）
-        const keywordMap = {
-            // 基本技術
-            '対空': '#対空反応遅れ',
-            'コンボ': '#コンボドロップ',
-            '投げ': '#投げ抜け失敗',
-            'パリィ': '#パリィタイミング',
-            '確反': '#確反取れず',
-            '起き攻め': '#起き攻め対応',
-            '中段': '#中段見切り',
-            '下段': '#下段ガード',
-
-            // 戦術面
-            '立ち回り': '#立ち回り改善',
-            '距離': '#距離管理',
-            '読み': '#読み合い成功',
-            'プレッシャー': '#プレッシャー継続',
-            '攻め': '#攻め継続',
-            '守り': '#守備重視',
-            'リズム': '#リズム変化',
-
-            // キャラクター対策
-            'ジュリ': '#ジュリ対策',
-            'ルーク': '#ルーク対策',
-            'ケン': '#ケン対策',
-            '春麗': '#春麗対策',
-            'チュンリー': '#春麗対策',
-            'ザンギエフ': '#ザンギエフ対策',
-            'ガイル': '#対飛び道具キャラ',
-            '飛び道具': '#対飛び道具',
-            'グラップラー': '#対グラップラー',
-
-            // システム要素
-            'ドライブ': '#ドライブ管理',
-            'バーンアウト': '#バーンアウト回避',
-            'OD': '#ODアーツ有効活用',
-            'ゲージ': '#ゲージ管理',
-            'クリティカル': '#クリティカルアーツ',
-
-            // メンタル・状況
-            '焦り': '#メンタル管理',
-            '冷静': '#冷静判断',
-            '判断': '#判断力向上',
-            '集中': '#集中力維持'
-        };
-
-        for (const [keyword, tag] of Object.entries(keywordMap)) {
-            if (text.includes(keyword) && defaultTags.length < 3) {
-                defaultTags.push(tag);
-            }
-        }
-
-        // デフォルトタグを追加
-        if (defaultTags.length === 0) {
-            defaultTags.push('#試合振り返り', '#気づき');
-        }
-
-        return defaultTags.slice(0, 5);
+        // ハッシュタグが見つからない場合は空配列を返す
+        console.warn('⚠️ ハッシュタグが見つかりませんでした');
+        return [];
     }
 
     // チャット履歴クリア

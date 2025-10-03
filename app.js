@@ -1363,16 +1363,23 @@ class App {
                 }
 
                 const fileContents = [];
+                let totalSize = 0;
                 selectedCheckboxes.forEach(checkbox => {
                     const filename = checkbox.value;
                     const content = localStorage.getItem(`datasource-${filename}`);
                     if (content) {
                         fileContents.push(`--- Content from ${filename} ---\n${content}`);
+                        totalSize += content.length;
                     }
                 });
 
                 if (fileContents.length === 0) {
                     throw new Error('選択されたファイルの読み込みに失敗しました。');
+                }
+
+                // ファイルサイズ警告（6000文字制限をユーザーに通知）
+                if (totalSize > 6000) {
+                    this.showToast(`⚠️ 選択されたファイルは${totalSize}文字です。AIの分析には最初の6,000文字のみが使用されます。`, 'warning');
                 }
 
                 fileContent = fileContents.join('\n\n');
@@ -4103,6 +4110,13 @@ class App {
 
         if (!file) {
             this.showToast('ファイルを選択してください', 'warning');
+            return;
+        }
+
+        // ファイルサイズチェック（6000文字 ≈ 12KB程度）
+        const maxFileSize = 50 * 1024; // 50KB（約25,000文字）
+        if (file.size > maxFileSize) {
+            this.showToast(`ファイルサイズが大きすぎます。最大50KB（約25,000文字）までです。現在: ${Math.round(file.size / 1024)}KB`, 'warning');
             return;
         }
 
