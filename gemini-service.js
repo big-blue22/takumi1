@@ -622,138 +622,6 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 
 
 
-    // 気づきタグ生成 (3ステップ版)
-    async generateInsightTags(feelings, analysisMode = 'browsing', fileContent = null) {
-        if (!this.isConfigured()) {
-            throw new Error('Gemini APIキーが設定されていません');
-        }
-
-        try {
-            // Step 1: 入力文の推敲
-            console.log('📝 Step 1: 入力文を推敲・構造化中...');
-            const refinedResult = await this.refineInputContent(feelings);
-            const refinedQuery = refinedResult.structuredContent;
-            console.log('✅ Step 1完了 - 推敲されたクエリ:', refinedQuery);
-
-            let context = '';
-            let processingSteps = ['推敲'];
-
-            // Step 2: モードに応じてコンテキストを取得
-            if (analysisMode === 'file' && fileContent) {
-                context = await this.findRelevantContextInFile(refinedQuery, fileContent);
-                processingSteps.push('コンテキスト検索');
-            } else {
-                // ブラウジングモードまたはファイルがない場合は、推敲されたクエリをそのままコンテキストとして扱う
-                context = refinedQuery;
-            }
-
-            // コンテキストがない場合は、元の入力でフォールバック
-            if (!context) {
-                console.warn('⚠️ 関連コンテキストが見つからなかったため、元の入力を使用します。');
-                context = feelings;
-            }
-
-            // Step 3: コンテキストからタグ生成
-            console.log('🏷️ Step 3: コンテキストからタグ生成中...');
-            processingSteps.push('タグ生成');
-
-            let tagPrompt = `以下の分析内容から、Street Fighter 6の戦術分析に使える気づきタグを3～5個、日本語で生成してください。
-
-【分析内容】
-"${context}"
-
-【タグ生成のヒント】
-- #対空反応 #コンボミス #投げ抜け失敗 のような具体的な課題
-- #立ち回り改善 #起き攻め対策 のような戦術的な課題
-- #ジュリ対策 #対空キャラ のようなキャラクターに関する課題
-- #ドライブ管理 #バーンアウト のようなシステムに関する課題
-
-【出力形式】
-#タグ1 #タグ2 #タグ3`;
-
-            const useGrounding = analysisMode === 'browsing';
-            const requestBody = this.createGroundedRequest(tagPrompt, context, useGrounding);
-            requestBody.generationConfig.maxOutputTokens = 200;
-
-            const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
-            const response = await this.makeAPIRequest(url, requestBody);
-            const data = await response.json();
-
-            if (!data.candidates || data.candidates.length === 0) {
-                throw new Error('タグ生成の応答が得られませんでした');
-            }
-
-            const candidate = data.candidates[0];
-            const aiResponse = candidate.content?.parts?.[0]?.text || '';
-
-            if (!aiResponse || candidate.finishReason === 'SAFETY' || candidate.finishReason === 'RECITATION') {
-                 throw new Error('AIからの応答が無効か、コンテンツがブロックされました。');
-            }
-
-            const tags = this.extractTags(aiResponse);
-            console.log('✅ Step 3完了 - 生成されたタグ:', tags);
-
-            return {
-                tags: tags,
-                originalResponse: aiResponse,
-                refinedContent: refinedResult,
-                groundingSources: candidate.groundingMetadata ? this.processGroundingMetadata(candidate.groundingMetadata) : null,
-                usage: data.usageMetadata || {},
-                processingSteps: processingSteps,
-            };
-
-        } catch (error) {
-            console.error('気づきタグ生成エラー:', error);
-            throw new Error('タグの生成に失敗しました。入力内容やファイルを確認して、時間をおいて再試行してください。');
-        }
-    }
-
-    // Step 2: ファイルから関連コンテキストを検索
-    async findRelevantContextInFile(query, fileContent) {
-        if (!fileContent) {
-            return ''; // ファイル内容がなければ空文字を返す
-        }
-
-        console.log('🔎 Step 2: ファイルから関連コンテキストを検索中...');
-        const MAX_FILE_CHUNK_SIZE = 8000; // APIに渡すファイル内容の最大文字数
-        const truncatedFileContent = fileContent.length > MAX_FILE_CHUNK_SIZE
-            ? fileContent.substring(0, MAX_FILE_CHUNK_SIZE)
-            : fileContent;
-
-        const searchPrompt = `以下の「検索クエリ」に最も関連する部分を、「ドキュメント」から最大300文字で抽出してください。関連部分がない場合は「関連情報なし」とだけ出力してください。
-
-【検索クエリ】
-"${query}"
-
-【ドキュメント】
----
-${truncatedFileContent}
----
-
-【抽出結果】`;
-
-        const requestBody = {
-            contents: [{ parts: [{ text: searchPrompt }] }],
-            generationConfig: {
-                temperature: 0.1,
-                maxOutputTokens: 300, // 抽出するテキストは短く
-            }
-        };
-
-        const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
-        const response = await this.makeAPIRequest(url, requestBody);
-        const data = await response.json();
-
-        const relevantText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-        if (relevantText.trim() === '関連情報なし') {
-            console.log('✅ Step 2完了 - 関連情報なし');
-            return '';
-        }
-
-        console.log('✅ Step 2完了 - 抽出されたコンテキスト:', relevantText);
-        return relevantText;
-    }
 
     // グラウンディング対応の検索クエリ生成
     generateSearchQueries(rawInput) {
@@ -856,73 +724,99 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
         };
     }
 
-    // 入力文の推敲・構造化
-    async refineInputContent(rawInput) {
-        try {
-            let refinePrompt = `以下のプレイヤーの試合感想を分析し、Street Fighter 6の戦術分析に適した、簡潔で具体的な内容に要約してください。
 
-【プレイヤーの生の感想】
-"${rawInput}"
+    // 新しい独立した気づきタグ生成機能
+    async generateInsightTags(feelings, analysisMode = 'browsing', fileContent = null) {
+        if (!this.isConfigured()) {
+            throw new Error('Gemini APIキーが設定されていません');
+        }
+
+        console.log('🤖 新しい気づきタグ生成プロセスを開始:', { analysisMode });
+
+        try {
+            // コンテキストを構築
+            let context = `プレイヤーの感想: "${feelings}"`;
+            const MAX_CONTEXT_LENGTH = 8000; // コンテキストの最大文字数
+
+            if (analysisMode === 'file' && fileContent) {
+                if (fileContent.length > MAX_CONTEXT_LENGTH) {
+                    console.warn(`ファイル内容が長いため、${MAX_CONTEXT_LENGTH}文字に切り詰めます。`);
+                    fileContent = fileContent.substring(0, MAX_CONTEXT_LENGTH);
+                }
+                context += `\n\n関連ドキュメント:\n---\n${fileContent}\n---`;
+            }
+
+            // 単一のプロンプトで分析とタグ生成を指示
+            const prompt = `あなたはStreet Fighter 6の専門コーチです。以下の情報を分析し、JSON形式で結果を出力してください。
+
+【情報】
+${context}
 
 【指示】
-- 感情的な表現（「悔しい」「嬉しい」など）を、具体的な状況や課題（「対空が出なかった」「読み合いに勝てた」など）に変換する。
-- 重要なキーワードや課題点を箇条書きで抽出する。
-- 全体として150字程度の簡潔な文章にまとめる。
+1.  提供された情報を基に、プレイヤーの状況を分析し、改善点や良かった点を「analysis」として150字程度で要約してください。
+2.  その分析に基づき、最も重要だと思われる気づきを、日本語のハッシュタグ形式で3～5個、「tags」としてリストアップしてください。（例: #コンボ精度, #対空の意識, #ドライブラッシュ多用）
+3.  必ず以下のJSONフォーマットで出力してください。説明は不要です。
 
-【出力形式】
-以下のJSONフォーマットで出力してください：
 {
-  "structuredContent": "（ここに150字程度の要約を記述）",
-  "extractedElements": [
-    "（抽出した課題点やキーワード1）",
-    "（抽出した課題点やキーワード2）"
-  ]
+  "analysis": "（ここに分析要約）",
+  "tags": ["#タグ1", "#タグ2", "#タグ3"]
 }
+`;
 
-必ずJSONフォーマットで出力してください。`;
-
-            // ブラウジングモードは推敲では使用しないため、useGroundingは常にfalse
-            const requestBody = this.createGroundedRequest(refinePrompt, rawInput, false);
-            requestBody.generationConfig.maxOutputTokens = 500;
+            const useGrounding = analysisMode === 'browsing';
+            const requestBody = this.createGroundedRequest(prompt, feelings, useGrounding);
+            // 応答でJSONオブジェクト全体を確実に受け取るため、十分なトークン数を確保
+            requestBody.generationConfig.maxOutputTokens = 1024;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
             const response = await this.makeAPIRequest(url, requestBody);
             const data = await response.json();
 
             if (!data.candidates || data.candidates.length === 0) {
-                throw new Error('入力文推敲の応答が得られませんでした');
+                throw new Error('AIからの応答がありません。');
             }
 
             const candidate = data.candidates[0];
+            let aiResponseText = candidate.content?.parts?.[0]?.text || '';
 
-            if (candidate.finishReason === 'SAFETY') {
-                throw new Error('推敲処理でコンテンツが安全性フィルタによってブロックされました。');
-            }
-            if (candidate.finishReason === 'MAX_TOKENS') {
-                console.warn('⚠️ 推敲: 応答がトークン制限で切り詰められました。');
+            if (!aiResponseText || candidate.finishReason === 'SAFETY' || candidate.finishReason === 'RECITATION') {
+                throw new Error('AIからの応答が無効か、コンテンツがブロックされました。');
             }
 
-            let aiResponse = candidate.content?.parts?.[0]?.text || '';
-
-            if (!aiResponse) {
-                throw new Error('推敲AIからのテキスト応答がありません');
-            }
-
+            // JSONを抽出してパース
             try {
-                const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    return JSON.parse(jsonMatch[0]);
+                const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error('AIの応答に有効なJSONが含まれていません。');
                 }
-                console.warn('推敲応答がJSON形式でないため、フォールバックします。');
-            } catch (parseError) {
-                console.warn('JSON解析失敗、フォールバック実行:', parseError);
-            }
 
-            return this.createFallbackRefinement(rawInput, aiResponse);
+                const parsedResponse = JSON.parse(jsonMatch[0]);
+
+                if (!parsedResponse.tags || !Array.isArray(parsedResponse.tags)) {
+                    throw new Error('AIの応答のJSON形式が正しくありません（tagsフィールドがありません）。');
+                }
+
+                console.log('✅ タグ生成成功:', parsedResponse);
+
+                // app.jsが期待するフォーマットで返す
+                return {
+                    tags: parsedResponse.tags,
+                    originalResponse: aiResponseText,
+                    refinedContent: { structuredContent: parsedResponse.analysis || '分析結果なし' },
+                    groundingSources: candidate.groundingMetadata ? this.processGroundingMetadata(candidate.groundingMetadata) : null,
+                    usage: data.usageMetadata || {},
+                    processingSteps: ['分析・タグ生成']
+                };
+
+            } catch (e) {
+                console.error('AI応答のJSON解析に失敗:', e, '応答テキスト:', aiResponseText);
+                throw new Error('AIからの応答形式が正しくありません。');
+            }
 
         } catch (error) {
-            console.warn('入力文推敲でエラー、フォールバック実行:', error);
-            return this.createFallbackRefinement(rawInput);
+            console.error('気づきタグ生成エラー:', error);
+            // ユーザーフレンドリーなエラーをスロー
+            throw new Error('タグの生成に失敗しました。入力内容やファイルを確認し、時間をおいて再試行してください。');
         }
     }
 
