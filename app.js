@@ -1289,9 +1289,13 @@ class App {
             });
         }
 
-        // タグ生成ボタン
+        // タグ生成ボタン（重複防止のため、既存のリスナーを削除）
         if (generateTagsBtn) {
-            generateTagsBtn.addEventListener('click', () => {
+            // 既存のイベントリスナーを削除するため、クローンで置き換え
+            const newGenerateTagsBtn = generateTagsBtn.cloneNode(true);
+            generateTagsBtn.parentNode.replaceChild(newGenerateTagsBtn, generateTagsBtn);
+            
+            newGenerateTagsBtn.addEventListener('click', () => {
                 console.log('タグ生成ボタンがクリックされました');
                 this.generateInsightTags();
             });
@@ -1302,7 +1306,11 @@ class App {
         // タグ再生成ボタン
         const regenerateTagsBtn = document.getElementById('regenerate-tags-btn');
         if (regenerateTagsBtn) {
-            regenerateTagsBtn.addEventListener('click', () => {
+            // 既存のイベントリスナーを削除
+            const newRegenerateTagsBtn = regenerateTagsBtn.cloneNode(true);
+            regenerateTagsBtn.parentNode.replaceChild(newRegenerateTagsBtn, regenerateTagsBtn);
+            
+            newRegenerateTagsBtn.addEventListener('click', () => {
                 this.generateInsightTags();
             });
         }
@@ -1334,6 +1342,12 @@ class App {
 
     // 気づきタグ生成
     async generateInsightTags() {
+        // 多重実行を防止
+        if (this._isGeneratingTags) {
+            console.warn('⚠️ タグ生成は既に実行中です');
+            return;
+        }
+        
         const feelingsInput = document.getElementById('match-feelings');
         const generateBtn = document.getElementById('generate-tags-btn');
         const analysisSource = document.querySelector('input[name="analysis-source"]:checked').value;
@@ -1351,6 +1365,7 @@ class App {
         let analysisMode = 'browsing';
 
         try {
+            this._isGeneratingTags = true; // フラグを立てる
             generateBtn.disabled = true;
             generateBtn.textContent = '🤖 分析中...';
 
@@ -1406,7 +1421,10 @@ class App {
             this.displayGeneratedTags(result.tags);
 
             // コンテナを表示
-            generatedTagsContainer.style.display = 'block';
+            const generatedTagsContainer = document.getElementById('generated-tags-container');
+            if (generatedTagsContainer) {
+                generatedTagsContainer.style.display = 'block';
+            }
 
             // フォールバックモードかグラウンディング成功かに応じてメッセージを表示
             if (result.fallbackMode) {
@@ -1421,6 +1439,7 @@ class App {
             console.error('タグ生成エラー:', error);
             this.showToast('❌ タグ生成に失敗しました: ' + error.message, 'error');
         } finally {
+            this._isGeneratingTags = false; // フラグを解除
             generateBtn.disabled = false;
             generateBtn.textContent = '🤖 AIでタグ生成';
         }
