@@ -1289,16 +1289,13 @@ class App {
             });
         }
 
-        // タグ生成ボタン（重複防止のため、既存のリスナーを削除）
+        // タグ生成ボタン（重複防止のため、onclickで設定）
         if (generateTagsBtn) {
-            // 既存のイベントリスナーを削除するため、クローンで置き換え
-            const newGenerateTagsBtn = generateTagsBtn.cloneNode(true);
-            generateTagsBtn.parentNode.replaceChild(newGenerateTagsBtn, generateTagsBtn);
-            
-            newGenerateTagsBtn.addEventListener('click', () => {
+            // onclickは常に1つだけなので重複しない
+            generateTagsBtn.onclick = () => {
                 console.log('タグ生成ボタンがクリックされました');
                 this.generateInsightTags();
-            });
+            };
         } else {
             console.warn('generate-tags-btn要素が見つかりません');
         }
@@ -1306,13 +1303,10 @@ class App {
         // タグ再生成ボタン
         const regenerateTagsBtn = document.getElementById('regenerate-tags-btn');
         if (regenerateTagsBtn) {
-            // 既存のイベントリスナーを削除
-            const newRegenerateTagsBtn = regenerateTagsBtn.cloneNode(true);
-            regenerateTagsBtn.parentNode.replaceChild(newRegenerateTagsBtn, regenerateTagsBtn);
-            
-            newRegenerateTagsBtn.addEventListener('click', () => {
+            regenerateTagsBtn.onclick = () => {
+                console.log('タグ再生成ボタンがクリックされました');
                 this.generateInsightTags();
-            });
+            };
         }
 
         // タグ採用ボタン
@@ -1349,8 +1343,9 @@ class App {
         }
         
         const feelingsInput = document.getElementById('match-feelings');
+        // クローンで置き換えた後も正しく取得できるように、毎回DOMから取得
         const generateBtn = document.getElementById('generate-tags-btn');
-        const analysisSource = document.querySelector('input[name="analysis-source"]:checked').value;
+        const analysisSource = document.querySelector('input[name="analysis-source"]:checked');
 
         if (!feelingsInput || !feelingsInput.value.trim()) {
             this.showToast('❌ 感想を入力してください', 'error');
@@ -1360,16 +1355,22 @@ class App {
             this.showToast('❌ AIサービスが初期化されていません', 'error');
             return;
         }
+        if (!analysisSource) {
+            this.showToast('❌ 情報ソースを選択してください', 'error');
+            return;
+        }
 
         let fileContent = null;
         let analysisMode = 'browsing';
 
         try {
             this._isGeneratingTags = true; // フラグを立てる
-            generateBtn.disabled = true;
-            generateBtn.textContent = '🤖 分析中...';
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.textContent = '🤖 分析中...';
+            }
 
-            if (analysisSource === 'file') {
+            if (analysisSource.value === 'file') {
                 analysisMode = 'file';
                 const selectedCheckboxes = document.querySelectorAll('input[name="source-file"]:checked');
 
@@ -1440,8 +1441,12 @@ class App {
             this.showToast('❌ タグ生成に失敗しました: ' + error.message, 'error');
         } finally {
             this._isGeneratingTags = false; // フラグを解除
-            generateBtn.disabled = false;
-            generateBtn.textContent = '🤖 AIでタグ生成';
+            // ボタンを再度取得して状態を更新
+            const finalBtn = document.getElementById('generate-tags-btn');
+            if (finalBtn) {
+                finalBtn.disabled = false;
+                finalBtn.textContent = '🤖 AIでタグ生成';
+            }
         }
     }
 
