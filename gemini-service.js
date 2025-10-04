@@ -670,10 +670,10 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
 
             const useGrounding = analysisMode === 'browsing';
             const requestBody = this.createGroundedRequest(tagPrompt, truncatedContext, useGrounding);
-            requestBody.generationConfig.maxOutputTokens = 100; // タグ生成は短いので100で十分
-            requestBody.generationConfig.temperature = 0.5; // 予測可能な出力
-            requestBody.generationConfig.topK = 20;
-            requestBody.generationConfig.topP = 0.9;
+            requestBody.generationConfig.maxOutputTokens = 8192; // APIの最大値
+            requestBody.generationConfig.temperature = 0.7;
+            requestBody.generationConfig.topK = 40;
+            requestBody.generationConfig.topP = 0.95;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
             const response = await this.makeAPIRequest(url, requestBody);
@@ -763,7 +763,7 @@ ${truncatedFileContent}
             contents: [{ parts: [{ text: searchPrompt }] }],
             generationConfig: {
                 temperature: 0.1,
-                maxOutputTokens: 250, // さらに削減
+                maxOutputTokens: 8192, // APIの最大値
                 topK: 1,
                 topP: 0.8,
             }
@@ -905,9 +905,7 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 
             // ブラウジングモードは推敲では使用しないため、useGroundingは常にfalse
             const requestBody = this.createGroundedRequest(refinePrompt, truncatedInput, false);
-            // トークン制限を300に削減してMAX_TOKENSエラーを回避
-            requestBody.generationConfig.maxOutputTokens = 300;
-            // 温度を下げて、より予測可能な出力にする
+            requestBody.generationConfig.maxOutputTokens = 8192; // APIの最大値
             requestBody.generationConfig.temperature = 0.3;
 
             const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
