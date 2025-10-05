@@ -756,6 +756,9 @@ class App {
             case 'goals':
                 this.loadGoals();
                 break;
+            case 'gallery':
+                this.loadGallery();
+                break;
             case 'data-source':
                 this.loadDataSourcePage();
                 break;
@@ -943,6 +946,9 @@ class App {
                 uploadBtn.disabled = fileInput.files.length === 0;
             });
         }
+
+        // Gallery Page Listeners
+        this.setupGalleryFilters();
     }
     
     // タブ切り替え
@@ -1947,6 +1953,11 @@ class App {
     
     loadGoals() {
         this.loadGoalsList();
+    }
+
+    loadGallery() {
+        this.loadGalleryMatches();
+        this.loadOpponentFilter();
     }
     
     loadSettings() {
@@ -5000,6 +5011,297 @@ class App {
     editPlan(planId) {
         // プラン編集機能（今後実装）
         this.showToast('プラン編集機能は今後実装予定です', 'info');
+    }
+
+    // ==========================================
+    // Gallery Functions
+    // ==========================================
+
+    loadGalleryMatches(filters = {}) {
+        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const galleryGrid = document.getElementById('gallery-grid');
+        
+        if (!galleryGrid) return;
+
+        // フィルターを適用
+        let filteredMatches = matches;
+
+        if (filters.opponent) {
+            filteredMatches = filteredMatches.filter(m => 
+                m.opponentCharacter === filters.opponent
+            );
+        }
+
+        if (filters.result) {
+            filteredMatches = filteredMatches.filter(m => 
+                m.result === filters.result
+            );
+        }
+
+        if (filters.tag) {
+            filteredMatches = filteredMatches.filter(m => {
+                const tags = m.insightTags || [];
+                return tags.some(tag => 
+                    tag.toLowerCase().includes(filters.tag.toLowerCase())
+                );
+            });
+        }
+
+        // 表示
+        if (filteredMatches.length === 0) {
+            galleryGrid.innerHTML = `
+                <div class="no-matches-gallery">
+                    <h3>試合データがありません</h3>
+                    <p>分析ページから試合を記録してみましょう</p>
+                </div>
+            `;
+            return;
+        }
+
+        galleryGrid.innerHTML = filteredMatches.map(match => this.createMatchCard(match)).join('');
+
+        // カードクリックイベントを設定
+        document.querySelectorAll('.match-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const matchId = parseInt(card.dataset.matchId);
+                this.showMatchDetail(matchId);
+            });
+        });
+    }
+
+    createMatchCard(match) {
+        const isWin = match.result === 'WIN';
+        const resultClass = isWin ? 'win' : 'loss';
+        const tags = match.insightTags || [];
+        const feelings = match.feelings || '';
+
+        // キャラクターアイコンを取得（簡易実装）
+        const getCharIcon = (charName) => {
+            const icons = {
+                'Luke': '👊', 'Ryu': '🥋', 'Ken': '🔥', 'Chun-Li': '💨',
+                'Cammy': '⚡', 'Zangief': '💪', 'JP': '🎭', 'Juri': '👁️'
+            };
+            return icons[charName] || '🥊';
+        };
+
+        return `
+            <div class="match-card ${resultClass}-card" data-match-id="${match.id}">
+                <div class="match-card-header">
+                    <span class="match-result-badge ${resultClass}">${isWin ? 'WIN' : 'LOSS'}</span>
+                    <span class="match-date">${match.date || '日付不明'}</span>
+                </div>
+
+                <div class="character-matchup">
+                    <div class="character-box">
+                        <div class="character-icon">${getCharIcon(match.playerCharacter)}</div>
+                        <div class="character-name">${match.playerCharacter || 'Unknown'}</div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="character-box">
+                        <div class="character-icon">${getCharIcon(match.opponentCharacter)}</div>
+                        <div class="character-name">${match.opponentCharacter || 'Unknown'}</div>
+                    </div>
+                </div>
+
+                <div class="match-info">
+                    <div class="info-row">
+                        <span class="info-label">ラウンド</span>
+                        <span class="info-value">${match.roundsWon || 0}-${match.roundsLost || 0}</span>
+                    </div>
+                    ${match.decision ? `
+                    <div class="info-row">
+                        <span class="info-label">決着方法</span>
+                        <span class="info-value">${this.getDecisionLabel(match.decision)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+
+                ${tags.length > 0 ? `
+                <div class="match-tags">
+                    ${tags.slice(0, 3).map(tag => `<span class="match-tag">${tag}</span>`).join('')}
+                    ${tags.length > 3 ? `<span class="match-tag">+${tags.length - 3}</span>` : ''}
+                </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    getDecisionLabel(decision) {
+        const labels = {
+            'ko': 'KO',
+            'timeout': 'タイムアップ',
+            'perfect': 'パーフェクト',
+            'super': 'スーパーアーツ',
+            'critical': 'クリティカルアーツ',
+            'drive-impact': 'ドライブインパクト'
+        };
+        return labels[decision] || decision;
+    }
+
+    showMatchDetail(matchId) {
+        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const match = matches.find(m => m.id === matchId);
+
+        if (!match) {
+            this.showToast('試合データが見つかりません', 'error');
+            return;
+        }
+
+        const modal = document.getElementById('match-detail-modal');
+        const body = document.getElementById('match-detail-body');
+
+        if (!modal || !body) return;
+
+        const isWin = match.result === 'WIN';
+        const tags = match.insightTags || [];
+        const feelings = match.feelings || '';
+
+        body.innerHTML = `
+            <div class="detail-section">
+                <h3>試合結果</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">結果</div>
+                        <div class="detail-value">
+                            <span class="match-result-badge ${isWin ? 'win' : 'loss'}">${isWin ? 'WIN' : 'LOSS'}</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">試合日</div>
+                        <div class="detail-value">${match.date || '日付不明'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>対戦情報</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">自分</div>
+                        <div class="detail-value">${match.playerCharacter || 'Unknown'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">相手</div>
+                        <div class="detail-value">${match.opponentCharacter || 'Unknown'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">ラウンド</div>
+                        <div class="detail-value">${match.roundsWon || 0}-${match.roundsLost || 0}</div>
+                    </div>
+                    ${match.decision ? `
+                    <div class="detail-item">
+                        <div class="detail-label">決着方法</div>
+                        <div class="detail-value">${this.getDecisionLabel(match.decision)}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+
+            ${tags.length > 0 ? `
+            <div class="detail-section">
+                <h3>気づきタグ</h3>
+                <div class="match-tags">
+                    ${tags.map(tag => `<span class="match-tag">${tag}</span>`).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            ${feelings ? `
+            <div class="detail-section">
+                <h3>試合の気づき</h3>
+                <div class="memo-box">${feelings}</div>
+            </div>
+            ` : ''}
+        `;
+
+        // 編集・削除ボタンにイベントを設定
+        const editBtn = document.getElementById('edit-match-btn');
+        const deleteBtn = document.getElementById('delete-match-btn');
+
+        if (editBtn) {
+            editBtn.onclick = () => this.editMatch(matchId);
+        }
+
+        if (deleteBtn) {
+            deleteBtn.onclick = () => this.deleteMatch(matchId);
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    closeMatchDetailModal() {
+        const modal = document.getElementById('match-detail-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    editMatch(matchId) {
+        this.showToast('編集機能は今後実装予定です', 'info');
+        // TODO: 編集モーダルを表示して、試合データを編集できるようにする
+    }
+
+    deleteMatch(matchId) {
+        if (!confirm('この試合データを削除してもよろしいですか？')) {
+            return;
+        }
+
+        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const filteredMatches = matches.filter(m => m.id !== matchId);
+
+        localStorage.setItem('recentMatches', JSON.stringify(filteredMatches));
+
+        this.showToast('試合データを削除しました', 'success');
+        this.closeMatchDetailModal();
+        this.loadGalleryMatches();
+
+        // 統計も更新
+        if (this.playerStatsManager) {
+            this.playerStatsManager.loadStatsToUI();
+        }
+    }
+
+    loadOpponentFilter() {
+        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const opponents = [...new Set(matches.map(m => m.opponentCharacter).filter(Boolean))];
+
+        const select = document.getElementById('filter-opponent');
+        if (!select) return;
+
+        // 既存のオプションをクリアして再生成
+        select.innerHTML = '<option value="">すべて</option>';
+        opponents.forEach(opponent => {
+            const option = document.createElement('option');
+            option.value = opponent;
+            option.textContent = opponent;
+            select.appendChild(option);
+        });
+    }
+
+    setupGalleryFilters() {
+        const applyBtn = document.getElementById('apply-filters');
+        const clearBtn = document.getElementById('clear-filters');
+
+        if (applyBtn) {
+            applyBtn.addEventListener('click', () => {
+                const filters = {
+                    opponent: document.getElementById('filter-opponent')?.value || '',
+                    result: document.getElementById('filter-result')?.value || '',
+                    tag: document.getElementById('filter-tag')?.value || ''
+                };
+
+                this.loadGalleryMatches(filters);
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                document.getElementById('filter-opponent').value = '';
+                document.getElementById('filter-result').value = '';
+                document.getElementById('filter-tag').value = '';
+                this.loadGalleryMatches();
+            });
+        }
     }
 
 }

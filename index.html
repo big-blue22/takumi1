@@ -31,6 +31,10 @@
                         <span class="nav-icon">📈</span>
                         分析
                     </button>
+                    <button class="nav-btn" data-page="gallery">
+                        <span class="nav-icon">🖼️</span>
+                        ギャラリー
+                    </button>
                     <button class="nav-btn" data-page="ai-chat">
                         <span class="nav-icon">🤖</span>
                         AIチャット
@@ -841,6 +845,48 @@
                 </div>
             </div>
 
+            <!-- Gallery Page -->
+            <div id="gallery" class="page">
+                <div class="page-header">
+                    <h2>🖼️ 試合ギャラリー</h2>
+                    <p>記録された試合データの閲覧・管理</p>
+                </div>
+
+                <!-- フィルター・検索エリア -->
+                <div class="card gallery-filters">
+                    <h3>絞り込み・検索</h3>
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <label for="filter-opponent">対戦相手</label>
+                            <select id="filter-opponent">
+                                <option value="">すべて</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-result">勝敗</label>
+                            <select id="filter-result">
+                                <option value="">すべて</option>
+                                <option value="WIN">勝利のみ</option>
+                                <option value="LOSS">敗北のみ</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-tag">気づきタグ</label>
+                            <input type="text" id="filter-tag" placeholder="タグで検索...">
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn-primary" id="apply-filters">絞り込み</button>
+                            <button class="btn-secondary" id="clear-filters">クリア</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 試合カード一覧 -->
+                <div class="gallery-grid" id="gallery-grid">
+                    <!-- カードはJavaScriptで動的に生成されます -->
+                </div>
+            </div>
+
             <!-- AI Chat Page -->
             <div id="ai-chat" class="page">
                 <div class="page-header">
@@ -1466,6 +1512,27 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Detail Modal -->
+    <div id="match-detail-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="app.closeMatchDetailModal()"></div>
+        <div class="modal-content match-detail-content">
+            <div class="modal-header">
+                <h2>試合詳細</h2>
+                <button class="modal-close" onclick="app.closeMatchDetailModal()">✕</button>
+            </div>
+
+            <div class="match-detail-body" id="match-detail-body">
+                <!-- 詳細はJavaScriptで動的に生成されます -->
+            </div>
+
+            <div class="match-detail-actions">
+                <button class="btn-secondary" onclick="app.closeMatchDetailModal()">閉じる</button>
+                <button class="btn-primary" id="edit-match-btn">✏️ 編集</button>
+                <button class="btn-danger" id="delete-match-btn">🗑️ 削除</button>
             </div>
         </div>
     </div>
