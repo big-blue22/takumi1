@@ -949,6 +949,14 @@ class App {
 
         // Gallery Page Listeners
         this.setupGalleryFilters();
+
+        // 勝率詳細ボタン
+        const winRateDetailBtn = document.getElementById('show-winrate-detail-btn');
+        if (winRateDetailBtn) {
+            winRateDetailBtn.addEventListener('click', () => {
+                this.showWinRateDetailModal();
+            });
+        }
     }
     
     // タブ切り替え
@@ -1736,6 +1744,10 @@ class App {
                 if (winRateEl) winRateEl.textContent = `${winRate}%`;
                 if (gamesPlayedEl) gamesPlayedEl.textContent = `${totalMatches}`;
             }
+
+            // グラフを更新
+            this.renderWinRateTrendChart();
+            this.renderCharacterUsageChart();
         } catch (e) {
             console.warn('Failed to store match and refresh stats:', e);
         }
@@ -1825,8 +1837,442 @@ class App {
     
     // チャート初期化
     initCharts() {
-        // チャートは実際のデータが入力された時のみ初期化する
-        // 初期状態では何も表示しない
+        // ダッシュボードページに遷移した時にグラフを描画
+        this.renderWinRateTrendChart();
+        this.renderCharacterUsageChart();
+    }
+
+    // 勝率トレンドグラフの描画
+    renderWinRateTrendChart() {
+        const canvas = document.getElementById('performance-chart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+
+        // 既存のチャートを破棄
+        if (this.winRateTrendChart) {
+            this.winRateTrendChart.destroy();
+        }
+
+        // 試合データを取得
+        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+
+        if (matches.length === 0) {
+            // データがない場合は空のグラフを表示
+            ctx.font = '16px sans-serif';
+            ctx.fillStyle = '#888';
+            ctx.textAlign = 'center';
+            ctx.fillText('試合データがまだありません', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        // 1. 直近10試合ごとの勝率推移を計算
+        const batchSize = 10;
+        const batches = [];
+        for (let i = 0; i < matches.length; i += batchSize) {
+            const batch = matches.slice(i, i + batchSize);
+            const wins = batch.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
+            const winRate = (wins / batch.length * 100).toFixed(1);
+            batches.push({
+                label: `試合${i + 1}-${Math.min(i + batchSize, matches.length)}`,
+                winRate: parseFloat(winRate)
+            });
+        }
+
+        // 2. 対戦キャラクターごとの累計勝率を計算
+        const opponentStats = {};
+        matches.forEach(match => {
+            const opponent = match.opponentCharacter || 'Unknown';
+            if (!opponentStats[opponent]) {
+                opponentStats[opponent] = { wins: 0, total: 0 };
+            }
+            opponentStats[opponent].total++;
+            if ((match.result || '').toUpperCase() === 'WIN') {
+                opponentStats[opponent].wins++;
+            }
+        });
+
+        const opponentWinRates = Object.entries(opponentStats)
+            .map(([opponent, stats]) => ({
+                opponent,
+                winRate: (stats.wins / stats.total * 100).toFixed(1),
+                total: stats.total
+            }))
+            .sort((a, b) => b.total - a.total) // 対戦回数が多い順
+            .slice(0, 5); // 上位5キャラクター
+
+        // グラフの描画
+        this.winRateTrendChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    ...batches.map(b => b.label),
+                    ...opponentWinRates.map(o => `vs ${o.opponent}`)
+                ],
+                datasets: [{
+                    label: '勝率 (%)',
+                    data: [
+                        ...batches.map(b => b.winRate),
+                        ...opponentWinRates.map(o => parseFloat(o.winRate))
+                    ],
+                    backgroundColor: [
+                        ...batches.map(() => 'rgba(54, 162, 235, 0.6)'),
+                        ...opponentWinRates.map(() => 'rgba(255, 159, 64, 0.6)')
+                    ],
+                    borderColor: [
+                        ...batches.map(() => 'rgba(54, 162, 235, 1)'),
+                        ...opponentWinRates.map(() => 'rgba(255, 159, 64, 1)')
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: '直近10試合ごとの勝率 & 対戦キャラクター別勝率',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                        font: {
+                            size: 14
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `勝率: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa',
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // キャラクター使用率グラフの描画
+    renderCharacterUsageChart() {
+        const canvas = document.getElementById('sf6-metrics-chart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+
+        // 既存のチャートを破棄
+        if (this.characterUsageChart) {
+            this.characterUsageChart.destroy();
+        }
+
+        // 試合データを取得
+        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+
+        if (matches.length === 0) {
+            // データがない場合は空のグラフを表示
+            ctx.font = '16px sans-serif';
+            ctx.fillStyle = '#888';
+            ctx.textAlign = 'center';
+            ctx.fillText('試合データがまだありません', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        // キャラクター使用率を計算
+        const characterUsage = {};
+        matches.forEach(match => {
+            const character = match.playerCharacter || match.character || 'Unknown';
+            if (!characterUsage[character]) {
+                characterUsage[character] = 0;
+            }
+            characterUsage[character]++;
+        });
+
+        // 使用率を計算してソート
+        const characterData = Object.entries(characterUsage)
+            .map(([character, count]) => ({
+                character,
+                count,
+                percentage: ((count / matches.length) * 100).toFixed(1)
+            }))
+            .sort((a, b) => b.count - a.count);
+
+        // グラフの描画
+        this.characterUsageChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: characterData.map(c => c.character),
+                datasets: [{
+                    label: '使用回数',
+                    data: characterData.map(c => c.count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(201, 203, 207, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(201, 203, 207, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right',
+                        labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    return data.labels.map((label, i) => {
+                                        const meta = chart.getDatasetMeta(0);
+                                        const value = data.datasets[0].data[i];
+                                        const percentage = ((value / matches.length) * 100).toFixed(1);
+                                        return {
+                                            text: `${label}: ${percentage}% (${value}回)`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: !chart.getDataVisibility(i),
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'キャラクター使用率',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                        font: {
+                            size: 14
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const percentage = ((value / matches.length) * 100).toFixed(1);
+                                return `${label}: ${value}回 (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 勝率詳細モーダルを表示
+    showWinRateDetailModal() {
+        const modal = document.getElementById('winrate-detail-modal');
+        if (!modal) return;
+
+        modal.classList.remove('hidden');
+        this.loadWinRateDetailData();
+    }
+
+    // 勝率詳細モーダルを閉じる
+    closeWinRateDetailModal() {
+        const modal = document.getElementById('winrate-detail-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // 勝率詳細データを読み込む
+    loadWinRateDetailData() {
+        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+
+        if (matches.length === 0) {
+            document.getElementById('opponent-stats-list').innerHTML = '<p class="no-data">試合データがありません</p>';
+            return;
+        }
+
+        // 対戦キャラクターごとの統計を計算
+        const opponentStats = {};
+        matches.forEach(match => {
+            const opponent = match.opponentCharacter || 'Unknown';
+            if (!opponentStats[opponent]) {
+                opponentStats[opponent] = { wins: 0, losses: 0, total: 0 };
+            }
+            opponentStats[opponent].total++;
+            if ((match.result || '').toUpperCase() === 'WIN') {
+                opponentStats[opponent].wins++;
+            } else {
+                opponentStats[opponent].losses++;
+            }
+        });
+
+        // 統計データを配列に変換
+        this.opponentStatsData = Object.entries(opponentStats).map(([opponent, stats]) => ({
+            opponent,
+            wins: stats.wins,
+            losses: stats.losses,
+            total: stats.total,
+            winRate: stats.total > 0 ? (stats.wins / stats.total * 100).toFixed(1) : 0
+        }));
+
+        // サマリー情報を更新
+        const totalMatches = matches.length;
+        const uniqueOpponents = this.opponentStatsData.length;
+        const totalWins = matches.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
+        const overallWinRate = totalMatches > 0 ? (totalWins / totalMatches * 100).toFixed(1) : 0;
+
+        document.getElementById('detail-total-matches').textContent = totalMatches;
+        document.getElementById('detail-unique-opponents').textContent = uniqueOpponents;
+        document.getElementById('detail-overall-winrate').textContent = overallWinRate + '%';
+
+        // 初期表示
+        this.renderOpponentStatsList();
+
+        // ソート・フィルターのイベントリスナー
+        this.setupDetailControls();
+    }
+
+    // 詳細コントロールのイベントリスナーを設定
+    setupDetailControls() {
+        const sortSelect = document.getElementById('sort-by');
+        const minMatchesInput = document.getElementById('min-matches');
+
+        if (sortSelect && !sortSelect.hasAttribute('data-listener-added')) {
+            sortSelect.addEventListener('change', () => this.renderOpponentStatsList());
+            sortSelect.setAttribute('data-listener-added', 'true');
+        }
+
+        if (minMatchesInput && !minMatchesInput.hasAttribute('data-listener-added')) {
+            minMatchesInput.addEventListener('input', () => this.renderOpponentStatsList());
+            minMatchesInput.setAttribute('data-listener-added', 'true');
+        }
+    }
+
+    // 対戦キャラクター別統計リストを描画
+    renderOpponentStatsList() {
+        const container = document.getElementById('opponent-stats-list');
+        if (!container || !this.opponentStatsData) return;
+
+        // フィルター条件を取得
+        const minMatches = parseInt(document.getElementById('min-matches').value) || 0;
+        const sortBy = document.getElementById('sort-by').value;
+
+        // フィルター適用
+        let filteredData = this.opponentStatsData.filter(stat => stat.total >= minMatches);
+
+        // ソート適用
+        switch (sortBy) {
+            case 'matches-desc':
+                filteredData.sort((a, b) => b.total - a.total);
+                break;
+            case 'matches-asc':
+                filteredData.sort((a, b) => a.total - b.total);
+                break;
+            case 'winrate-desc':
+                filteredData.sort((a, b) => parseFloat(b.winRate) - parseFloat(a.winRate));
+                break;
+            case 'winrate-asc':
+                filteredData.sort((a, b) => parseFloat(a.winRate) - parseFloat(b.winRate));
+                break;
+            case 'name-asc':
+                filteredData.sort((a, b) => a.opponent.localeCompare(b.opponent));
+                break;
+        }
+
+        // リストを描画
+        if (filteredData.length === 0) {
+            container.innerHTML = '<p class="no-data">条件に一致するデータがありません</p>';
+            return;
+        }
+
+        container.innerHTML = filteredData.map(stat => {
+            const winRateValue = parseFloat(stat.winRate);
+            const winRateClass = winRateValue >= 60 ? 'high' : winRateValue >= 40 ? 'medium' : 'low';
+            
+            return `
+                <div class="opponent-stat-item">
+                    <div class="opponent-header">
+                        <span class="opponent-name">${stat.opponent}</span>
+                        <span class="opponent-winrate ${winRateClass}">${stat.winRate}%</span>
+                    </div>
+                    <div class="opponent-details">
+                        <span class="stat-detail">試合数: ${stat.total}</span>
+                        <span class="stat-detail wins">${stat.wins}勝</span>
+                        <span class="stat-detail losses">${stat.losses}敗</span>
+                    </div>
+                    <div class="winrate-bar">
+                        <div class="winrate-fill ${winRateClass}" style="width: ${stat.winRate}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 勝率データをエクスポート
+    exportWinRateData() {
+        if (!this.opponentStatsData || this.opponentStatsData.length === 0) {
+            this.showToast('エクスポートするデータがありません', 'warning');
+            return;
+        }
+
+        // CSV形式でエクスポート
+        let csv = 'キャラクター,試合数,勝利数,敗北数,勝率(%)\n';
+        this.opponentStatsData.forEach(stat => {
+            csv += `${stat.opponent},${stat.total},${stat.wins},${stat.losses},${stat.winRate}\n`;
+        });
+
+        // ダウンロード
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `対戦キャラクター別勝率_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        this.showToast('データをエクスポートしました', 'success');
     }
     
     // トースト表示
@@ -1894,6 +2340,10 @@ class App {
 
         // ダッシュボード目標を読み込み
         this.loadDashboardGoals();
+
+        // グラフを描画
+        this.renderWinRateTrendChart();
+        this.renderCharacterUsageChart();
     }
     
     loadAnalysis() {

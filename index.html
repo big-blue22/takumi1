@@ -116,7 +116,12 @@
                 <!-- Performance Charts -->
                 <div class="charts-grid">
                     <div class="card chart-card">
-                        <h3>勝率トレンド</h3>
+                        <div class="chart-header">
+                            <h3>勝率トレンド</h3>
+                            <button class="btn-text" id="show-winrate-detail-btn" title="詳細を表示">
+                                📊 詳しく見る
+                            </button>
+                        </div>
                         <canvas id="performance-chart"></canvas>
                     </div>
                     <div class="card chart-card">
@@ -1600,6 +1605,63 @@
                     <button class="btn-success" id="detail-resume-plan-btn" onclick="app.resumePlanFromDetail()">再開</button>
                     <button class="btn-primary" id="detail-complete-plan-btn" onclick="app.completePlanFromDetail()">完了</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Rate Detail Modal -->
+    <div id="winrate-detail-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="app.closeWinRateDetailModal()"></div>
+        <div class="modal-content winrate-detail-content">
+            <div class="modal-header">
+                <h2>📊 対戦キャラクター別勝率詳細</h2>
+                <button class="modal-close" onclick="app.closeWinRateDetailModal()">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- 統計サマリー -->
+                <div class="stats-summary">
+                    <div class="summary-stat">
+                        <span class="summary-label">総試合数</span>
+                        <span class="summary-value" id="detail-total-matches">0</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="summary-label">対戦キャラ数</span>
+                        <span class="summary-value" id="detail-unique-opponents">0</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="summary-label">全体勝率</span>
+                        <span class="summary-value" id="detail-overall-winrate">0%</span>
+                    </div>
+                </div>
+
+                <!-- ソート・フィルター -->
+                <div class="detail-controls">
+                    <div class="control-group">
+                        <label for="sort-by">並び替え:</label>
+                        <select id="sort-by" class="sort-select">
+                            <option value="matches-desc">対戦回数（多い順）</option>
+                            <option value="matches-asc">対戦回数（少ない順）</option>
+                            <option value="winrate-desc">勝率（高い順）</option>
+                            <option value="winrate-asc">勝率（低い順）</option>
+                            <option value="name-asc">キャラ名（A-Z）</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="min-matches">最小試合数:</label>
+                        <input type="number" id="min-matches" min="0" value="0" class="filter-input">
+                    </div>
+                </div>
+
+                <!-- キャラクター別勝率リスト -->
+                <div class="opponent-stats-list" id="opponent-stats-list">
+                    <!-- JavaScriptで動的に生成 -->
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="app.closeWinRateDetailModal()">閉じる</button>
+                <button class="btn-primary" onclick="app.exportWinRateData()">📥 データをエクスポート</button>
             </div>
         </div>
     </div>
