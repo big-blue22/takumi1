@@ -1929,12 +1929,21 @@ class App {
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                layout: {
+                    padding: {
+                        bottom: 20
+                    }
+                },
                 plugins: {
                     legend: {
                         display: true,
                         position: 'top',
                         labels: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff'
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                            font: {
+                                size: 12
+                            }
                         }
                     },
                     title: {
@@ -1942,11 +1951,31 @@ class App {
                         text: '直近10試合ごとの勝率 & 対戦キャラクター別勝率',
                         color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
                         font: {
-                            size: 14
+                            size: 14,
+                            weight: '600'
+                        },
+                        padding: {
+                            bottom: 15
                         }
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
                         callbacks: {
+                            title: function(context) {
+                                const label = context[0].label;
+                                if (label.startsWith('#')) {
+                                    return '試合' + label.substring(1);
+                                }
+                                return label;
+                            },
                             label: function(context) {
                                 return `勝率: ${context.parsed.y}%`;
                             }
@@ -1970,8 +1999,24 @@ class App {
                     x: {
                         ticks: {
                             color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa',
-                            maxRotation: 45,
-                            minRotation: 45
+                            maxRotation: 90,
+                            minRotation: 45,
+                            autoSkip: false,
+                            font: {
+                                size: 11
+                            },
+                            callback: function(value, index, values) {
+                                const label = this.getLabelForValue(value);
+                                // ラベルを短縮表示
+                                if (label.startsWith('試合')) {
+                                    // 「試合1-10」を「#1-10」に短縮
+                                    return label.replace('試合', '#');
+                                } else if (label.startsWith('vs ')) {
+                                    // 「vs Luke」を「Luke」に短縮
+                                    return label.replace('vs ', '');
+                                }
+                                return label;
+                            }
                         },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)'
