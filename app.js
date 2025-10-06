@@ -1948,7 +1948,7 @@ class App {
                     },
                     title: {
                         display: true,
-                        text: '直近10試合ごとの勝率 & 対戦キャラクター別勝率',
+                        text: '直近10試合の勝率 & 対戦キャラクター別勝率',
                         color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
                         font: {
                             size: 14,
