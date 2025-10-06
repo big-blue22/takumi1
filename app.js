@@ -1873,8 +1873,10 @@ class App {
             const batch = matches.slice(i, i + batchSize);
             const wins = batch.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
             const winRate = (wins / batch.length * 100).toFixed(1);
+            // 最初のバッチは「直近10試合」、それ以降は試合範囲を表示
+            const label = i === 0 ? '直近10試合' : `試合${i + 1}-${Math.min(i + batchSize, matches.length)}`;
             batches.push({
-                label: `試合${i + 1}-${Math.min(i + batchSize, matches.length)}`,
+                label: label,
                 winRate: parseFloat(winRate)
             });
         }
@@ -1971,7 +1973,10 @@ class App {
                         callbacks: {
                             title: function(context) {
                                 const label = context[0].label;
-                                if (label.startsWith('#')) {
+                                if (label === '直近10試合') {
+                                    // 「直近10試合」はそのまま表示
+                                    return label;
+                                } else if (label.startsWith('#')) {
                                     return '試合' + label.substring(1);
                                 }
                                 return label;
@@ -2008,8 +2013,11 @@ class App {
                             callback: function(value, index, values) {
                                 const label = this.getLabelForValue(value);
                                 // ラベルを短縮表示
-                                if (label.startsWith('試合')) {
-                                    // 「試合1-10」を「#1-10」に短縮
+                                if (label === '直近10試合') {
+                                    // 「直近10試合」はそのまま表示
+                                    return label;
+                                } else if (label.startsWith('試合')) {
+                                    // 「試合11-20」を「#11-20」に短縮
                                     return label.replace('試合', '#');
                                 } else if (label.startsWith('vs ')) {
                                     // 「vs Luke」を「Luke」に短縮
