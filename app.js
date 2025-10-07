@@ -1859,10 +1859,10 @@ class App {
 
         if (matches.length === 0) {
             // データがない場合は空のグラフを表示
-            ctx.font = '16px sans-serif';
-            ctx.fillStyle = '#888';
+            ctx.font = '20px sans-serif';
+            ctx.fillStyle = '#e94560';
             ctx.textAlign = 'center';
-            ctx.fillText('試合データがまだありません', canvas.width / 2, canvas.height / 2);
+            ctx.fillText('📝 記録しよう！', canvas.width / 2, canvas.height / 2);
             return;
         }
 
@@ -1894,14 +1894,37 @@ class App {
             }
         });
 
-        const opponentWinRates = Object.entries(opponentStats)
-            .map(([opponent, stats]) => ({
-                opponent,
-                winRate: (stats.wins / stats.total * 100).toFixed(1),
-                total: stats.total
-            }))
-            .sort((a, b) => b.total - a.total) // 対戦回数が多い順
-            .slice(0, 5); // 上位5キャラクター
+        // 最も勝率が低いキャラクターを抽出（対戦回数が多い方を優先）
+        let opponentWinRates = [];
+        
+        if (Object.keys(opponentStats).length > 0) {
+            const winRateData = Object.entries(opponentStats)
+                .map(([opponent, stats]) => ({
+                    opponent,
+                    winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
+                    total: stats.total
+                }));
+            
+            // 最低勝率を特定
+            const minWinRate = Math.min(...winRateData.map(d => d.winRate));
+            
+            // 最低勝率のキャラクターを抽出
+            const lowestWinRateChars = winRateData.filter(d => d.winRate === minWinRate);
+            
+            // 対戦回数が最も多いキャラクターを選択
+            const selectedChar = lowestWinRateChars.sort((a, b) => b.total - a.total)[0];
+            
+            opponentWinRates = [selectedChar];
+        }
+
+        // 対戦データがない場合のダミーラベル
+        const opponentLabels = opponentWinRates.length > 0 
+            ? opponentWinRates.map(o => `vs ${o.opponent}`)
+            : ['📝 記録しよう！'];
+        
+        const opponentData = opponentWinRates.length > 0
+            ? opponentWinRates.map(o => parseFloat(o.winRate))
+            : [0];
 
         // グラフの描画
         this.winRateTrendChart = new Chart(ctx, {
@@ -1909,21 +1932,25 @@ class App {
             data: {
                 labels: [
                     ...batches.map(b => b.label),
-                    ...opponentWinRates.map(o => `vs ${o.opponent}`)
+                    ...opponentLabels
                 ],
                 datasets: [{
                     label: '勝率 (%)',
                     data: [
                         ...batches.map(b => b.winRate),
-                        ...opponentWinRates.map(o => parseFloat(o.winRate))
+                        ...opponentData
                     ],
                     backgroundColor: [
                         ...batches.map(() => 'rgba(54, 162, 235, 0.6)'),
-                        ...opponentWinRates.map(() => 'rgba(255, 159, 64, 0.6)')
+                        ...opponentWinRates.length > 0 
+                            ? opponentWinRates.map(() => 'rgba(255, 99, 71, 0.6)') 
+                            : ['rgba(128, 128, 128, 0.3)']
                     ],
                     borderColor: [
                         ...batches.map(() => 'rgba(54, 162, 235, 1)'),
-                        ...opponentWinRates.map(() => 'rgba(255, 159, 64, 1)')
+                        ...opponentWinRates.length > 0 
+                            ? opponentWinRates.map(() => 'rgba(255, 99, 71, 1)') 
+                            : ['rgba(128, 128, 128, 0.5)']
                     ],
                     borderWidth: 2
                 }]
@@ -1943,7 +1970,7 @@ class App {
                     },
                     title: {
                         display: true,
-                        text: '直近10試合の勝率 & 対戦キャラクター別勝率',
+                        text: '直近10試合の勝率 & 最も勝率が低い対戦キャラクター',
                         color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
                         font: {
                             size: 14,
@@ -1971,10 +1998,16 @@ class App {
                                     return label;
                                 } else if (label.startsWith('#')) {
                                     return '試合' + label.substring(1);
+                                } else if (label === '📝 記録しよう！') {
+                                    return '対戦データなし';
                                 }
                                 return label;
                             },
                             label: function(context) {
+                                const label = context.label;
+                                if (label === '📝 記録しよう！') {
+                                    return '対戦データを記録してください';
+                                }
                                 return `勝率: ${context.parsed.y}%`;
                             }
                         }
