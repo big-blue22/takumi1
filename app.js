@@ -1939,14 +1939,7 @@ class App {
                 },
                 plugins: {
                     legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
-                            font: {
-                                size: 12
-                            }
-                        }
+                        display: false
                     },
                     title: {
                         display: true,
