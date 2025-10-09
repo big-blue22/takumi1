@@ -157,6 +157,12 @@ class App {
             root.style.setProperty('--accent-primary', '#e94560');
             root.style.setProperty('--accent-secondary', '#c13651');
         }
+        
+        // チャートを再描画してテーマを反映
+        if (this.characterUsageChart || this.winRateTrendChart) {
+            this.renderCharacterUsageChart();
+            this.renderWinRateTrendChart();
+        }
     }
     
     // 認証チェック
@@ -2141,7 +2147,10 @@ class App {
                         display: true,
                         position: 'right',
                         labels: {
-                            color: '#ffffff',
+                            color: document.documentElement.getAttribute('data-theme') === 'light' ? '#0f172a' : '#ffffff',
+                            font: {
+                                size: 12
+                            },
                             generateLabels: function(chart) {
                                 const data = chart.data;
                                 if (data.labels.length && data.datasets.length) {
@@ -2165,6 +2174,11 @@ class App {
                         display: false
                     },
                     tooltip: {
+                        backgroundColor: document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(26, 26, 46, 0.95)',
+                        titleColor: document.documentElement.getAttribute('data-theme') === 'light' ? '#0f172a' : '#ffffff',
+                        bodyColor: document.documentElement.getAttribute('data-theme') === 'light' ? '#334155' : '#b8c5d6',
+                        borderColor: document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(226, 232, 240, 0.8)' : 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
                         callbacks: {
                             label: function(context) {
                                 const label = context.label || '';
