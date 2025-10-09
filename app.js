@@ -122,7 +122,18 @@ class App {
                 this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
                 this.applyTheme(this.currentTheme);
                 localStorage.setItem('theme', this.currentTheme);
+                
+                // テーマ変更時にグラフを再描画
+                this.refreshChartsForTheme();
             });
+        }
+    }
+    
+    // テーマ変更時にグラフを再描画
+    refreshChartsForTheme() {
+        if (this.currentPage === 'dashboard') {
+            this.renderWinRateTrendChart();
+            this.renderCharacterUsageChart();
         }
     }
     
@@ -2104,6 +2115,10 @@ class App {
             }))
             .sort((a, b) => b.count - a.count);
 
+        // 現在のテーマを取得（ライトモードかダークモードか）
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#ffffff' : '#1a1a1a';
+
         // グラフの描画
         this.characterUsageChart = new Chart(ctx, {
             type: 'doughnut',
@@ -2141,7 +2156,10 @@ class App {
                         display: true,
                         position: 'right',
                         labels: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                            color: textColor,
+                            font: {
+                                size: 12
+                            },
                             generateLabels: function(chart) {
                                 const data = chart.data;
                                 if (data.labels.length && data.datasets.length) {
@@ -2152,6 +2170,7 @@ class App {
                                         return {
                                             text: `${label}: ${percentage}% (${value}回)`,
                                             fillStyle: data.datasets[0].backgroundColor[i],
+                                            strokeStyle: data.datasets[0].borderColor[i],
                                             hidden: !chart.getDataVisibility(i),
                                             index: i
                                         };
@@ -2162,14 +2181,12 @@ class App {
                         }
                     },
                     title: {
-                        display: true,
-                        text: 'キャラクター使用率',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
-                        font: {
-                            size: 14
-                        }
+                        display: false  // タイトルを非表示に（重複を防ぐ）
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
                         callbacks: {
                             label: function(context) {
                                 const label = context.label || '';
