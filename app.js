@@ -1854,6 +1854,11 @@ class App {
             this.winRateTrendChart.destroy();
         }
 
+        const isDarkMode = this.currentTheme === 'dark';
+        const primaryColor = isDarkMode ? '#FFFFFF' : '#0f172a';
+        const secondaryColor = isDarkMode ? '#b8c5d6' : '#64748b';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
         // 試合データを取得
         const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
 
@@ -1971,7 +1976,7 @@ class App {
                     title: {
                         display: true,
                         text: '直近10試合の勝率 & 最も勝率が低い対戦キャラクター',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                        color: primaryColor,
                         font: {
                             size: 14,
                             weight: '600'
@@ -2021,15 +2026,15 @@ class App {
                             callback: function(value) {
                                 return value + '%';
                             },
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa'
+                            color: secondaryColor
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: gridColor
                         }
                     },
                     x: {
                         ticks: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa',
+                            color: secondaryColor,
                             maxRotation: 90,
                             minRotation: 45,
                             autoSkip: false,
@@ -2053,7 +2058,7 @@ class App {
                             }
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: gridColor
                         }
                     }
                 }
@@ -2072,6 +2077,8 @@ class App {
         if (this.characterUsageChart) {
             this.characterUsageChart.destroy();
         }
+
+        const legendColor = this.currentTheme === 'dark' ? '#FFFFFF' : '#0f172a';
 
         // 試合データを取得
         const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
@@ -2141,7 +2148,7 @@ class App {
                         display: true,
                         position: 'right',
                         labels: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                            color: legendColor,
                             generateLabels: function(chart) {
                                 const data = chart.data;
                                 if (data.labels.length && data.datasets.length) {
@@ -2162,9 +2169,9 @@ class App {
                         }
                     },
                     title: {
-                        display: true,
+                        display: false,
                         text: 'キャラクター使用率',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                        color: legendColor,
                         font: {
                             size: 14
                         }
