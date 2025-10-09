@@ -2104,12 +2104,6 @@ class App {
             }))
             .sort((a, b) => b.count - a.count);
 
-        const rootStyles = getComputedStyle(document.documentElement);
-        const themeAttribute = document.documentElement.getAttribute('data-theme') || this.currentTheme || 'dark';
-        const isDarkMode = themeAttribute === 'dark';
-        const textPrimaryColor = (rootStyles.getPropertyValue('--text-primary') || '').trim() || '#1a1a1a';
-        const legendTextColor = isDarkMode ? '#ffffff' : textPrimaryColor;
-
         // グラフの描画
         this.characterUsageChart = new Chart(ctx, {
             type: 'doughnut',
@@ -2147,7 +2141,7 @@ class App {
                         display: true,
                         position: 'right',
                         labels: {
-                            color: legendTextColor,
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
                             generateLabels: function(chart) {
                                 const data = chart.data;
                                 if (data.labels.length && data.datasets.length) {
@@ -2168,11 +2162,14 @@ class App {
                         }
                     },
                     title: {
-                        display: false
+                        display: true,
+                        text: 'キャラクター使用率',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                        font: {
+                            size: 14
+                        }
                     },
                     tooltip: {
-                        titleColor: legendTextColor,
-                        bodyColor: legendTextColor,
                         callbacks: {
                             label: function(context) {
                                 const label = context.label || '';
