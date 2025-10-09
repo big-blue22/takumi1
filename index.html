@@ -680,6 +680,56 @@
                     </form>
                 </div>
 
+                <!-- Batch Match Input (Screenshot Upload) -->
+                <div class="card batch-match-card">
+                    <h3>📸 まとめて入力（スクリーンショット）</h3>
+                    <p class="subtitle">戦績画面のスクリーンショットをアップロードして、複数の対戦データを一括で入力</p>
+                    
+                    <div class="batch-upload-area">
+                        <div class="upload-instructions">
+                            <h4>📋 使い方</h4>
+                            <ol>
+                                <li>Street Fighter 6の戦績画面のスクリーンショットを撮影</li>
+                                <li>下のボタンから画像ファイルを選択</li>
+                                <li>AIが自動的にキャラクター別の試合数と勝率を抽出</li>
+                                <li>データを確認して保存</li>
+                            </ol>
+                            <p class="note">※ 対応形式: 「試合数と勝率%」「勝利数/試合数」の両方</p>
+                        </div>
+
+                        <div class="upload-section">
+                            <input type="file" id="batch-screenshot-input" accept="image/*" style="display: none;">
+                            <button type="button" id="select-screenshot-btn" class="btn-primary">
+                                📷 スクリーンショットを選択
+                            </button>
+                            <div id="selected-file-info" class="file-info" style="display: none;">
+                                <span id="file-name"></span>
+                                <button type="button" id="clear-file-btn" class="btn-text">✕</button>
+                            </div>
+                        </div>
+
+                        <div id="batch-preview-section" class="preview-section" style="display: none;">
+                            <h4>📊 抽出されたデータ</h4>
+                            <div id="batch-data-preview" class="data-preview">
+                                <!-- 抽出データがここに表示される -->
+                            </div>
+                            <div class="batch-actions">
+                                <button type="button" id="save-batch-data-btn" class="btn-primary">
+                                    💾 データを保存
+                                </button>
+                                <button type="button" id="cancel-batch-btn" class="btn-secondary">
+                                    ❌ キャンセル
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="batch-loading" class="batch-loading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <p>AIが画像を分析中...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Traditional Match Input (Collapsible) -->
                 <div class="card detailed-match-card collapsed" id="detailed-match-card">
                     <div class="card-header collapsible-header" onclick="toggleDetailedInput()">

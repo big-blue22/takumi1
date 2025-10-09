@@ -845,6 +845,9 @@ class App {
         // クイック入力のイベントリスナー
         this.setupQuickMatchListeners();
         
+        // まとめて入力のイベントリスナー
+        this.setupBatchInputListeners();
+        
         // 目標フォーム
         const goalForm = document.getElementById('goal-form');
         if (goalForm) {
@@ -1663,6 +1666,274 @@ class App {
         document.getElementById('generate-tags-btn').disabled = true;
 
         this.updateSubmitButton();
+    }
+
+    // === まとめて入力機能（スクリーンショットアップロード） ===
+
+    // まとめて入力のイベントリスナーを設定
+    setupBatchInputListeners() {
+        const selectBtn = document.getElementById('select-screenshot-btn');
+        const fileInput = document.getElementById('batch-screenshot-input');
+        const clearFileBtn = document.getElementById('clear-file-btn');
+        const saveBatchBtn = document.getElementById('save-batch-data-btn');
+        const cancelBatchBtn = document.getElementById('cancel-batch-btn');
+
+        // スクリーンショット選択ボタン
+        if (selectBtn && fileInput) {
+            selectBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    await this.handleScreenshotUpload(file);
+                }
+            });
+        }
+
+        // ファイルクリアボタン
+        if (clearFileBtn) {
+            clearFileBtn.addEventListener('click', () => {
+                this.clearBatchInput();
+            });
+        }
+
+        // データ保存ボタン
+        if (saveBatchBtn) {
+            saveBatchBtn.addEventListener('click', () => {
+                this.saveBatchMatchData();
+            });
+        }
+
+        // キャンセルボタン
+        if (cancelBatchBtn) {
+            cancelBatchBtn.addEventListener('click', () => {
+                this.clearBatchInput();
+            });
+        }
+    }
+
+    // スクリーンショットアップロード処理
+    async handleScreenshotUpload(file) {
+        console.log('📸 スクリーンショットアップロード:', file.name);
+
+        // ファイル情報を表示
+        const fileInfo = document.getElementById('selected-file-info');
+        const fileName = document.getElementById('file-name');
+        if (fileInfo && fileName) {
+            fileName.textContent = file.name;
+            fileInfo.style.display = 'flex';
+        }
+
+        // ローディング表示
+        const loadingEl = document.getElementById('batch-loading');
+        const previewSection = document.getElementById('batch-preview-section');
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (previewSection) previewSection.style.display = 'none';
+
+        try {
+            // Gemini APIで画像を分析
+            const result = await window.geminiService.analyzeMatchImage(file);
+            
+            console.log('✅ 画像分析結果:', result);
+
+            // 抽出データを保存
+            this.batchMatchData = result.matches;
+
+            // プレビューを表示
+            this.displayBatchDataPreview(result.matches);
+
+            // ローディングを非表示、プレビューを表示
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (previewSection) previewSection.style.display = 'block';
+
+            this.showToast('データを正常に抽出しました！', 'success');
+
+        } catch (error) {
+            console.error('❌ 画像分析エラー:', error);
+            
+            if (loadingEl) loadingEl.style.display = 'none';
+            
+            this.showToast('画像の分析に失敗しました: ' + error.message, 'error');
+            this.clearBatchInput();
+        }
+    }
+
+    // バッチデータプレビューを表示
+    displayBatchDataPreview(matches) {
+        const previewContainer = document.getElementById('batch-data-preview');
+        if (!previewContainer) return;
+
+        previewContainer.innerHTML = '';
+
+        if (!matches || matches.length === 0) {
+            previewContainer.innerHTML = '<p class="no-data">データが抽出できませんでした</p>';
+            return;
+        }
+
+        const table = document.createElement('table');
+        table.className = 'batch-data-table';
+        
+        // ヘッダー
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th>キャラクター</th>
+                <th>試合数</th>
+                <th>勝率</th>
+                <th>勝利数</th>
+            </tr>
+        `;
+        table.appendChild(thead);
+
+        // データ行
+        const tbody = document.createElement('tbody');
+        matches.forEach(match => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${match.character}</strong></td>
+                <td>${match.totalMatches}試合</td>
+                <td>${match.winRate.toFixed(2)}%</td>
+                <td>${match.wins}勝</td>
+            `;
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+
+        previewContainer.appendChild(table);
+
+        // サマリー情報
+        const summary = document.createElement('div');
+        summary.className = 'batch-summary';
+        const totalMatches = matches.reduce((sum, m) => sum + m.totalMatches, 0);
+        const totalWins = matches.reduce((sum, m) => sum + m.wins, 0);
+        const avgWinRate = totalMatches > 0 ? (totalWins / totalMatches * 100).toFixed(2) : 0;
+        
+        summary.innerHTML = `
+            <div class="summary-item">
+                <span class="summary-label">キャラクター数:</span>
+                <span class="summary-value">${matches.length}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">総試合数:</span>
+                <span class="summary-value">${totalMatches}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">平均勝率:</span>
+                <span class="summary-value">${avgWinRate}%</span>
+            </div>
+        `;
+        previewContainer.appendChild(summary);
+    }
+
+    // バッチマッチデータを保存
+    saveBatchMatchData() {
+        if (!this.batchMatchData || this.batchMatchData.length === 0) {
+            this.showToast('保存するデータがありません', 'error');
+            return;
+        }
+
+        try {
+            // 既存のギャラリーデータを取得
+            const galleryData = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+            
+            // 現在の日時
+            const timestamp = new Date().toISOString();
+            
+            // 各キャラクターのデータをギャラリーに追加
+            this.batchMatchData.forEach(match => {
+                // スキップ条件: ALLキャラクターや試合数0のデータ
+                if (match.character.toUpperCase() === 'ALL' || match.totalMatches === 0) {
+                    return;
+                }
+
+                // 勝利と敗北に分けて試合データを作成
+                const wins = match.wins;
+                const losses = match.totalMatches - match.wins;
+
+                // 勝利試合を追加
+                for (let i = 0; i < wins; i++) {
+                    const matchEntry = {
+                        id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        timestamp: timestamp,
+                        character: match.character,
+                        opponent: 'Unknown', // 対戦相手は不明
+                        result: 'WIN',
+                        score: '3-0', // スコアは不明のためデフォルト
+                        decision: 'unknown',
+                        source: 'batch_screenshot',
+                        insightTags: ['#一括入力'],
+                        feelings: 'スクリーンショットから一括入力されたデータ'
+                    };
+                    galleryData.push(matchEntry);
+                }
+
+                // 敗北試合を追加
+                for (let i = 0; i < losses; i++) {
+                    const matchEntry = {
+                        id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        timestamp: timestamp,
+                        character: match.character,
+                        opponent: 'Unknown',
+                        result: 'LOSS',
+                        score: '0-3',
+                        decision: 'unknown',
+                        source: 'batch_screenshot',
+                        insightTags: ['#一括入力'],
+                        feelings: 'スクリーンショットから一括入力されたデータ'
+                    };
+                    galleryData.push(matchEntry);
+                }
+            });
+
+            // ローカルストレージに保存
+            localStorage.setItem('sf6_gallery', JSON.stringify(galleryData));
+
+            // ダッシュボードを更新
+            this.loadDashboard();
+
+            // 成功メッセージ
+            const totalSaved = this.batchMatchData.reduce((sum, m) => sum + m.totalMatches, 0);
+            this.showToast(`${totalSaved}試合のデータを保存しました！`, 'success');
+
+            // 入力をクリア
+            this.clearBatchInput();
+
+        } catch (error) {
+            console.error('❌ バッチデータ保存エラー:', error);
+            this.showToast('データの保存に失敗しました: ' + error.message, 'error');
+        }
+    }
+
+    // バッチ入力をクリア
+    clearBatchInput() {
+        // ファイル入力をリセット
+        const fileInput = document.getElementById('batch-screenshot-input');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        // ファイル情報を非表示
+        const fileInfo = document.getElementById('selected-file-info');
+        if (fileInfo) {
+            fileInfo.style.display = 'none';
+        }
+
+        // プレビューを非表示
+        const previewSection = document.getElementById('batch-preview-section');
+        if (previewSection) {
+            previewSection.style.display = 'none';
+        }
+
+        // ローディングを非表示
+        const loadingEl = document.getElementById('batch-loading');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+        }
+
+        // データをクリア
+        this.batchMatchData = null;
     }
 
     // クイック試合入力の送信処理

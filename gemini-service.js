@@ -1054,6 +1054,161 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
         console.log('チャット履歴をクリアしました');
     }
 
+    // 画像から試合データを分析（Street Fighter 6専用）
+    async analyzeMatchImage(imageFile) {
+        if (!this.isConfigured()) {
+            throw new Error('Gemini APIキーが設定されていません');
+        }
+
+        try {
+            console.log('📸 画像分析開始:', imageFile.name, imageFile.size);
+            
+            // 画像をBase64に変換
+            const base64Image = await this.fileToBase64(imageFile);
+            const imageData = base64Image.split(',')[1]; // data:image/png;base64, を除去
+            
+            // 画像の形式を判定
+            const mimeType = imageFile.type || 'image/png';
+            
+            const analysisPrompt = `この画像はStreet Fighter 6の対戦戦績画面のスクリーンショットです。
+以下の情報を抽出してJSON形式で返してください。
+
+【重要】
+- 各キャラクターの「試合数」と「勝率」または「勝利数」を抽出
+- 画像には2つの形式があります：
+  1. 「試合数」と「勝率%」が表示されている形式（例: 33戦, 54.55%）
+  2. 「勝利数/試合数」が表示されている形式（例: 14勝/23戦）
+- どちらの形式でも対応し、試合数と勝率を計算してください
+
+出力形式（必ずこのJSON形式で返してください）:
+{
+  "matches": [
+    {
+      "character": "キャラクター名",
+      "totalMatches": 試合数（数値）,
+      "winRate": 勝率（数値、パーセントで0-100）,
+      "wins": 勝利数（数値、計算できる場合）
+    }
+  ]
+}
+
+例1（勝率形式の場合）:
+{
+  "matches": [
+    {"character": "KIMBERLY", "totalMatches": 33, "winRate": 54.55, "wins": 18},
+    {"character": "ZANGIEF", "totalMatches": 33, "winRate": 69.70, "wins": 23}
+  ]
+}
+
+例2（勝利数形式の場合）:
+{
+  "matches": [
+    {"character": "ALL", "totalMatches": 23, "winRate": 60.87, "wins": 14},
+    {"character": "LUKE", "totalMatches": 23, "winRate": 60.87, "wins": 14}
+  ]
+}
+
+必ずJSON形式のみを返してください。説明文は不要です。`;
+
+            const requestBody = {
+                contents: [{
+                    parts: [
+                        { text: analysisPrompt },
+                        {
+                            inline_data: {
+                                mime_type: mimeType,
+                                data: imageData
+                            }
+                        }
+                    ]
+                }],
+                generationConfig: {
+                    temperature: 0.1, // 低い温度で正確性を優先
+                    maxOutputTokens: 2048,
+                    topP: 0.8,
+                    topK: 10
+                }
+            };
+
+            const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
+            const response = await this.makeAPIRequest(url, requestBody);
+            const data = await response.json();
+
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error('画像分析の応答が得られませんでした');
+            }
+
+            const candidate = data.candidates[0];
+            
+            if (candidate.finishReason === 'SAFETY') {
+                throw new Error('画像の内容が安全性フィルタによりブロックされました');
+            }
+
+            const aiResponse = candidate.content?.parts?.[0]?.text || '';
+            
+            if (!aiResponse) {
+                throw new Error('画像分析の応答が空です');
+            }
+
+            console.log('🔍 AI応答:', aiResponse);
+
+            // JSONを抽出
+            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error('JSONデータを抽出できませんでした: ' + aiResponse.substring(0, 200));
+            }
+
+            const parsedData = JSON.parse(jsonMatch[0]);
+            
+            // データ検証
+            if (!parsedData.matches || !Array.isArray(parsedData.matches)) {
+                throw new Error('不正なデータ形式です');
+            }
+
+            // 各マッチデータの検証と補完
+            const validatedMatches = parsedData.matches.map(match => {
+                // 勝利数が未設定の場合は計算
+                if (match.wins === undefined && match.totalMatches && match.winRate !== undefined) {
+                    match.wins = Math.round(match.totalMatches * match.winRate / 100);
+                }
+                
+                // 勝率が未設定の場合は計算
+                if (match.winRate === undefined && match.wins !== undefined && match.totalMatches) {
+                    match.winRate = (match.wins / match.totalMatches) * 100;
+                }
+                
+                return {
+                    character: match.character || 'Unknown',
+                    totalMatches: parseInt(match.totalMatches) || 0,
+                    winRate: parseFloat(match.winRate) || 0,
+                    wins: parseInt(match.wins) || 0
+                };
+            });
+
+            console.log('✅ 画像分析完了:', validatedMatches);
+
+            return {
+                matches: validatedMatches,
+                rawResponse: aiResponse,
+                usage: data.usageMetadata || {}
+            };
+
+        } catch (error) {
+            console.error('❌ 画像分析エラー:', error);
+            throw new Error('画像の分析に失敗しました: ' + error.message);
+        }
+    }
+
+    // ファイルをBase64に変換
+    async fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
     // デバッグ情報取得（グラウンディング情報追加）
     getDebugInfo() {
         return {
