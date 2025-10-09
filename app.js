@@ -2116,8 +2116,14 @@ class App {
             .sort((a, b) => b.count - a.count);
 
         // 現在のテーマを取得（ライトモードかダークモードか）
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDarkMode ? '#ffffff' : '#1a1a1a';
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const isDarkMode = currentTheme === 'dark';
+        
+        // テーマに応じた色設定（より明確なコントラスト）
+        const textColor = isDarkMode ? '#ffffff' : '#000000';
+        const backgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)';
+
+        console.log('グラフ描画 - テーマ:', currentTheme, '文字色:', textColor);
 
         // グラフの描画
         this.characterUsageChart = new Chart(ctx, {
@@ -2128,13 +2134,13 @@ class App {
                     label: '使用回数',
                     data: characterData.map(c => c.count),
                     backgroundColor: [
-                        'rgba(255, 99, 132, 0.6)',
-                        'rgba(54, 162, 235, 0.6)',
-                        'rgba(255, 206, 86, 0.6)',
-                        'rgba(75, 192, 192, 0.6)',
-                        'rgba(153, 102, 255, 0.6)',
-                        'rgba(255, 159, 64, 0.6)',
-                        'rgba(201, 203, 207, 0.6)'
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(201, 203, 207, 0.7)'
                     ],
                     borderColor: [
                         'rgba(255, 99, 132, 1)',
@@ -2156,23 +2162,28 @@ class App {
                         display: true,
                         position: 'right',
                         labels: {
-                            color: textColor,
+                            color: textColor,  // 明示的なテーマ対応の色
                             font: {
-                                size: 12
+                                size: 13,
+                                weight: '500'
                             },
+                            padding: 10,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
                             generateLabels: function(chart) {
                                 const data = chart.data;
                                 if (data.labels.length && data.datasets.length) {
                                     return data.labels.map((label, i) => {
-                                        const meta = chart.getDatasetMeta(0);
                                         const value = data.datasets[0].data[i];
                                         const percentage = ((value / matches.length) * 100).toFixed(1);
                                         return {
                                             text: `${label}: ${percentage}% (${value}回)`,
                                             fillStyle: data.datasets[0].backgroundColor[i],
                                             strokeStyle: data.datasets[0].borderColor[i],
+                                            lineWidth: 2,
                                             hidden: !chart.getDataVisibility(i),
-                                            index: i
+                                            index: i,
+                                            fontColor: textColor  // 追加の色指定
                                         };
                                     });
                                 }
@@ -2181,12 +2192,17 @@ class App {
                         }
                     },
                     title: {
-                        display: false  // タイトルを非表示に（重複を防ぐ）
+                        display: false  // HTMLタイトルを使用
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
+                        enabled: true,
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
                         callbacks: {
                             label: function(context) {
                                 const label = context.label || '';
@@ -2199,6 +2215,8 @@ class App {
                 }
             }
         });
+        
+        console.log('キャラクター使用率グラフ描画完了');
     }
 
     // 勝率詳細モーダルを表示
