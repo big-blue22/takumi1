@@ -2141,7 +2141,7 @@ class App {
                         display: true,
                         position: 'right',
                         labels: {
-                            color: '#fff',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
                             generateLabels: function(chart) {
                                 const data = chart.data;
                                 if (data.labels.length && data.datasets.length) {
@@ -2162,7 +2162,12 @@ class App {
                         }
                     },
                     title: {
-                        display: false
+                        display: true,
+                        text: 'キャラクター使用率',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                        font: {
+                            size: 14
+                        }
                     },
                     tooltip: {
                         callbacks: {
