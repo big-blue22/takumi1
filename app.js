@@ -1924,6 +1924,12 @@ class App {
 
             // ダッシュボードを更新
             this.loadDashboard();
+            
+            // ギャラリーも更新（現在ギャラリーページにいる場合）
+            const currentPage = document.querySelector('.page.active');
+            if (currentPage && currentPage.id === 'gallery') {
+                this.loadGallery();
+            }
 
             // 成功メッセージ（実際に保存された試合数とキャラクター数を表示）
             const characterCount = validMatches.length;
@@ -2036,6 +2042,11 @@ class App {
             matches.unshift(newMatch);
             if (matches.length > 50) matches.length = 50;
             localStorage.setItem('recentMatches', JSON.stringify(matches));
+            
+            // sf6_galleryにも保存（統一ストレージ）
+            const galleryData = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+            galleryData.unshift(newMatch);
+            localStorage.setItem('sf6_gallery', JSON.stringify(galleryData));
 
             // 基本統計の計算（勝率のみ）
             const totalMatches = matches.length;
@@ -2171,8 +2182,20 @@ class App {
             this.winRateTrendChart.destroy();
         }
 
-        // 試合データを取得
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        // 両方のストレージからデータを取得してマージ
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        
+        // 重複を排除してマージ
+        const matchesMap = new Map();
+        [...sf6Gallery, ...recentMatches].forEach(match => {
+            if (match.id) {
+                matchesMap.set(match.id, match);
+            }
+        });
+        
+        const matches = Array.from(matchesMap.values())
+            .sort((a, b) => (b.id || 0) - (a.id || 0)); // 新しい順
 
         if (matches.length === 0) {
             // データがない場合は空のグラフを表示
@@ -2390,8 +2413,19 @@ class App {
             this.characterUsageChart.destroy();
         }
 
-        // 試合データを取得
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        // 両方のストレージからデータを取得してマージ
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        
+        // 重複を排除してマージ
+        const matchesMap = new Map();
+        [...sf6Gallery, ...recentMatches].forEach(match => {
+            if (match.id) {
+                matchesMap.set(match.id, match);
+            }
+        });
+        
+        const matches = Array.from(matchesMap.values());
 
         if (matches.length === 0) {
             // データがない場合は空のグラフを表示
@@ -2544,7 +2578,19 @@ class App {
 
     // 勝率詳細データを読み込む
     loadWinRateDetailData() {
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        // 両方のストレージからデータを取得してマージ
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        
+        // 重複を排除してマージ
+        const matchesMap = new Map();
+        [...sf6Gallery, ...recentMatches].forEach(match => {
+            if (match.id) {
+                matchesMap.set(match.id, match);
+            }
+        });
+        
+        const matches = Array.from(matchesMap.values());
 
         if (matches.length === 0) {
             document.getElementById('opponent-stats-list').innerHTML = '<p class="no-data">試合データがありません</p>';
@@ -2847,8 +2893,21 @@ class App {
         const container = document.getElementById('recent-matches');
         if (!container) return;
         
-        // 実際の試合データをローカルストレージから取得
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        // 両方のストレージからデータを取得してマージ
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        
+        // 重複を排除してマージ
+        const matchesMap = new Map();
+        [...sf6Gallery, ...recentMatches].forEach(match => {
+            if (match.id) {
+                matchesMap.set(match.id, match);
+            }
+        });
+        
+        const matches = Array.from(matchesMap.values())
+            .sort((a, b) => (b.id || 0) - (a.id || 0)) // 新しい順
+            .slice(0, 10); // 最新10件のみ表示
         
         if (matches.length === 0) {
             container.innerHTML = '<p class="no-data">試合記録がまだありません</p>';
@@ -5888,7 +5947,19 @@ class App {
     // ==========================================
 
     loadGalleryMatches(filters = {}) {
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        // sf6_galleryとrecentMatchesの両方からデータを取得してマージ
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        
+        // 両方のデータをマージ（重複を避ける）
+        const matchesMap = new Map();
+        [...sf6Gallery, ...recentMatches].forEach(match => {
+            if (match.id) {
+                matchesMap.set(match.id, match);
+            }
+        });
+        
+        const matches = Array.from(matchesMap.values());
         const galleryGrid = document.getElementById('gallery-grid');
         
         if (!galleryGrid) return;
