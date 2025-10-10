@@ -7670,6 +7670,49 @@ input, select, textarea {
   margin-bottom: var(--spacing-lg);
 }
 
+/* データタイプヘッダー */
+.data-type-header {
+  margin-bottom: var(--spacing-md);
+}
+
+.data-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.data-type-badge.player-data {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.data-type-badge.opponent-data {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+}
+
+.data-type-badge.unknown-data {
+  background: linear-gradient(135deg, #a8a8a8 0%, #636363 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(168, 168, 168, 0.3);
+}
+
+.data-type-badge .badge-icon {
+  font-size: 1.2rem;
+}
+
+.data-type-badge .badge-text {
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
 .batch-data-table {
   width: 100%;
   border-collapse: collapse;

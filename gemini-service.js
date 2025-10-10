@@ -1152,6 +1152,7 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 以下の形式で、抽出したすべてのデータを出力してください：
 
 {
+  "dataType": "player_characters" または "opponent_characters",
   "matches": [
     {
       "character": "LUKE",
@@ -1162,12 +1163,17 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
   ]
 }
 
+**dataTypeの値:**
+- "player_characters": 形式A（使用キャラクター別成績）の場合
+- "opponent_characters": 形式B（対戦相手別成績）の場合
+
 ═══════════════════════════════════════════════════════
 📋 出力例
 ═══════════════════════════════════════════════════════
 
 【形式A: 使用キャラクター別成績の出力例】
 {
+  "dataType": "player_characters",
   "matches": [
     {"character": "ALL", "totalMatches": 23, "winRate": 60.87, "wins": 14},
     {"character": "LUKE", "totalMatches": 23, "winRate": 60.87, "wins": 14},
@@ -1178,6 +1184,7 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 
 【形式B: 対戦相手別成績の出力例】
 {
+  "dataType": "opponent_characters",
   "matches": [
     {"character": "KIMBERLY", "totalMatches": 33, "winRate": 54.55, "wins": 18},
     {"character": "ZANGIEF", "totalMatches": 33, "winRate": 69.70, "wins": 23},
@@ -1254,6 +1261,13 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
                 throw new Error('不正なデータ形式です');
             }
 
+            // dataTypeの検証（オプショナル）
+            const dataType = parsedData.dataType || 'unknown';
+            const validDataTypes = ['player_characters', 'opponent_characters'];
+            if (!validDataTypes.includes(dataType)) {
+                console.warn('⚠️ 不明なdataType:', dataType, '- デフォルト値を使用します');
+            }
+
             // 各マッチデータの検証と補完
             const validatedMatches = parsedData.matches.map(match => {
                 // 勝利数が未設定の場合は計算
@@ -1274,9 +1288,14 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
                 };
             });
 
-            console.log('✅ 画像分析完了:', validatedMatches);
+            console.log('✅ 画像分析完了:', {
+                dataType: dataType,
+                matchCount: validatedMatches.length,
+                matches: validatedMatches
+            });
 
             return {
+                dataType: dataType,
                 matches: validatedMatches,
                 rawResponse: aiResponse,
                 usage: data.usageMetadata || {}

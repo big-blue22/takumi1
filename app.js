@@ -1738,11 +1738,12 @@ class App {
             
             console.log('✅ 画像分析結果:', result);
 
-            // 抽出データを保存
+            // 抽出データを保存（dataTypeも含める）
             this.batchMatchData = result.matches;
+            this.batchDataType = result.dataType || 'unknown';
 
             // プレビューを表示
-            this.displayBatchDataPreview(result.matches);
+            this.displayBatchDataPreview(result.matches, this.batchDataType);
 
             // ローディングを非表示、プレビューを表示
             if (loadingEl) loadingEl.style.display = 'none';
@@ -1761,7 +1762,7 @@ class App {
     }
 
     // バッチデータプレビューを表示
-    displayBatchDataPreview(matches) {
+    displayBatchDataPreview(matches, dataType = 'unknown') {
         const previewContainer = document.getElementById('batch-data-preview');
         if (!previewContainer) return;
 
@@ -1772,6 +1773,23 @@ class App {
             return;
         }
 
+        // データタイプのヘッダーを追加
+        const dataTypeHeader = document.createElement('div');
+        dataTypeHeader.className = 'data-type-header';
+        const dataTypeLabel = dataType === 'player_characters' ? '📊 使用キャラクター別成績' 
+                             : dataType === 'opponent_characters' ? '🎯 対戦相手別成績' 
+                             : '❓ 形式不明';
+        const dataTypeClass = dataType === 'player_characters' ? 'player-data' 
+                            : dataType === 'opponent_characters' ? 'opponent-data' 
+                            : 'unknown-data';
+        dataTypeHeader.innerHTML = `
+            <div class="data-type-badge ${dataTypeClass}">
+                <span class="badge-icon">${dataType === 'player_characters' ? '📊' : dataType === 'opponent_characters' ? '🎯' : '❓'}</span>
+                <span class="badge-text">${dataTypeLabel}</span>
+            </div>
+        `;
+        previewContainer.appendChild(dataTypeHeader);
+
         // ALLを除外してフィルタリング
         const filteredMatches = matches.filter(match => {
             const charName = match.character.toUpperCase();
@@ -1779,7 +1797,7 @@ class App {
         });
 
         if (filteredMatches.length === 0) {
-            previewContainer.innerHTML = '<p class="no-data">保存可能なキャラクターデータがありませんでした</p>';
+            previewContainer.innerHTML += '<p class="no-data">保存可能なキャラクターデータがありませんでした</p>';
             return;
         }
 
