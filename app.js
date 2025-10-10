@@ -6389,15 +6389,20 @@ class App {
     handleCheckboxChange(matchId, currentIndex, shiftKey) {
         const checkbox = document.querySelector(`.match-card[data-match-id="${matchId}"] input`);
         
+        // IDを文字列として正規化
+        const normalizedId = String(matchId);
+        
         if (shiftKey && this.lastSelectedIndex !== -1) {
             // SHIFT+クリックで範囲選択
             this.selectRange(this.lastSelectedIndex, currentIndex, checkbox.checked);
         } else {
             // 通常の選択
             if (checkbox.checked) {
-                this.selectedMatches.add(matchId);
+                this.selectedMatches.add(normalizedId);
+                console.log('Selected:', normalizedId, 'Total:', this.selectedMatches.size);
             } else {
-                this.selectedMatches.delete(matchId);
+                this.selectedMatches.delete(normalizedId);
+                console.log('Deselected:', normalizedId, 'Total:', this.selectedMatches.size);
             }
         }
 
@@ -6415,7 +6420,7 @@ class App {
         for (let i = start; i <= end; i++) {
             if (cards[i]) {
                 const input = cards[i].querySelector('input');
-                const matchId = cards[i].dataset.matchId;
+                const matchId = String(cards[i].dataset.matchId); // 文字列として正規化
                 
                 if (input) {
                     input.checked = checked;
@@ -6434,7 +6439,7 @@ class App {
         const cards = document.querySelectorAll('.match-card');
         cards.forEach(card => {
             const input = card.querySelector('input');
-            const matchId = card.dataset.matchId;
+            const matchId = String(card.dataset.matchId); // 文字列として正規化
             
             if (input) {
                 input.checked = true;
@@ -6442,6 +6447,7 @@ class App {
             }
         });
 
+        console.log('Selected all:', this.selectedMatches.size, 'matches');
         this.updateSelectionCount();
     }
 
@@ -6491,8 +6497,36 @@ class App {
         const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
 
-        const filteredSf6 = sf6Gallery.filter(m => !this.selectedMatches.has(String(m.id)));
-        const filteredRecent = recentMatches.filter(m => !this.selectedMatches.has(String(m.id)));
+        console.log('削除前のデータ数:', {
+            sf6Gallery: sf6Gallery.length,
+            recentMatches: recentMatches.length,
+            selected: Array.from(this.selectedMatches)
+        });
+
+        // IDの型に関係なく削除できるように、両方の形式で比較
+        const selectedIds = Array.from(this.selectedMatches);
+        const filteredSf6 = sf6Gallery.filter(m => {
+            const matchId = String(m.id);
+            const shouldKeep = !selectedIds.some(id => String(id) === matchId);
+            if (!shouldKeep) {
+                console.log('sf6_galleryから削除:', matchId);
+            }
+            return shouldKeep;
+        });
+        const filteredRecent = recentMatches.filter(m => {
+            const matchId = String(m.id);
+            const shouldKeep = !selectedIds.some(id => String(id) === matchId);
+            if (!shouldKeep) {
+                console.log('recentMatchesから削除:', matchId);
+            }
+            return shouldKeep;
+        });
+
+        console.log('削除後のデータ数:', {
+            sf6Gallery: filteredSf6.length,
+            recentMatches: filteredRecent.length,
+            deleted: sf6Gallery.length - filteredSf6.length + recentMatches.length - filteredRecent.length
+        });
 
         localStorage.setItem('sf6_gallery', JSON.stringify(filteredSf6));
         localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
