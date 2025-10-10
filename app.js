@@ -1906,16 +1906,22 @@ class App {
                     const matchEntry = {
                         id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                         timestamp: timestamp,
+                        date: new Date().toLocaleDateString('ja-JP'),
+                        playerCharacter: match.character,
                         character: match.character,
-                        opponent: 'Unknown', // 対戦相手は不明
+                        opponentCharacter: 'Unknown', // 対戦相手は不明
+                        opponent: 'Unknown',
                         result: 'WIN',
                         score: '3-0', // スコアは不明のためデフォルト
+                        roundsWon: 3,
+                        roundsLost: 0,
                         decision: 'unknown',
                         source: 'batch_screenshot',
                         insightTags: ['#一括入力'],
                         feelings: 'スクリーンショットから一括入力されたデータ'
                     };
                     galleryData.push(matchEntry);
+                    savedCount++;
                 }
 
                 // 敗北試合を追加
@@ -1923,10 +1929,15 @@ class App {
                     const matchEntry = {
                         id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                         timestamp: timestamp,
+                        date: new Date().toLocaleDateString('ja-JP'),
+                        playerCharacter: match.character,
                         character: match.character,
+                        opponentCharacter: 'Unknown',
                         opponent: 'Unknown',
                         result: 'LOSS',
                         score: '0-3',
+                        roundsWon: 0,
+                        roundsLost: 3,
                         decision: 'unknown',
                         source: 'batch_screenshot',
                         insightTags: ['#一括入力'],
