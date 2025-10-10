@@ -6348,7 +6348,7 @@ class App {
         
         if (toggleBtn) {
             toggleBtn.classList.remove('active');
-            toggleBtn.innerHTML = '<span class="icon">✓</span> 選択';
+            toggleBtn.innerHTML = '<span class="icon">✓</span> 削除';
         }
 
         // チェックボックスを削除
