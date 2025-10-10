@@ -909,7 +909,36 @@
 
                 <!-- フィルター・検索エリア -->
                 <div class="card gallery-filters">
-                    <h3>絞り込み・検索</h3>
+                    <div class="filter-header">
+                        <h3>絞り込み・検索</h3>
+                        <div class="selection-controls">
+                            <button class="btn-secondary" id="toggle-selection-mode">
+                                <span class="icon">✓</span> 選択
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 選択モード時の操作ボタン（初期非表示） -->
+                    <div class="selection-actions hidden" id="selection-actions">
+                        <div class="selection-info">
+                            <span id="selection-count">0件選択中</span>
+                        </div>
+                        <div class="selection-buttons">
+                            <button class="btn-secondary" id="select-all-btn">
+                                <span class="icon">☑</span> すべて選択
+                            </button>
+                            <button class="btn-secondary" id="deselect-all-btn">
+                                <span class="icon">☐</span> 選択解除
+                            </button>
+                            <button class="btn-danger" id="delete-selected-btn" disabled>
+                                <span class="icon">🗑️</span> 選択項目を削除
+                            </button>
+                            <button class="btn-secondary" id="cancel-selection-btn">
+                                <span class="icon">✕</span> キャンセル
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="filter-grid">
                         <div class="filter-group">
                             <label for="filter-opponent">対戦相手</label>

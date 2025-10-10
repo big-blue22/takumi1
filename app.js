@@ -2903,6 +2903,7 @@ class App {
     loadGallery() {
         this.loadGalleryMatches();
         this.loadOpponentFilter();
+        this.setupGallerySelectionMode();
     }
     
     loadSettings() {
@@ -6272,6 +6273,241 @@ class App {
                 this.loadGalleryMatches();
             });
         }
+    }
+
+    // ギャラリー選択モードの設定
+    setupGallerySelectionMode() {
+        this.selectionMode = false;
+        this.selectedMatches = new Set();
+        this.lastSelectedIndex = -1; // SHIFT選択用
+
+        const toggleBtn = document.getElementById('toggle-selection-mode');
+        const selectAllBtn = document.getElementById('select-all-btn');
+        const deselectAllBtn = document.getElementById('deselect-all-btn');
+        const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+        const cancelBtn = document.getElementById('cancel-selection-btn');
+
+        if (toggleBtn) {
+            toggleBtn.onclick = () => this.toggleSelectionMode();
+        }
+
+        if (selectAllBtn) {
+            selectAllBtn.onclick = () => this.selectAllMatches();
+        }
+
+        if (deselectAllBtn) {
+            deselectAllBtn.onclick = () => this.deselectAllMatches();
+        }
+
+        if (deleteSelectedBtn) {
+            deleteSelectedBtn.onclick = () => this.deleteSelectedMatches();
+        }
+
+        if (cancelBtn) {
+            cancelBtn.onclick = () => this.cancelSelectionMode();
+        }
+    }
+
+    // 選択モードの切り替え
+    toggleSelectionMode() {
+        this.selectionMode = !this.selectionMode;
+        
+        const selectionActions = document.getElementById('selection-actions');
+        const galleryGrid = document.getElementById('gallery-grid');
+        const toggleBtn = document.getElementById('toggle-selection-mode');
+
+        if (this.selectionMode) {
+            // 選択モード有効化
+            selectionActions?.classList.remove('hidden');
+            galleryGrid?.classList.add('selection-mode');
+            if (toggleBtn) {
+                toggleBtn.classList.add('active');
+                toggleBtn.innerHTML = '<span class="icon">✕</span> キャンセル';
+            }
+
+            // 各カードにチェックボックスを追加
+            this.addCheckboxesToCards();
+        } else {
+            // 選択モード無効化
+            this.cancelSelectionMode();
+        }
+    }
+
+    // 選択モードをキャンセル
+    cancelSelectionMode() {
+        this.selectionMode = false;
+        this.selectedMatches.clear();
+        this.lastSelectedIndex = -1;
+
+        const selectionActions = document.getElementById('selection-actions');
+        const galleryGrid = document.getElementById('gallery-grid');
+        const toggleBtn = document.getElementById('toggle-selection-mode');
+
+        selectionActions?.classList.add('hidden');
+        galleryGrid?.classList.remove('selection-mode');
+        
+        if (toggleBtn) {
+            toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = '<span class="icon">✓</span> 選択';
+        }
+
+        // チェックボックスを削除
+        document.querySelectorAll('.match-checkbox').forEach(cb => cb.remove());
+        this.updateSelectionCount();
+    }
+
+    // カードにチェックボックスを追加
+    addCheckboxesToCards() {
+        const cards = document.querySelectorAll('.match-card');
+        cards.forEach((card, index) => {
+            // 既存のチェックボックスがあれば削除
+            const existingCheckbox = card.querySelector('.match-checkbox');
+            if (existingCheckbox) {
+                existingCheckbox.remove();
+            }
+
+            // 新しいチェックボックスを追加
+            const checkbox = document.createElement('div');
+            checkbox.className = 'match-checkbox';
+            checkbox.innerHTML = '<input type="checkbox" class="match-select-input">';
+            
+            const input = checkbox.querySelector('input');
+            const matchId = card.dataset.matchId;
+
+            // チェックボックスのイベントリスナー
+            input.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.handleCheckboxChange(matchId, index, e.shiftKey);
+            });
+
+            card.insertBefore(checkbox, card.firstChild);
+            card.style.cursor = 'pointer';
+        });
+    }
+
+    // チェックボックス変更ハンドラー
+    handleCheckboxChange(matchId, currentIndex, shiftKey) {
+        const checkbox = document.querySelector(`.match-card[data-match-id="${matchId}"] input`);
+        
+        if (shiftKey && this.lastSelectedIndex !== -1) {
+            // SHIFT+クリックで範囲選択
+            this.selectRange(this.lastSelectedIndex, currentIndex, checkbox.checked);
+        } else {
+            // 通常の選択
+            if (checkbox.checked) {
+                this.selectedMatches.add(matchId);
+            } else {
+                this.selectedMatches.delete(matchId);
+            }
+        }
+
+        this.lastSelectedIndex = currentIndex;
+        this.updateSelectionCount();
+    }
+
+    // 範囲選択
+    selectRange(startIndex, endIndex, checked) {
+        const [start, end] = startIndex < endIndex 
+            ? [startIndex, endIndex] 
+            : [endIndex, startIndex];
+
+        const cards = document.querySelectorAll('.match-card');
+        for (let i = start; i <= end; i++) {
+            if (cards[i]) {
+                const input = cards[i].querySelector('input');
+                const matchId = cards[i].dataset.matchId;
+                
+                if (input) {
+                    input.checked = checked;
+                    if (checked) {
+                        this.selectedMatches.add(matchId);
+                    } else {
+                        this.selectedMatches.delete(matchId);
+                    }
+                }
+            }
+        }
+    }
+
+    // すべて選択
+    selectAllMatches() {
+        const cards = document.querySelectorAll('.match-card');
+        cards.forEach(card => {
+            const input = card.querySelector('input');
+            const matchId = card.dataset.matchId;
+            
+            if (input) {
+                input.checked = true;
+                this.selectedMatches.add(matchId);
+            }
+        });
+
+        this.updateSelectionCount();
+    }
+
+    // すべて選択解除
+    deselectAllMatches() {
+        const cards = document.querySelectorAll('.match-card');
+        cards.forEach(card => {
+            const input = card.querySelector('input');
+            if (input) {
+                input.checked = false;
+            }
+        });
+
+        this.selectedMatches.clear();
+        this.updateSelectionCount();
+    }
+
+    // 選択数の更新
+    updateSelectionCount() {
+        const countEl = document.getElementById('selection-count');
+        const deleteBtn = document.getElementById('delete-selected-btn');
+
+        if (countEl) {
+            countEl.textContent = `${this.selectedMatches.size}件選択中`;
+        }
+
+        if (deleteBtn) {
+            deleteBtn.disabled = this.selectedMatches.size === 0;
+        }
+    }
+
+    // 選択された試合を削除
+    deleteSelectedMatches() {
+        if (this.selectedMatches.size === 0) {
+            this.showToast('削除する試合を選択してください', 'warning');
+            return;
+        }
+
+        const count = this.selectedMatches.size;
+        const message = `選択した${count}試合を削除してもよろしいですか？\n\nこの操作は取り消せません。`;
+
+        if (!confirm(message)) {
+            return;
+        }
+
+        // sf6_galleryとrecentMatchesの両方から削除
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+
+        const filteredSf6 = sf6Gallery.filter(m => !this.selectedMatches.has(String(m.id)));
+        const filteredRecent = recentMatches.filter(m => !this.selectedMatches.has(String(m.id)));
+
+        localStorage.setItem('sf6_gallery', JSON.stringify(filteredSf6));
+        localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
+
+        this.showToast(`${count}試合のデータを削除しました`, 'success');
+
+        // 選択をクリア
+        this.selectedMatches.clear();
+        this.cancelSelectionMode();
+
+        // ギャラリーを再読み込み
+        this.loadGalleryMatches();
+
+        // ダッシュボードの統計も更新
+        this.loadDashboard();
     }
 
 }
