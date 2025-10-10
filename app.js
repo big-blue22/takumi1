@@ -1772,6 +1772,17 @@ class App {
             return;
         }
 
+        // ALLを除外してフィルタリング
+        const filteredMatches = matches.filter(match => {
+            const charName = match.character.toUpperCase();
+            return charName !== 'ALL' && match.totalMatches > 0;
+        });
+
+        if (filteredMatches.length === 0) {
+            previewContainer.innerHTML = '<p class="no-data">保存可能なキャラクターデータがありませんでした</p>';
+            return;
+        }
+
         const table = document.createElement('table');
         table.className = 'batch-data-table';
         
@@ -1787,9 +1798,9 @@ class App {
         `;
         table.appendChild(thead);
 
-        // データ行
+        // データ行（ALLを除外）
         const tbody = document.createElement('tbody');
-        matches.forEach(match => {
+        filteredMatches.forEach(match => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${match.character}</strong></td>
@@ -1803,28 +1814,39 @@ class App {
 
         previewContainer.appendChild(table);
 
-        // サマリー情報
+        // サマリー情報（ALLのデータを使用して正確な総試合数を表示）
         const summary = document.createElement('div');
         summary.className = 'batch-summary';
-        const totalMatches = matches.reduce((sum, m) => sum + m.totalMatches, 0);
-        const totalWins = matches.reduce((sum, m) => sum + m.wins, 0);
+        
+        // ALLデータがあればそれを総試合数として使用、なければ各キャラの合計
+        const allData = matches.find(m => m.character.toUpperCase() === 'ALL');
+        const totalMatches = allData ? allData.totalMatches : filteredMatches.reduce((sum, m) => sum + m.totalMatches, 0);
+        const totalWins = allData ? allData.wins : filteredMatches.reduce((sum, m) => sum + m.wins, 0);
         const avgWinRate = totalMatches > 0 ? (totalWins / totalMatches * 100).toFixed(2) : 0;
         
         summary.innerHTML = `
             <div class="summary-item">
                 <span class="summary-label">キャラクター数:</span>
-                <span class="summary-value">${matches.length}</span>
+                <span class="summary-value">${filteredMatches.length}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">総試合数:</span>
-                <span class="summary-value">${totalMatches}</span>
+                <span class="summary-value">${totalMatches}試合</span>
             </div>
             <div class="summary-item">
-                <span class="summary-label">平均勝率:</span>
+                <span class="summary-label">総合勝率:</span>
                 <span class="summary-value">${avgWinRate}%</span>
             </div>
         `;
         previewContainer.appendChild(summary);
+
+        // 元のデータにALLが含まれていた場合の注意メッセージ
+        if (allData) {
+            const note = document.createElement('p');
+            note.className = 'batch-note';
+            note.innerHTML = `💡 総試合数 ${totalMatches}試合（勝率 ${avgWinRate}%）は「ALL」から取得されました。個別キャラクターデータのみ保存されます。`;
+            previewContainer.appendChild(note);
+        }
     }
 
     // バッチマッチデータを保存
@@ -1841,12 +1863,21 @@ class App {
             // 現在の日時
             const timestamp = new Date().toISOString();
             
+            // ALLと試合数0を除外してフィルタリング
+            const validMatches = this.batchMatchData.filter(match => {
+                const charName = match.character.toUpperCase();
+                return charName !== 'ALL' && match.totalMatches > 0;
+            });
+
+            if (validMatches.length === 0) {
+                this.showToast('保存可能なデータがありませんでした', 'warning');
+                return;
+            }
+
+            let savedCount = 0;
+            
             // 各キャラクターのデータをギャラリーに追加
-            this.batchMatchData.forEach(match => {
-                // スキップ条件: ALLキャラクターや試合数0のデータ
-                if (match.character.toUpperCase() === 'ALL' || match.totalMatches === 0) {
-                    return;
-                }
+            validMatches.forEach(match => {
 
                 // 勝利と敗北に分けて試合データを作成
                 const wins = match.wins;
@@ -1884,6 +1915,7 @@ class App {
                         feelings: 'スクリーンショットから一括入力されたデータ'
                     };
                     galleryData.push(matchEntry);
+                    savedCount++;
                 }
             });
 
@@ -1893,9 +1925,12 @@ class App {
             // ダッシュボードを更新
             this.loadDashboard();
 
-            // 成功メッセージ
-            const totalSaved = this.batchMatchData.reduce((sum, m) => sum + m.totalMatches, 0);
-            this.showToast(`${totalSaved}試合のデータを保存しました！`, 'success');
+            // 成功メッセージ（実際に保存された試合数とキャラクター数を表示）
+            const characterCount = validMatches.length;
+            this.showToast(
+                `✅ ${characterCount}キャラクター、合計${savedCount}試合のデータを保存しました！`,
+                'success'
+            );
 
             // 入力をクリア
             this.clearBatchInput();

@@ -1073,12 +1073,13 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
             const analysisPrompt = `この画像はStreet Fighter 6の対戦戦績画面のスクリーンショットです。
 以下の情報を抽出してJSON形式で返してください。
 
-【重要】
+【重要な指示】
 - 各キャラクターの「試合数」と「勝率」または「勝利数」を抽出
 - 画像には2つの形式があります：
   1. 「試合数」と「勝率%」が表示されている形式（例: 33戦, 54.55%）
   2. 「勝利数/試合数」が表示されている形式（例: 14勝/23戦）
 - どちらの形式でも対応し、試合数と勝率を計算してください
+- **「ALL」は全キャラクターの合計値なので、データに含めてください（後で除外されます）**
 
 出力形式（必ずこのJSON形式で返してください）:
 {
@@ -1095,6 +1096,7 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 例1（勝率形式の場合）:
 {
   "matches": [
+    {"character": "ALL", "totalMatches": 23, "winRate": 60.87, "wins": 14},
     {"character": "KIMBERLY", "totalMatches": 33, "winRate": 54.55, "wins": 18},
     {"character": "ZANGIEF", "totalMatches": 33, "winRate": 69.70, "wins": 23}
   ]
