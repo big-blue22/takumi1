@@ -6399,14 +6399,16 @@ class App {
             
             const matchId = card.dataset.matchId;
 
+            // 入力のchangeイベントで処理
+            input.addEventListener('change', (e) => {
+                e.stopPropagation();
+                // changeイベントは状態が更新された後に発火するので、正しい状態が取得できる
+                this.handleCheckboxChange(matchId, index, e.shiftKey);
+            });
+
             // チェックボックス全体のクリックイベント（伝播を停止）
             checkbox.addEventListener('click', (e) => {
                 e.stopPropagation();
-                
-                // クリック後の状態を取得（changeイベントの後に実行されるため正しい状態）
-                setTimeout(() => {
-                    this.handleCheckboxChange(matchId, index, e.shiftKey);
-                }, 0);
             });
 
             // 入力自体のクリックも伝播停止
