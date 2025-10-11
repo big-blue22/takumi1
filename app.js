@@ -6435,12 +6435,16 @@ class App {
         console.log('handleCheckboxChange:', {
             matchId: normalizedId,
             isChecked: isChecked,
-            shiftKey: shiftKey
+            shiftKey: shiftKey,
+            lastSelectedIndex: this.lastSelectedIndex,
+            currentIndex: currentIndex
         });
         
-        if (shiftKey && this.lastSelectedIndex !== -1) {
+        if (shiftKey && this.lastSelectedIndex !== -1 && this.lastSelectedIndex !== currentIndex) {
             // SHIFT+クリックで範囲選択
+            console.log('🎯 SHIFT範囲選択を実行');
             this.selectRange(this.lastSelectedIndex, currentIndex, isChecked);
+            // 範囲選択の場合、updateSelectionCountはselectRange内で呼ばれる
         } else {
             // 通常の選択
             if (isChecked) {
@@ -6450,10 +6454,11 @@ class App {
                 this.selectedMatches.delete(normalizedId);
                 console.log('✗ Deselected:', normalizedId, 'Total:', this.selectedMatches.size);
             }
+            this.updateSelectionCount();
         }
 
+        // 最後に選択したインデックスを更新
         this.lastSelectedIndex = currentIndex;
-        this.updateSelectionCount();
     }
 
     // 範囲選択
@@ -6462,7 +6467,16 @@ class App {
             ? [startIndex, endIndex] 
             : [endIndex, startIndex];
 
+        console.log('範囲選択:', {
+            start: start,
+            end: end,
+            checked: checked,
+            range: end - start + 1
+        });
+
         const cards = document.querySelectorAll('.match-card');
+        let selectedCount = 0;
+        
         for (let i = start; i <= end; i++) {
             if (cards[i]) {
                 const input = cards[i].querySelector('input');
@@ -6472,12 +6486,16 @@ class App {
                     input.checked = checked;
                     if (checked) {
                         this.selectedMatches.add(matchId);
+                        selectedCount++;
                     } else {
                         this.selectedMatches.delete(matchId);
                     }
                 }
             }
         }
+        
+        console.log(`範囲選択完了: ${selectedCount}件を${checked ? '選択' : '解除'}`);
+        this.updateSelectionCount();
     }
 
     // すべて選択
