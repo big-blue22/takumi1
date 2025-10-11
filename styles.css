@@ -7980,6 +7980,8 @@ input, select, textarea {
   z-index: 10;
   cursor: pointer;
   transition: var(--transition-base);
+  width: 32px;
+  height: 32px;
 }
 
 .match-checkbox:hover {
@@ -7989,9 +7991,13 @@ input, select, textarea {
 .match-checkbox input[type="checkbox"] {
   position: absolute;
   opacity: 0;
-  width: 0;
-  height: 0;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
+  z-index: 2;
+  margin: 0;
+  top: 0;
+  left: 0;
 }
 
 /* Custom Checkbox Design */
@@ -8010,7 +8016,10 @@ input, select, textarea {
     0 4px 12px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
 }
 
 [data-theme="light"] .match-checkbox::before {
@@ -8084,6 +8093,7 @@ input, select, textarea {
     0 0 8px rgba(255, 255, 255, 0.5);
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   pointer-events: none;
+  z-index: 0;
 }
 
 .match-checkbox input[type="checkbox"]:checked ~ *::after,

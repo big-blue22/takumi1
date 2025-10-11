@@ -6392,25 +6392,29 @@ class App {
             // 新しいチェックボックスを追加
             const checkbox = document.createElement('div');
             checkbox.className = 'match-checkbox';
-            checkbox.innerHTML = '<input type="checkbox" class="match-select-input">';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'match-select-input';
+            checkbox.appendChild(input);
             
-            const input = checkbox.querySelector('input');
             const matchId = card.dataset.matchId;
 
             // チェックボックス全体のクリックイベント（伝播を停止）
             checkbox.addEventListener('click', (e) => {
                 e.stopPropagation();
-            });
-
-            // チェックボックスのイベントリスナー
-            input.addEventListener('click', (e) => {
-                e.stopPropagation();
+                e.preventDefault();
+                
+                // 入力の状態を切り替え
+                input.checked = !input.checked;
+                
+                // 変更を処理
                 this.handleCheckboxChange(matchId, index, e.shiftKey);
             });
 
-            // チェンジイベントも追加（より確実に）
+            // 入力自体のイベントも処理
             input.addEventListener('change', (e) => {
                 e.stopPropagation();
+                console.log('Checkbox changed:', matchId, 'Checked:', input.checked);
             });
 
             card.insertBefore(checkbox, card.firstChild);
@@ -6422,20 +6426,32 @@ class App {
     handleCheckboxChange(matchId, currentIndex, shiftKey) {
         const checkbox = document.querySelector(`.match-card[data-match-id="${matchId}"] input`);
         
+        if (!checkbox) {
+            console.error('チェックボックスが見つかりません:', matchId);
+            return;
+        }
+        
         // IDを文字列として正規化
         const normalizedId = String(matchId);
+        const isChecked = checkbox.checked;
+        
+        console.log('handleCheckboxChange:', {
+            matchId: normalizedId,
+            isChecked: isChecked,
+            shiftKey: shiftKey
+        });
         
         if (shiftKey && this.lastSelectedIndex !== -1) {
             // SHIFT+クリックで範囲選択
-            this.selectRange(this.lastSelectedIndex, currentIndex, checkbox.checked);
+            this.selectRange(this.lastSelectedIndex, currentIndex, isChecked);
         } else {
             // 通常の選択
-            if (checkbox.checked) {
+            if (isChecked) {
                 this.selectedMatches.add(normalizedId);
-                console.log('Selected:', normalizedId, 'Total:', this.selectedMatches.size);
+                console.log('✓ Selected:', normalizedId, 'Total:', this.selectedMatches.size);
             } else {
                 this.selectedMatches.delete(normalizedId);
-                console.log('Deselected:', normalizedId, 'Total:', this.selectedMatches.size);
+                console.log('✗ Deselected:', normalizedId, 'Total:', this.selectedMatches.size);
             }
         }
 
