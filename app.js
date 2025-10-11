@@ -6402,19 +6402,16 @@ class App {
             // チェックボックス全体のクリックイベント（伝播を停止）
             checkbox.addEventListener('click', (e) => {
                 e.stopPropagation();
-                e.preventDefault();
                 
-                // 入力の状態を切り替え
-                input.checked = !input.checked;
-                
-                // 変更を処理
-                this.handleCheckboxChange(matchId, index, e.shiftKey);
+                // クリック後の状態を取得（changeイベントの後に実行されるため正しい状態）
+                setTimeout(() => {
+                    this.handleCheckboxChange(matchId, index, e.shiftKey);
+                }, 0);
             });
 
-            // 入力自体のイベントも処理
-            input.addEventListener('change', (e) => {
+            // 入力自体のクリックも伝播停止
+            input.addEventListener('click', (e) => {
                 e.stopPropagation();
-                console.log('Checkbox changed:', matchId, 'Checked:', input.checked);
             });
 
             card.insertBefore(checkbox, card.firstChild);
