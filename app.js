@@ -6033,8 +6033,19 @@ class App {
 
         // カードクリックイベントを設定
         document.querySelectorAll('.match-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const matchId = parseInt(card.dataset.matchId);
+            card.addEventListener('click', (e) => {
+                // 選択モード中はモーダルを開かない
+                if (this.selectionMode) {
+                    return;
+                }
+                
+                // チェックボックスのクリックは無視
+                if (e.target.type === 'checkbox' || e.target.closest('.match-checkbox')) {
+                    return;
+                }
+                
+                // IDは文字列として扱う（バッチ入力のIDも対応）
+                const matchId = card.dataset.matchId;
                 this.showMatchDetail(matchId);
             });
         });
@@ -6110,10 +6121,16 @@ class App {
     }
 
     showMatchDetail(matchId) {
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const match = matches.find(m => m.id === matchId);
+        // sf6_galleryとrecentMatchesの両方から検索
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const allMatches = [...sf6Gallery, ...recentMatches];
+        
+        // IDは文字列として比較（バッチ入力のIDも対応）
+        const match = allMatches.find(m => String(m.id) === String(matchId));
 
         if (!match) {
+            console.error('試合が見つかりません。ID:', matchId, 'タイプ:', typeof matchId);
             this.showToast('試合データが見つかりません', 'error');
             return;
         }
@@ -6217,10 +6234,16 @@ class App {
             return;
         }
 
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const filteredMatches = matches.filter(m => m.id !== matchId);
+        // sf6_galleryとrecentMatchesの両方から削除
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        
+        // IDを文字列として比較
+        const filteredSf6 = sf6Gallery.filter(m => String(m.id) !== String(matchId));
+        const filteredRecent = recentMatches.filter(m => String(m.id) !== String(matchId));
 
-        localStorage.setItem('recentMatches', JSON.stringify(filteredMatches));
+        localStorage.setItem('sf6_gallery', JSON.stringify(filteredSf6));
+        localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
 
         this.showToast('試合データを削除しました', 'success');
         this.closeMatchDetailModal();
@@ -6374,10 +6397,20 @@ class App {
             const input = checkbox.querySelector('input');
             const matchId = card.dataset.matchId;
 
+            // チェックボックス全体のクリックイベント（伝播を停止）
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
             // チェックボックスのイベントリスナー
             input.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.handleCheckboxChange(matchId, index, e.shiftKey);
+            });
+
+            // チェンジイベントも追加（より確実に）
+            input.addEventListener('change', (e) => {
+                e.stopPropagation();
             });
 
             card.insertBefore(checkbox, card.firstChild);
