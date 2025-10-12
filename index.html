@@ -1011,19 +1011,25 @@
                             <!-- Plan Generation Step -->
                             <div id="plan-generation-step" class="plan-step">
                                 <div class="plan-summary">
-                                    <h4>目標概要</h4>
-                                    <div class="goal-summary-card">
-                                        <div class="goal-summary-title" id="modal-goal-title">目標タイトル</div>
-                                        <div class="goal-summary-details">
-                                            <span class="goal-summary-deadline" id="modal-goal-deadline">期限</span>
-                                            <span class="goal-summary-duration" id="modal-goal-duration">期間</span>
+                                    <h4>目標情報を入力</h4>
+                                    <form id="modal-goal-form" class="modal-goal-form">
+                                        <div class="form-group">
+                                            <label for="modal-goal-title-input">目標タイトル <span class="required">*</span></label>
+                                            <input type="text" id="modal-goal-title-input" placeholder="例：ダイヤモンドランク到達" required>
                                         </div>
-                                        <div class="goal-summary-description" id="modal-goal-description">詳細説明</div>
-                                    </div>
+                                        <div class="form-group">
+                                            <label for="modal-goal-deadline-input">期限 <span class="required">*</span></label>
+                                            <input type="date" id="modal-goal-deadline-input" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="modal-goal-description-input">詳細説明（任意）</label>
+                                            <textarea id="modal-goal-description-input" rows="3" placeholder="目標の詳細や達成したいことを記入してください"></textarea>
+                                        </div>
+                                    </form>
                                 </div>
 
                                 <div class="plan-generation">
-                                    <div class="generation-status" id="generation-status">
+                                    <div class="generation-status hidden" id="generation-status">
                                         <div class="loading-spinner"></div>
                                         <p>AIがあなた専用のコーチングプランを作成中...</p>
                                     </div>

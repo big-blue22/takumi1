@@ -5201,27 +5201,17 @@ class App {
 
     // プラン付き目標作成を開始
     handleCreateGoalWithPlan() {
-        // フォームデータを取得
-        const goalData = this.getGoalFormData();
-
-        if (!goalData.title || !goalData.deadline) {
-            this.showToast('目標タイトルと期限を入力してください', 'warning');
-            return;
-        }
-
-        // プランモーダルを開く
-        this.openCoachingPlanModal(goalData);
-    }
-
-    // 目標フォームデータを取得
-    getGoalFormData() {
-        return {
-            title: document.getElementById('goal-title').value,
-            deadline: document.getElementById('goal-deadline').value,
-            description: document.getElementById('goal-description').value,
+        // 空の目標データでモーダルを開く（モーダル内で入力）
+        const goalData = {
+            title: '',
+            deadline: '',
+            description: '',
             gameGenre: this.getCurrentGameGenre(),
             skillLevel: this.getCurrentSkillLevel()
         };
+
+        // プランモーダルを開く
+        this.openCoachingPlanModal(goalData);
     }
 
     // 現在のゲームジャンルを取得
@@ -5337,29 +5327,26 @@ class App {
         this.currentPlan = null;
     }
 
-    // 目標概要を表示
+    // 目標概要を表示（フォーム入力フィールドに初期値を設定）
     displayGoalSummary(goalData) {
-        const titleEl = document.getElementById('modal-goal-title');
-        const deadlineEl = document.getElementById('modal-goal-deadline');
-        const durationEl = document.getElementById('modal-goal-duration');
-        const descriptionEl = document.getElementById('modal-goal-description');
+        const titleInput = document.getElementById('modal-goal-title-input');
+        const deadlineInput = document.getElementById('modal-goal-deadline-input');
+        const descriptionInput = document.getElementById('modal-goal-description-input');
 
-        if (titleEl) titleEl.textContent = goalData.title;
-        if (deadlineEl) deadlineEl.textContent = `期限: ${goalData.deadline}`;
-        if (descriptionEl) descriptionEl.textContent = goalData.description || '詳細説明なし';
+        if (titleInput && goalData.title) {
+            titleInput.value = goalData.title;
+        }
+        if (deadlineInput && goalData.deadline) {
+            deadlineInput.value = goalData.deadline;
+        }
+        if (descriptionInput && goalData.description) {
+            descriptionInput.value = goalData.description;
+        }
 
-        // 期間計算
-        if (durationEl && goalData.deadline) {
-            const today = new Date();
-            const deadline = new Date(goalData.deadline);
-            const diffTime = deadline - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 0) {
-                durationEl.textContent = `期間: ${diffDays}日間`;
-            } else {
-                durationEl.textContent = '期限: 本日または過去';
-            }
+        // 期限の最小値を今日の日付に設定
+        if (deadlineInput) {
+            const today = new Date().toISOString().split('T')[0];
+            deadlineInput.min = today;
         }
     }
 
@@ -5390,6 +5377,44 @@ class App {
             this.showToast('コーチングプランサービスが利用できません', 'error');
             return;
         }
+
+        // モーダル内のフォームから目標データを取得
+        const titleInput = document.getElementById('modal-goal-title-input');
+        const deadlineInput = document.getElementById('modal-goal-deadline-input');
+        const descriptionInput = document.getElementById('modal-goal-description-input');
+
+        if (!titleInput || !deadlineInput) {
+            this.showToast('フォーム要素が見つかりません', 'error');
+            return;
+        }
+
+        const title = titleInput.value.trim();
+        const deadline = deadlineInput.value;
+        const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+        // 入力検証
+        if (!title || !deadline) {
+            this.showToast('目標タイトルと期限を入力してください', 'warning');
+            return;
+        }
+
+        // 期限が過去の日付でないかチェック
+        const deadlineDate = new Date(deadline);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (deadlineDate < today) {
+            this.showToast('期限は本日以降の日付を設定してください', 'warning');
+            return;
+        }
+
+        // 目標データを更新
+        this.currentGoalData = {
+            title: title,
+            deadline: deadline,
+            description: description,
+            gameGenre: this.getCurrentGameGenre(),
+            skillLevel: this.getCurrentSkillLevel()
+        };
 
         this.showPlanGenerationLoading(true);
 

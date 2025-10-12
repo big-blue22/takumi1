@@ -8257,3 +8257,83 @@ input, select, textarea {
     0 0 30px rgba(245, 158, 11, 0.5);
   border-color: rgba(245, 158, 11, 0.7);
 }
+
+/* Modal Goal Form Styles */
+.modal-goal-form {
+  margin-bottom: var(--spacing-xl);
+}
+
+.modal-goal-form .form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.modal-goal-form label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.modal-goal-form label .required {
+  color: var(--color-accent);
+  margin-left: var(--spacing-xs);
+}
+
+[data-theme="light"] .modal-goal-form label .required {
+  color: var(--color-primary);
+}
+
+.modal-goal-form input[type="text"],
+.modal-goal-form input[type="date"],
+.modal-goal-form textarea {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: var(--transition-base);
+  font-family: inherit;
+}
+
+[data-theme="light"] .modal-goal-form input[type="text"],
+[data-theme="light"] .modal-goal-form input[type="date"],
+[data-theme="light"] .modal-goal-form textarea {
+  background: rgba(248, 250, 252, 0.9);
+  border: 2px solid rgba(226, 232, 240, 0.8);
+  color: var(--text-primary);
+}
+
+.modal-goal-form input:focus,
+.modal-goal-form textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .modal-goal-form input:focus,
+[data-theme="light"] .modal-goal-form textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.modal-goal-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.plan-summary h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.generation-status.hidden {
+  display: none;
+}
