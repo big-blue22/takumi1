@@ -848,15 +848,6 @@ class App {
         // まとめて入力のイベントリスナー
         this.setupBatchInputListeners();
         
-        // 目標フォーム
-        const goalForm = document.getElementById('goal-form');
-        if (goalForm) {
-            goalForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleGoalSubmit();
-            });
-        }
-
         // プラン付き目標作成ボタン
         const createWithPlanBtn = document.getElementById('create-with-plan-btn');
         if (createWithPlanBtn) {
@@ -2108,23 +2099,6 @@ class App {
         } catch (e) {
             console.warn('Failed to store match and refresh stats:', e);
         }
-    }
-    
-    // 目標追加
-    handleGoalSubmit() {
-        const now = new Date();
-        const goalData = {
-            title: document.getElementById('goal-title').value,
-            deadline: document.getElementById('goal-deadline').value,
-            description: document.getElementById('goal-description').value,
-            id: Date.now(),
-            createdAt: now.toISOString(),
-            progress: 0
-        };
-
-        this.addGoal(goalData);
-        document.getElementById('goal-form').reset();
-        this.showToast('目標を追加しました', 'success');
     }
     
     // API設定保存

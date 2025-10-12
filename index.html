@@ -983,24 +983,12 @@
                 </div>
 
                 <!-- Add Goal Form -->
-                <div class="card">
-                    <h3>新しい目標を追加</h3>
-                    <form id="goal-form" class="goal-form">
-                        <div class="form-group">
-                            <label for="goal-title">目標タイトル</label>
-                            <input type="text" id="goal-title" placeholder="例：Master到達" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="goal-deadline">期限</label>
-                            <input type="date" id="goal-deadline" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="goal-description">詳細</label>
-                            <textarea id="goal-description" placeholder="目標の詳細説明"></textarea>
-                        </div>
-                        <button type="submit" class="btn-primary">目標を追加</button>
-                        <button type="button" id="create-with-plan-btn" class="btn-accent">📋 プラン付きで目標作成</button>
-                    </form>
+                <div class="card centered-button-card">
+                    <h3>新しい目標を作成</h3>
+                    <p class="subtitle">AIがあなたの目標達成をサポートする計画を作成します</p>
+                    <div class="centered-button-wrapper">
+                        <button type="button" id="create-with-plan-btn" class="btn-accent btn-large">📋 プラン付きで目標作成</button>
+                    </div>
                 </div>
 
                 <!-- Goals List -->
