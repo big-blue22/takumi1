@@ -995,11 +995,34 @@
                 <div id="coaching-plan-modal" class="modal hidden">
                     <div class="modal-content coaching-plan-modal">
                         <div class="modal-header">
-                            <h3>📋 コーチングプラン作成</h3>
+                            <h3>📋 コーチングプラン作成（SF6最適化版）</h3>
                             <button class="modal-close" id="close-plan-modal">&times;</button>
                         </div>
 
                         <div class="modal-body">
+                            <!-- SF6 Knowledge Base Status -->
+                            <div class="sf6-knowledge-status" id="sf6-knowledge-status">
+                                <div class="knowledge-indicator">
+                                    <span class="indicator-icon">📚</span>
+                                    <div class="indicator-text">
+                                        <span class="indicator-label">SF6知識ベース:</span>
+                                        <span class="indicator-value" id="kb-status-text">確認中...</span>
+                                    </div>
+                                    <button class="btn-icon" id="reload-kb-btn" title="知識ベースを再読み込み">
+                                        🔄
+                                    </button>
+                                </div>
+                                <div class="knowledge-details hidden" id="kb-details">
+                                    <div class="kb-info">
+                                        <span>📄 ファイル数: <strong id="kb-file-count">0</strong></span>
+                                        <span>📊 データサイズ: <strong id="kb-data-size">0</strong>文字</span>
+                                    </div>
+                                    <p class="kb-help-text">
+                                        💡 データソースページでSF6攻略資料をアップロードすると、より精度の高いプランが生成されます
+                                    </p>
+                                </div>
+                            </div>
+
                             <!-- Plan Generation Step -->
                             <div id="plan-generation-step" class="plan-step">
                                 <div class="plan-summary">

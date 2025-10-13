@@ -1,8 +1,10 @@
-// coaching-plan-service.js - コーチングプラン管理サービス
+// coaching-plan-service.js - コーチングプラン管理サービス（SF6最適化版）
 class CoachingPlanService {
     constructor() {
         this.geminiService = null;
+        this.sf6KnowledgeBase = null;
         this.initializeGeminiService();
+        this.loadSF6KnowledgeBase();
     }
 
     // Gemini APIサービスを初期化
@@ -17,7 +19,42 @@ class CoachingPlanService {
         }
     }
 
-    // 目標に基づいてコーチングプランを自動生成
+    // SF6知識ベースをロード
+    async loadSF6KnowledgeBase() {
+        try {
+            // LocalStorageから保存されているデータソースファイルを取得
+            const datasourceKeys = Object.keys(localStorage).filter(key => key.startsWith('datasource-'));
+            
+            if (datasourceKeys.length > 0) {
+                console.log(`📚 SF6知識ベース: ${datasourceKeys.length}ファイル検出`);
+                
+                // 全ファイルの内容を結合
+                let knowledgeBase = '';
+                datasourceKeys.forEach(key => {
+                    const content = localStorage.getItem(key);
+                    const filename = key.replace('datasource-', '');
+                    knowledgeBase += `\n--- ${filename} ---\n${content}\n`;
+                });
+                
+                // サイズ制限（12,000文字）
+                if (knowledgeBase.length > 12000) {
+                    console.warn(`⚠️ 知識ベースが大きすぎます（${knowledgeBase.length}文字）。最初の12,000文字を使用します。`);
+                    knowledgeBase = knowledgeBase.substring(0, 12000);
+                }
+                
+                this.sf6KnowledgeBase = knowledgeBase;
+                console.log(`✅ SF6知識ベース読み込み完了: ${knowledgeBase.length}文字`);
+            } else {
+                console.log('📚 SF6知識ベース: データソースファイルなし');
+                this.sf6KnowledgeBase = null;
+            }
+        } catch (error) {
+            console.error('SF6知識ベース読み込みエラー:', error);
+            this.sf6KnowledgeBase = null;
+        }
+    }
+
+    // 目標に基づいてコーチングプランを自動生成（SF6最適化版）
     async generateCoachingPlan(goal) {
         const { title, deadline, description, gameGenre, skillLevel } = goal;
 
@@ -26,11 +63,19 @@ class CoachingPlanService {
         }
 
         try {
+            // 知識ベースを再読み込み（最新のデータソースを反映）
+            await this.loadSF6KnowledgeBase();
+            
             const planData = this.calculatePlanStructure(deadline);
 
             if (!this.geminiService) {
                 throw new Error('Gemini APIサービスが利用できません。APIキーを設定してください。');
             }
+
+            console.log('🎮 SF6コーチングプラン生成開始');
+            console.log(`📊 知識ベース: ${this.sf6KnowledgeBase ? '有効' : '無効'}`);
+            console.log(`🎯 目標: ${title}`);
+            console.log(`📅 期間: ${planData.totalWeeks}週間`);
 
             return await this.generatePlanWithAI(goal, planData);
         } catch (error) {
@@ -84,13 +129,19 @@ class CoachingPlanService {
         };
     }
 
-    // AIでコーチングプランを生成
+    // AIでコーチングプランを生成（SF6最適化版・グラウンディング対応）
     async generatePlanWithAI(goal, planStructure) {
         const prompt = this.buildPlanGenerationPrompt(goal, planStructure);
 
         try {
-            console.log('🤖 Generating plan with Gemini API...');
-            const response = await this.geminiService.sendChatMessage(prompt, false);
+            console.log('🤖 Generating SF6 coaching plan with Gemini API...');
+            
+            // データソース情報の有無を確認
+            const hasKnowledgeBase = this.sf6KnowledgeBase && this.sf6KnowledgeBase.length > 0;
+            console.log(`📚 知識ベース: ${hasKnowledgeBase ? '有効' : '無効'}`);
+            
+            // グラウンディングを使用してAPI呼び出し
+            const response = await this.generatePlanWithGrounding(prompt, goal);
 
             console.log('📡 Raw API Response:', response);
 
@@ -120,31 +171,297 @@ class CoachingPlanService {
             console.log('📝 Response preview:', responseText.substring(0, 200) + '...');
 
             const generatedPlan = this.parsePlanResponse(responseText, planStructure);
-            return this.createPlanObject(goal, generatedPlan);
+            const planObject = this.createPlanObject(goal, generatedPlan);
+            
+            // グラウンディング情報があれば追加
+            if (response.groundingSources) {
+                planObject.metadata.groundingSources = response.groundingSources;
+                planObject.metadata.knowledgeBaseUsed = hasKnowledgeBase;
+            }
+            
+            return planObject;
         } catch (error) {
             console.error('AI plan generation failed:', error);
             throw error;
         }
     }
 
-    // AI用プロンプトを構築
+    // グラウンディングを使用してプラン生成
+    async generatePlanWithGrounding(prompt, goal) {
+        const { character } = goal;
+        
+        // SF6固有の検索クエリを生成
+        const searchQueries = this.generateSF6SearchQueries(goal);
+        
+        // リクエストボディを構築
+        const requestBody = {
+            contents: [{
+                parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+                temperature: 0.4,
+                maxOutputTokens: 8192,
+                topP: 0.8,
+                topK: 40
+            }
+        };
+
+        // 知識ベースがある場合はコンテキストに追加
+        if (this.sf6KnowledgeBase) {
+            const contextPrompt = `## ストリートファイター6 参考資料\n${this.sf6KnowledgeBase}\n\n${prompt}`;
+            requestBody.contents[0].parts[0].text = contextPrompt;
+            console.log('📚 知識ベースをコンテキストに追加');
+        }
+
+        // Webグラウンディングを有効化
+        if (searchQueries.length > 0 && this.geminiService.groundingConfig?.enableWebSearch) {
+            requestBody.tools = [{
+                googleSearch: {}
+            }];
+            
+            // 検索キーワードをプロンプトに含める
+            const enhancedPrompt = `${requestBody.contents[0].parts[0].text}
+
+【最新情報検索】
+以下のキーワードで最新のメタ情報を検索して参考にしてください：
+${searchQueries.map(q => `- ${q}`).join('\n')}`;
+            
+            requestBody.contents[0].parts[0].text = enhancedPrompt;
+            console.log('🔍 グラウンディング有効化:', searchQueries);
+        }
+
+        // API呼び出し
+        const apiKey = this.geminiService.apiKey;
+        const model = this.geminiService.chatModel;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error('No response from API');
+        }
+
+        const candidate = data.candidates[0];
+        const text = candidate.content?.parts?.[0]?.text || '';
+        
+        // グラウンディング情報を抽出
+        let groundingSources = null;
+        if (candidate.groundingMetadata) {
+            groundingSources = this.geminiService.processGroundingMetadata(candidate.groundingMetadata);
+        }
+
+        return {
+            response: text,
+            groundingSources: groundingSources
+        };
+    }
+
+    // SF6固有の検索クエリを生成
+    generateSF6SearchQueries(goal) {
+        const { title, character, description, skillLevel } = goal;
+        const queries = [];
+        
+        // 基本検索クエリ
+        queries.push('ストリートファイター6 最新メタ 2025');
+        
+        // キャラクター固有の検索
+        if (character && character !== 'all') {
+            queries.push(`ストリートファイター6 ${character} 攻略 2025`);
+            queries.push(`SF6 ${character} コンボ 最新`);
+        }
+        
+        // スキルレベル別の検索
+        if (skillLevel) {
+            const levelMap = {
+                'beginner': '初心者',
+                'intermediate': '中級者',
+                'advanced': '上級者'
+            };
+            const levelJp = levelMap[skillLevel] || '中級者';
+            queries.push(`ストリートファイター6 ${levelJp} 上達法`);
+        }
+        
+        // 目標タイトルからキーワード抽出
+        if (title) {
+            // ランク関連
+            if (title.match(/ダイヤ|プラチナ|ゴールド|シルバー|ブロンズ|マスター|レジェンド/)) {
+                queries.push('ストリートファイター6 ランクマッチ 攻略');
+            }
+            // キャラクター名が含まれている場合
+            const characters = ['リュウ', 'ケン', 'キャミィ', '春麗', 'ガイル', 'ザンギエフ', 'ブランカ', 'ダルシム', 'Eホンダ', 'ジュリ', 'ジェイミー', 'マノン', 'ディージェイ', 'マリーザ', 'JP', 'キンバリー', 'リリー', 'ラシード'];
+            characters.forEach(char => {
+                if (title.includes(char)) {
+                    queries.push(`SF6 ${char} メタ 対策`);
+                }
+            });
+        }
+        
+        return queries;
+    }
+
+    // AI用プロンプトを構築（SF6最適化版）
     buildPlanGenerationPrompt(goal, planStructure) {
-        const { title } = goal;
+        const { title, character, description, skillLevel, gameGenre } = goal;
+        
+        // キャラクター情報
+        const characterInfo = character && character !== 'all' ? `使用キャラクター: ${character}` : '全キャラクター対応';
+        
+        // スキルレベル情報
+        const skillLevelMap = {
+            'beginner': '初心者（基本操作を習得中）',
+            'intermediate': '中級者（基本を理解し応用を学習中）',
+            'advanced': '上級者（高度な戦術を実践中）'
+        };
+        const skillInfo = skillLevelMap[skillLevel] || '中級者';
+        
+        // ユーザープロフィールから統計情報を取得
+        const userStats = this.getUserStatistics();
 
-        return `目標「${title}」の${planStructure.totalWeeks}週練習プラン。JSON形式のみ回答:
+        return `# ストリートファイター6 コーチングプラン生成
 
+## 目標情報
+- **目標**: ${title}
+- **期間**: ${planStructure.totalWeeks}週間（${planStructure.totalDays}日間）
+- **キャラクター**: ${characterInfo}
+- **スキルレベル**: ${skillInfo}
+${description ? `- **詳細**: ${description}` : ''}
+
+## プレイヤー統計
+- 総試合数: ${userStats.totalMatches}試合
+- 総合勝率: ${userStats.overallWinRate}%
+- よく使うキャラ: ${userStats.topCharacters.join(', ') || 'データなし'}
+- 苦手な相手: ${userStats.weakAgainst.join(', ') || 'データなし'}
+
+## 指示
+ストリートファイター6の最新メタ、キャラクター特性、フレームデータを考慮した実践的な${planStructure.totalWeeks}週間のコーチングプランを作成してください。
+
+### 各週の構成
+1. **focus**: その週のメインテーマ（SF6の実践的なスキルに特化）
+2. **objectives**: 達成すべき具体的な目標（2-3個、測定可能なもの）
+3. **milestones**: 達成の判断基準（具体的な数値や状況）
+
+### SF6固有の考慮事項
+- ドライブシステム（パリィ、ラッシュ、インパクト、リバーサル）の習得
+- モダン/クラシック操作の特性
+- キャラクター固有のコンボルート
+- 対戦キャラクター別の対策
+- フレーム有利・不利の理解
+- 起き攻め・受け身狩りのセットプレイ
+- 最新パッチでの変更点
+
+### プランの難易度調整
+- 第1週: 基礎固め（${skillInfo}向けの基本スキル）
+- 中盤週: 実践応用（ランクマッチでの活用）
+- 最終週: 目標達成（${title}の完遂）
+
+## 出力形式
+**必ずJSON形式のみで回答してください**：
+
+\`\`\`json
 {
   "weeks": [
     {
       "weekNumber": 1,
-      "focus": "基礎練習",
-      "objectives": ["目標1", "目標2"],
-      "milestones": ["達成1", "達成2"]
+      "focus": "ドライブシステムの基礎とパリィ練習",
+      "objectives": [
+        "トレーニングモードでパリィを20回連続成功",
+        "ランクマッチでドライブラッシュを5回以上使用",
+        "ドライブゲージの管理を意識して10試合"
+      ],
+      "milestones": [
+        "パリィ成功率60%以上",
+        "ドライブラッシュからコンボ完走3回",
+        "ゲージ切れ0回で5試合完了"
+      ]
     }
   ]
 }
+\`\`\`
 
-${planStructure.totalWeeks}週分生成。`;
+${planStructure.totalWeeks}週分のプランを生成してください。各週は上記の例のように、SF6の実践的で測定可能な内容にしてください。`;
+    }
+
+    // ユーザー統計情報を取得
+    getUserStatistics() {
+        try {
+            const galleryData = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+            
+            if (galleryData.length === 0) {
+                return {
+                    totalMatches: 0,
+                    overallWinRate: 0,
+                    topCharacters: [],
+                    weakAgainst: []
+                };
+            }
+
+            // 総試合数と勝率
+            const totalMatches = galleryData.length;
+            const wins = galleryData.filter(m => m.result === 'WIN').length;
+            const overallWinRate = ((wins / totalMatches) * 100).toFixed(1);
+
+            // よく使うキャラクター（上位3つ）
+            const characterCount = {};
+            galleryData.forEach(match => {
+                const char = match.playerCharacter || match.character;
+                if (char) {
+                    characterCount[char] = (characterCount[char] || 0) + 1;
+                }
+            });
+            const topCharacters = Object.entries(characterCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([char]) => char);
+
+            // 苦手な相手（勝率が低い相手キャラ上位3つ）
+            const opponentStats = {};
+            galleryData.forEach(match => {
+                const opp = match.opponentCharacter || match.opponent;
+                if (opp && opp !== 'Unknown') {
+                    if (!opponentStats[opp]) {
+                        opponentStats[opp] = { wins: 0, total: 0 };
+                    }
+                    opponentStats[opp].total++;
+                    if (match.result === 'WIN') {
+                        opponentStats[opp].wins++;
+                    }
+                }
+            });
+            const weakAgainst = Object.entries(opponentStats)
+                .filter(([_, stats]) => stats.total >= 3) // 3試合以上のデータがある相手のみ
+                .map(([char, stats]) => ({
+                    char,
+                    winRate: (stats.wins / stats.total) * 100
+                }))
+                .sort((a, b) => a.winRate - b.winRate)
+                .slice(0, 3)
+                .map(item => item.char);
+
+            return {
+                totalMatches,
+                overallWinRate,
+                topCharacters,
+                weakAgainst
+            };
+        } catch (error) {
+            console.error('統計情報の取得エラー:', error);
+            return {
+                totalMatches: 0,
+                overallWinRate: 0,
+                topCharacters: [],
+                weakAgainst: []
+            };
+        }
     }
 
     // AIレスポンスを解析

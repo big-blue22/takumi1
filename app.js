@@ -5245,6 +5245,14 @@ class App {
             });
         }
 
+        // 知識ベース再読み込みボタン
+        const reloadKbBtn = document.getElementById('reload-kb-btn');
+        if (reloadKbBtn) {
+            reloadKbBtn.addEventListener('click', () => {
+                this.reloadSF6KnowledgeBase();
+            });
+        }
+
         // AI生成ボタン
         const generateBtn = document.getElementById('generate-plan-btn');
         if (generateBtn) {
@@ -5309,11 +5317,95 @@ class App {
         // 目標情報を表示
         this.displayGoalSummary(goalData);
 
+        // SF6知識ベースの状態を更新
+        this.updateSF6KnowledgeStatus();
+
         // モーダルを表示
         const modal = document.getElementById('coaching-plan-modal');
         if (modal) {
             modal.classList.remove('hidden');
             this.showPlanStep('plan-generation-step');
+        }
+    }
+
+    // SF6知識ベースの状態を更新
+    updateSF6KnowledgeStatus() {
+        try {
+            // LocalStorageからデータソースファイルを取得
+            const datasourceKeys = Object.keys(localStorage).filter(key => key.startsWith('datasource-'));
+            
+            const statusText = document.getElementById('kb-status-text');
+            const fileCount = document.getElementById('kb-file-count');
+            const dataSize = document.getElementById('kb-data-size');
+            const kbDetails = document.getElementById('kb-details');
+            
+            if (datasourceKeys.length > 0) {
+                // データがある場合
+                let totalSize = 0;
+                datasourceKeys.forEach(key => {
+                    const content = localStorage.getItem(key);
+                    if (content) {
+                        totalSize += content.length;
+                    }
+                });
+                
+                if (statusText) statusText.textContent = '有効';
+                if (statusText) statusText.className = 'indicator-value active';
+                if (fileCount) fileCount.textContent = datasourceKeys.length;
+                if (dataSize) dataSize.textContent = totalSize.toLocaleString();
+                if (kbDetails) kbDetails.classList.remove('hidden');
+                
+                console.log(`📚 SF6知識ベース: ${datasourceKeys.length}ファイル、${totalSize}文字`);
+            } else {
+                // データがない場合
+                if (statusText) statusText.textContent = '未設定';
+                if (statusText) statusText.className = 'indicator-value inactive';
+                if (fileCount) fileCount.textContent = '0';
+                if (dataSize) dataSize.textContent = '0';
+                if (kbDetails) kbDetails.classList.remove('hidden');
+                
+                console.log('📚 SF6知識ベース: データなし');
+            }
+        } catch (error) {
+            console.error('知識ベース状態更新エラー:', error);
+        }
+    }
+
+    // SF6知識ベースを再読み込み
+    async reloadSF6KnowledgeBase() {
+        try {
+            const reloadBtn = document.getElementById('reload-kb-btn');
+            if (reloadBtn) {
+                reloadBtn.disabled = true;
+                reloadBtn.textContent = '🔄';
+                reloadBtn.classList.add('spinning');
+            }
+            
+            // コーチングプランサービスの知識ベースを再読み込み
+            if (this.coachingPlanService) {
+                await this.coachingPlanService.loadSF6KnowledgeBase();
+            }
+            
+            // 状態表示を更新
+            this.updateSF6KnowledgeStatus();
+            
+            this.showToast('📚 SF6知識ベースを更新しました', 'success');
+            
+            setTimeout(() => {
+                if (reloadBtn) {
+                    reloadBtn.disabled = false;
+                    reloadBtn.classList.remove('spinning');
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('知識ベース再読み込みエラー:', error);
+            this.showToast('知識ベースの更新に失敗しました', 'error');
+            
+            const reloadBtn = document.getElementById('reload-kb-btn');
+            if (reloadBtn) {
+                reloadBtn.disabled = false;
+                reloadBtn.classList.remove('spinning');
+            }
         }
     }
 
@@ -5481,6 +5573,11 @@ class App {
         // 週別プランを表示
         console.log('📅 Rendering week cards...');
         this.renderWeekCards(plan.weeks);
+        
+        // グラウンディング情報を表示
+        if (plan.metadata?.groundingSources) {
+            this.renderGroundingSources(plan.metadata.groundingSources);
+        }
     }
 
     // 週別カードをレンダリング
@@ -5502,6 +5599,38 @@ class App {
         });
 
         console.log('📅 Week cards rendered successfully');
+    }
+
+    // グラウンディング情報を表示
+    renderGroundingSources(groundingSources) {
+        const container = document.getElementById('weeks-container');
+        if (!container || !groundingSources || groundingSources.totalSources === 0) {
+            return;
+        }
+
+        const sourcesCard = document.createElement('div');
+        sourcesCard.className = 'grounding-sources-card';
+        sourcesCard.innerHTML = `
+            <div class="sources-header">
+                <span class="sources-icon">🌐</span>
+                <h4>参考にした最新情報（${groundingSources.totalSources}件）</h4>
+            </div>
+            <div class="sources-list">
+                ${groundingSources.sources.slice(0, 5).map(source => `
+                    <div class="source-item">
+                        <a href="${source.url}" target="_blank" rel="noopener noreferrer">
+                            ${source.title}
+                        </a>
+                        ${source.snippet ? `<p class="source-snippet">${source.snippet}</p>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            <p class="sources-note">
+                💡 このコーチングプランは、上記の最新情報を参考に生成されました
+            </p>
+        `;
+
+        container.appendChild(sourcesCard);
     }
 
     // 週カードを作成
