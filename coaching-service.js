@@ -521,10 +521,75 @@ ${recentFeedback}
             // メタデータを保存（キャッシュ管理用）
             this.updateCacheMetadata(date, advice.source || 'unknown');
 
+            // 履歴に追加（新機能）
+            this.addToHistory(advice);
+
             // 古いキャッシュを削除（30日以上前）
             this.cleanOldCache();
         } catch (error) {
             console.warn('CoachingService: Failed to cache advice:', error);
+        }
+    }
+    
+    // 履歴に追加
+    addToHistory(advice) {
+        try {
+            // 既存の履歴を取得
+            const history = this.getHistory();
+            
+            // 新しいアドバイスオブジェクトを作成
+            const historyEntry = {
+                id: advice.id || `history_${Date.now()}`,
+                headline: advice.headline,
+                coreContent: advice.coreContent,
+                practicalStep: advice.practicalStep,
+                goalConnection: advice.goalConnection || '',
+                date: advice.date || new Date().toDateString(),
+                timestamp: new Date().toISOString(),
+                source: advice.source || 'unknown'
+            };
+            
+            // 履歴の先頭に追加（新しいものが上に来るように）
+            history.unshift(historyEntry);
+            
+            // 履歴を保存
+            localStorage.setItem('coachingHistory', JSON.stringify(history));
+            
+            console.log('CoachingService: Added advice to history:', historyEntry.headline);
+        } catch (error) {
+            console.warn('CoachingService: Failed to add to history:', error);
+        }
+    }
+    
+    // 履歴を取得
+    getHistory() {
+        try {
+            const stored = localStorage.getItem('coachingHistory');
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.warn('CoachingService: Failed to load history:', error);
+            return [];
+        }
+    }
+    
+    // 履歴を検索
+    searchHistory(keyword) {
+        try {
+            const history = this.getHistory();
+            
+            if (!keyword || keyword.trim() === '') {
+                return history;
+            }
+            
+            const lowerKeyword = keyword.toLowerCase();
+            
+            return history.filter(item => {
+                const searchText = `${item.headline} ${item.coreContent} ${item.practicalStep}`.toLowerCase();
+                return searchText.includes(lowerKeyword);
+            });
+        } catch (error) {
+            console.warn('CoachingService: Failed to search history:', error);
+            return [];
         }
     }
 

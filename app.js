@@ -4416,6 +4416,161 @@ class App {
 
         // コメント機能のリスナー
         this.setupCommentFeedbackListeners();
+        
+        // 履歴機能のリスナー
+        this.setupCoachingHistoryListeners();
+    }
+    
+    // 履歴機能のイベントリスナー設定
+    setupCoachingHistoryListeners() {
+        const historyButton = document.getElementById('history-button');
+        const closeModalButton = document.getElementById('close-modal-button');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const searchInput = document.getElementById('search-history-input');
+        
+        // 履歴ボタンクリック
+        if (historyButton) {
+            historyButton.addEventListener('click', () => {
+                this.showCoachingHistoryModal();
+            });
+        }
+        
+        // 閉じるボタンクリック
+        if (closeModalButton) {
+            closeModalButton.addEventListener('click', () => {
+                this.hideCoachingHistoryModal();
+            });
+        }
+        
+        // オーバーレイクリック
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', () => {
+                this.hideCoachingHistoryModal();
+            });
+        }
+        
+        // 検索入力
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterCoachingHistory(e.target.value);
+            });
+        }
+    }
+    
+    // 履歴モーダルを表示
+    showCoachingHistoryModal() {
+        const modal = document.getElementById('history-modal');
+        const overlay = document.getElementById('modal-overlay');
+        
+        if (modal && overlay) {
+            // 履歴を読み込んで表示
+            this.displayCoachingHistory();
+            
+            // モーダルとオーバーレイを表示
+            modal.style.display = 'flex';
+            overlay.style.display = 'block';
+            
+            // アニメーション用に少し遅延
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                overlay.style.opacity = '1';
+            }, 10);
+        }
+    }
+    
+    // 履歴モーダルを非表示
+    hideCoachingHistoryModal() {
+        const modal = document.getElementById('history-modal');
+        const overlay = document.getElementById('modal-overlay');
+        const searchInput = document.getElementById('search-history-input');
+        
+        if (modal && overlay) {
+            // フェードアウト
+            modal.style.opacity = '0';
+            overlay.style.opacity = '0';
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                overlay.style.display = 'none';
+                
+                // 検索入力をクリア
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+            }, 300);
+        }
+    }
+    
+    // 履歴を表示
+    displayCoachingHistory(keyword = '') {
+        const container = document.getElementById('history-list-container');
+        if (!container || !this.coachingService) return;
+        
+        // 履歴を取得（検索キーワードがあれば絞り込み）
+        const history = keyword 
+            ? this.coachingService.searchHistory(keyword)
+            : this.coachingService.getHistory();
+        
+        // コンテナをクリア
+        container.innerHTML = '';
+        
+        // 履歴がない場合
+        if (history.length === 0) {
+            if (keyword) {
+                container.innerHTML = `
+                    <div class="no-results-message">
+                        <div class="search-icon">🔍</div>
+                        <h4>"${keyword}" に一致する履歴が見つかりませんでした</h4>
+                        <p>別のキーワードで検索してみてください</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="no-history-message">
+                        <h4>まだ履歴がありません</h4>
+                        <p>コーチングアドバイスが生成されると、ここに履歴が表示されます</p>
+                    </div>
+                `;
+            }
+            return;
+        }
+        
+        // 履歴アイテムを生成
+        history.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'history-item';
+            
+            // 日付のフォーマット
+            const date = new Date(item.timestamp);
+            const dateStr = date.toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            itemEl.innerHTML = `
+                <div class="history-item-header">
+                    <span class="history-item-date">${dateStr}</span>
+                </div>
+                <div class="history-item-headline">${item.headline}</div>
+                <div class="history-item-content">${item.coreContent}</div>
+                <div class="history-item-step">
+                    <strong>実践ステップ:</strong> ${item.practicalStep}
+                </div>
+                ${item.goalConnection ? `
+                <div class="history-item-goal">
+                    <strong>🎯 目標との関連:</strong> ${item.goalConnection}
+                </div>
+                ` : ''}
+            `;
+            
+            container.appendChild(itemEl);
+        });
+    }
+    
+    // 履歴を絞り込み
+    filterCoachingHistory(keyword) {
+        this.displayCoachingHistory(keyword);
     }
 
     setupCommentFeedbackListeners() {
