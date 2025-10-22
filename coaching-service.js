@@ -28,6 +28,8 @@ class CoachingService {
         const cachedAdvice = this.getCachedAdvice(today);
 
         if (cachedAdvice) {
+            // キャッシュから取得した場合も履歴に追加（重複チェック付き）
+            this.ensureInHistory(cachedAdvice);
             return cachedAdvice;
         }
 
@@ -52,7 +54,9 @@ class CoachingService {
                 const fallbackFromCache = this.getRecentCachedAdvice();
                 if (fallbackFromCache) {
                     console.log('CoachingService: Using recent cached advice due to rate limit');
-                    return { ...fallbackFromCache, date: today, source: 'cached_fallback' };
+                    const advice = { ...fallbackFromCache, date: today, source: 'cached_fallback' };
+                    this.ensureInHistory(advice);
+                    return advice;
                 }
             }
             console.warn('CoachingService: Gemini API generation failed, falling back to static data:', error);
@@ -558,6 +562,30 @@ ${recentFeedback}
             console.log('CoachingService: Added advice to history:', historyEntry.headline);
         } catch (error) {
             console.warn('CoachingService: Failed to add to history:', error);
+        }
+    }
+    
+    // 履歴に確実に存在するようにする（重複チェック付き）
+    ensureInHistory(advice) {
+        try {
+            const history = this.getHistory();
+            const today = new Date().toDateString();
+            
+            // 今日の日付で既に同じIDまたはheadlineの履歴があるかチェック
+            const existsToday = history.some(item => {
+                const itemDate = new Date(item.timestamp).toDateString();
+                return itemDate === today && 
+                       (item.id === advice.id || item.headline === advice.headline);
+            });
+            
+            // 存在しない場合のみ追加
+            if (!existsToday) {
+                this.addToHistory(advice);
+            } else {
+                console.log('CoachingService: Advice already in history for today');
+            }
+        } catch (error) {
+            console.warn('CoachingService: Failed to ensure in history:', error);
         }
     }
     
