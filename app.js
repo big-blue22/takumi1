@@ -296,7 +296,7 @@ class App {
         }
     }
 
-    // メインアプリを初期化（API接続成功時）
+    // メインアプリを初期化(API接続成功時)
     async initializeMainApp() {
         // 統一APIマネージャーからGeminiServiceへのAPIキー同期を確保
         if (window.unifiedApiManager && window.unifiedApiManager.isConfigured()) {
@@ -318,6 +318,8 @@ class App {
         // その他のナビゲーション機能
         this.initNavigationHelpers();
         
+        // 連勝記録の初期化
+        this.initWinStreak();
         
         // 初期ページの表示
         this.showPage(this.currentPage);
@@ -1250,7 +1252,10 @@ class App {
         option.classList.add('selected');
 
         // hidden inputに値を設定
-        document.getElementById('selected-score').value = option.dataset.score;
+        const score = option.dataset.score;
+        const result = option.dataset.result || 'loss'; // data-result属性から取得
+        document.getElementById('selected-score').value = score;
+        document.getElementById('selected-result').value = result; // 結果も保存
 
         this.updateSubmitButton();
     }
@@ -1951,10 +1956,13 @@ class App {
                 this.loadGallery();
             }
 
+            // 連勝記録をリセット
+            this.resetWinStreak();
+
             // 成功メッセージ（実際に保存された試合数とキャラクター数を表示）
             const characterCount = validMatches.length;
             this.showToast(
-                `✅ ${characterCount}キャラクター、合計${savedCount}試合のデータを保存しました！`,
+                `✅ ${characterCount}キャラクター、合計${savedCount}試合のデータを保存しました！\n連勝記録はリセットされました。`,
                 'success'
             );
 
@@ -2008,12 +2016,13 @@ class App {
         const insightTags = document.getElementById('selected-tags').value;
         const feelings = document.getElementById('match-feelings-hidden').value;
 
-        // スコアを分解 (例: "3-1" → 勝利ラウンド3, 敗北ラウンド1)
+        // スコアと結果を取得（data-result属性から）
+        const selectedScoreOption = document.querySelector(`.score-option[data-score="${score}"]`);
+        const result = selectedScoreOption ? selectedScoreOption.dataset.result : 'loss';
         const [roundsWon, roundsLost] = score.split('-').map(num => parseInt(num));
-        const result = roundsWon > roundsLost ? 'WIN' : 'LOSS';
 
         const matchData = {
-            result: result,
+            result: result.toUpperCase(),
             character: character,
             playerCharacter: character,
             opponentCharacter: opponent,
@@ -2031,6 +2040,9 @@ class App {
 
         // 試合を保存し、ダッシュボード統計を更新
         this.storeMatchAndRefresh(matchData);
+
+        // 連勝記録を更新
+        this.updateWinStreak(matchData.result);
 
         // フォームをリセット
         this.resetQuickForm();
@@ -6883,6 +6895,90 @@ class App {
 
         // ダッシュボードの統計も更新
         this.loadDashboard();
+    }
+
+    // ========== 連勝記録機能 ==========
+
+    // 連勝記録の初期化
+    initWinStreak() {
+        const currentStreak = this.getWinStreak();
+        this.updateWinStreakDisplay(currentStreak);
+        console.log('連勝記録を初期化しました:', currentStreak);
+    }
+
+    // 連勝記録を取得
+    getWinStreak() {
+        const streak = localStorage.getItem('winStreak');
+        return streak ? parseInt(streak) : 0;
+    }
+
+    // 連勝記録を保存
+    saveWinStreak(streak) {
+        localStorage.setItem('winStreak', streak.toString());
+    }
+
+    // 連勝記録を更新（試合結果に応じて）
+    updateWinStreak(result) {
+        const currentStreak = this.getWinStreak();
+        let newStreak = currentStreak;
+
+        switch (result.toUpperCase()) {
+            case 'WIN':
+                newStreak = currentStreak + 1;
+                console.log(`🔥 勝利！連勝記録を更新: ${currentStreak} → ${newStreak}`);
+                if (newStreak > 1) {
+                    this.showToast(`🔥 ${newStreak}連勝中！`, 'success');
+                }
+                break;
+            case 'LOSS':
+                if (currentStreak > 0) {
+                    console.log(`😢 敗北... 連勝記録がリセットされました (${currentStreak}連勝)`);
+                    this.showToast(`😢 連勝記録がリセットされました (${currentStreak}連勝)`, 'info');
+                }
+                newStreak = 0;
+                break;
+            case 'DRAW':
+                console.log(`🤝 引き分け。連勝記録は維持: ${currentStreak}`);
+                // 引き分けの場合は変動なし
+                break;
+            default:
+                console.warn('不明な試合結果:', result);
+                break;
+        }
+
+        this.saveWinStreak(newStreak);
+        this.updateWinStreakDisplay(newStreak);
+    }
+
+    // 連勝記録をリセット
+    resetWinStreak() {
+        const currentStreak = this.getWinStreak();
+        if (currentStreak > 0) {
+            console.log(`連勝記録をリセット: ${currentStreak} → 0`);
+        }
+        this.saveWinStreak(0);
+        this.updateWinStreakDisplay(0);
+    }
+
+    // 連勝記録の表示を更新
+    updateWinStreakDisplay(streak) {
+        const banner = document.getElementById('win-streak-banner');
+        const streakValue = document.getElementById('current-win-streak');
+
+        if (!banner || !streakValue) {
+            console.warn('連勝バナーの要素が見つかりません');
+            return;
+        }
+
+        streakValue.textContent = streak.toString();
+        banner.setAttribute('data-streak', streak.toString());
+
+        // 連勝数が0の場合は非表示
+        if (streak === 0) {
+            banner.style.display = 'none';
+        } else {
+            banner.style.display = 'block';
+        }
     }
 
 }

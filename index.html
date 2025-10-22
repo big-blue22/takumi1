@@ -80,6 +80,18 @@
                     <p>SF6 プレイヤーパフォーマンス概要</p>
                 </div>
 
+                <!-- Win Streak Display -->
+                <div class="win-streak-banner" id="win-streak-banner">
+                    <div class="streak-content">
+                        <span class="streak-icon">🔥</span>
+                        <div class="streak-info">
+                            <span class="streak-label">現在の連勝</span>
+                            <span class="streak-value" id="current-win-streak">0</span>
+                            <span class="streak-unit">連勝</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Performance Charts -->
                 <div class="charts-grid">
                     <div class="card chart-card">
@@ -497,19 +509,23 @@
                         <div class="match-section score-section">
                             <h4>試合結果</h4>
                             <div class="score-grid">
-                                <div class="score-option" data-score="2-0">
+                                <div class="score-option" data-score="2-0" data-result="win">
                                     <div class="score-display">2-0</div>
                                     <div class="score-label">完勝</div>
                                 </div>
-                                <div class="score-option" data-score="2-1">
+                                <div class="score-option" data-score="2-1" data-result="win">
                                     <div class="score-display">2-1</div>
                                     <div class="score-label">勝利</div>
                                 </div>
-                                <div class="score-option" data-score="1-2">
+                                <div class="score-option" data-score="1-1" data-result="draw">
+                                    <div class="score-display">1-1</div>
+                                    <div class="score-label">引き分け</div>
+                                </div>
+                                <div class="score-option" data-score="1-2" data-result="loss">
                                     <div class="score-display">1-2</div>
                                     <div class="score-label">敗北</div>
                                 </div>
-                                <div class="score-option" data-score="0-2">
+                                <div class="score-option" data-score="0-2" data-result="loss">
                                     <div class="score-display">0-2</div>
                                     <div class="score-label">完敗</div>
                                 </div>
@@ -636,6 +652,7 @@
                         <input type="hidden" id="selected-character" name="character">
                         <input type="hidden" id="selected-opponent" name="opponent">
                         <input type="hidden" id="selected-score" name="score">
+                        <input type="hidden" id="selected-result" name="result">
                         <input type="hidden" id="selected-decision" name="decision">
                         <input type="hidden" id="selected-tags" name="insightTags">
                         <input type="hidden" id="match-feelings-hidden" name="feelings">
