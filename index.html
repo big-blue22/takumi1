@@ -1742,6 +1742,25 @@
     </div>
 
     <!-- Scripts -->
+    <script>
+        // Chrome拡張機能のエラーを抑制
+        window.addEventListener('error', function(e) {
+            if (e.message && e.message.includes('message channel closed')) {
+                e.preventDefault();
+                return true;
+            }
+        });
+        
+        // Promise rejectionのエラーも抑制
+        window.addEventListener('unhandledrejection', function(e) {
+            if (e.reason && e.reason.message && 
+                (e.reason.message.includes('message channel closed') || 
+                 e.reason.message.includes('message port closed'))) {
+                e.preventDefault();
+                return true;
+            }
+        });
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="mock-data.js"></script>
