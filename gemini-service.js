@@ -24,14 +24,14 @@ class GeminiService {
             topK: 40 // より幅広い回答生成
         };
 
-        // グラウンディング設定（正しいAPI構造で再有効化）
+    // グラウンディング設定（正しいAPI構造で再有効化）
         this.groundingConfig = {
             enableWebSearch: true, // Web検索を再有効化
             enableDynamicRetrieval: true, // 動的な情報取得を有効化
             searchQueries: {
-                sf6: 'Street Fighter 6',
-                tactics: 'fighting game tactics',
-                meta: 'tournament meta analysis'
+                valorant: 'VALORANT',
+                tactics: 'VALORANT tactics strategies',
+                meta: 'VALORANT tournament meta analysis agents'
             }
         };
         
@@ -314,17 +314,17 @@ class GeminiService {
 - ゲーム: ${game.name} (${game.category})
 - 現在のランク: ${stats.rank}
 - 勝率: ${stats.winRate}
-- ドライブラッシュ成功: ${stats.driveRushSuccess}
-- 対空精度: ${stats.antiAirAccuracy}
+- エージェント使用率: ${stats.driveRushSuccess}
+- ヘッドショット率: ${stats.antiAirAccuracy}
 - 総試合数: ${stats.gamesPlayed}
 
 【設定目標】
 ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join('\n') : '- まだ目標が設定されていません'}
 
-【対話方針 (Gemini 2.5 Flash Enhanced)】
-1. ${game.name}の最新メタとトレンドを考慮した具体的アドバイス
-2. データドリブンな改善提案と実践的な練習方法
-3. プレイヤーの現在レベルに適した段階的スキルアップ計画
+【対話方針 (VALORANT専門 - Gemini 2.5 Flash Enhanced)】
+1. ${game.name}の最新メタとトレンド(エージェント構成、マップ戦略)を考慮した具体的アドバイス
+2. エージェント別の立ち回り、アビリティ使用タイミング、マップコントロールに関する実践的な提案
+3. プレイヤーの現在レベルに適した段階的スキルアップ計画(エイム練習、ポジショニング、チーム連携)
 4. メンタル面も含む総合的なパフォーマンス向上支援
 5. 迅速で的確な回答（Gemini 2.5 Flashの高速処理能力を活用）
 
@@ -660,11 +660,11 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
             // コンテキストを短縮してトークンエラーを回避
             const truncatedContext = context.length > 200 ? context.substring(0, 200) : context;
 
-            let tagPrompt = `SF6の戦術分析用タグを3～5個生成。必ず#で始めてください。
+            let tagPrompt = `VALORANTの戦術分析用タグを3～5個生成。必ず#で始めてください。
 
 分析内容: "${truncatedContext}"
 
-例: #対空反応 #コンボミス #立ち回り改善 #ドライブ管理
+例: #エイム練習 #スキル管理 #立ち回り改善 #チーム連携
 
 タグのみ出力:`;
 
@@ -788,29 +788,37 @@ ${truncatedFileContent}
     generateSearchQueries(rawInput) {
         const queries = [];
 
-        // キャラクター名を検出して検索クエリを生成
-        const characters = ['ジュリ', 'ルーク', 'ケン', '春麗', 'チュンリー', 'ザンギエフ', 'ガイル', 'リュウ', 'キャミィ', 'JP', 'マリーザ', 'マノン', 'リリー'];
-        const foundChars = characters.filter(char => rawInput.includes(char));
+        // エージェント名を検出して検索クエリを生成
+        const agents = ['ジェット', 'レイナ', 'セージ', 'ソーヴァ', 'ブリムストーン', 'フェニックス', 'ヴァイパー', 'サイファー', 'レイズ', 'キルジョイ', 'スカイ', 'ヨル', 'アストラ', 'KAY/O', 'チェンバー', 'ネオン', 'フェイド', 'ハーバー', 'ゲッコー', 'デッドロック', 'クローヴ'];
+        const foundAgents = agents.filter(agent => rawInput.includes(agent));
 
-        foundChars.forEach(char => {
-            queries.push(`Street Fighter 6 ${char} 対策 攻略`);
-            queries.push(`SF6 ${char} フレームデータ 技性能`);
+        foundAgents.forEach(agent => {
+            queries.push(`VALORANT ${agent} 立ち回り 攻略`);
+            queries.push(`VALORANT ${agent} アビリティ 使い方`);
+        });
+
+        // マップ戦略の検出
+        const maps = ['バインド', 'ヘイヴン', 'スプリット', 'アセント', 'アイスボックス', 'ブリーズ', 'フラクチャー', 'パール', 'ロータス', 'サンセット'];
+        const foundMaps = maps.filter(map => rawInput.includes(map));
+
+        foundMaps.forEach(map => {
+            queries.push(`VALORANT ${map} 戦略 攻略`);
         });
 
         // 技術的要素の検出
-        if (rawInput.includes('対空')) {
-            queries.push('Street Fighter 6 対空技 タイミング コツ');
+        if (rawInput.includes('エイム')) {
+            queries.push('VALORANT エイム練習 上達方法');
         }
-        if (rawInput.includes('コンボ')) {
-            queries.push('Street Fighter 6 コンボ 精度 練習方法');
+        if (rawInput.includes('スキル')) {
+            queries.push('VALORANT スキル管理 タイミング');
         }
         if (rawInput.includes('立ち回り')) {
-            queries.push('Street Fighter 6 立ち回り 距離管理 戦術');
+            queries.push('VALORANT 立ち回り ポジショニング 戦術');
         }
 
         // 最新メタ情報
-        queries.push('Street Fighter 6 最新 メタ 大会結果 2024');
-        queries.push('SF6 プロ選手 戦術 解説');
+        queries.push('VALORANT 最新 メタ 大会結果 2024');
+        queries.push('VALORANT プロ選手 戦術 解説');
 
         return queries.slice(0, 5); // 最大5つのクエリに制限
     }
@@ -897,7 +905,7 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
 
 指示:
 - 感情表現を具体的な状況に変換
-- キーワードを抽出
+- VALORANTのエージェント名、マップ名、戦術用語を抽出
 - 150字以内で要約
 
 出力形式(JSON):
@@ -974,22 +982,22 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
     extractBasicElements(text) {
         const elements = [];
 
-        // 技術面の要素
-        const techKeywords = ['対空', 'コンボ', '投げ', '確反', 'パリィ'];
+        // 技術面の要素（VALORANT用）
+        const techKeywords = ['エイム', 'スキル', 'アビリティ', 'ウルト', 'ピーク'];
         const foundTech = techKeywords.filter(keyword => text.includes(keyword));
         if (foundTech.length > 0) {
             elements.push(`技術面: ${foundTech.join('、')}に関する課題`);
         }
 
-        // キャラクター要素
-        const charKeywords = ['ジュリ', 'ルーク', 'ケン', '春麗', 'ザンギエフ', 'ガイル'];
-        const foundChars = charKeywords.filter(keyword => text.includes(keyword));
-        if (foundChars.length > 0) {
-            elements.push(`キャラ対策: ${foundChars.join('、')}戦での課題`);
+        // エージェント要素
+        const agentKeywords = ['ジェット', 'レイナ', 'セージ', 'ソーヴァ', 'ブリムストーン', 'フェニックス'];
+        const foundAgents = agentKeywords.filter(keyword => text.includes(keyword));
+        if (foundAgents.length > 0) {
+            elements.push(`エージェント対策: ${foundAgents.join('、')}戦での課題`);
         }
 
         // 戦術面
-        const tacticKeywords = ['立ち回り', '距離', '読み', 'プレッシャー'];
+        const tacticKeywords = ['立ち回り', 'ポジション', '連携', 'マップコントロール'];
         const foundTactics = tacticKeywords.filter(keyword => text.includes(keyword));
         if (foundTactics.length > 0) {
             elements.push(`戦術面: ${foundTactics.join('、')}の調整が必要`);
@@ -1054,8 +1062,12 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
         console.log('チャット履歴をクリアしました');
     }
 
-    // 画像から試合データを分析（Street Fighter 6専用）
+    // 画像から試合データを分析（VALORANT専用 - 現在無効化中）
     async analyzeMatchImage(imageFile) {
+        // この機能は現在VALORANTでは利用できません
+        throw new Error('画像分析機能は現在VALORANTでは利用できません。個別入力をご利用ください。');
+        
+        /*
         if (!this.isConfigured()) {
             throw new Error('Gemini APIキーが設定されていません');
         }
@@ -1070,7 +1082,7 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
             // 画像の形式を判定
             const mimeType = imageFile.type || 'image/png';
             
-            const analysisPrompt = `あなたは画像認識の専門家です。この画像はStreet Fighter 6の戦績統計画面のスクリーンショットです。
+            const analysisPrompt = `あなたは画像認識の専門家です。この画像はVALORANTの戦績統計画面のスクリーンショットです。
 以下の詳細な手順に従って、画像から正確にデータを抽出し、JSON形式で出力してください。
 
 ═══════════════════════════════════════════════════════
@@ -1305,6 +1317,7 @@ ${searchQueries.map(query => `- ${query}`).join('\n')}
             console.error('❌ 画像分析エラー:', error);
             throw new Error('画像の分析に失敗しました: ' + error.message);
         }
+        */
     }
 
     // ファイルをBase64に変換

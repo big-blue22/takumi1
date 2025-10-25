@@ -76,8 +76,8 @@
             <!-- Dashboard Page -->
             <div id="dashboard" class="page active">
                 <div class="page-header">
-                    <h2>🥊 Street Fighter 6 ダッシュボード</h2>
-                    <p>SF6 プレイヤーパフォーマンス概要</p>
+                    <h2>🎯 VALORANT ダッシュボード</h2>
+                    <p>VALORANT プレイヤーパフォーマンス概要</p>
                 </div>
 
                 <!-- Win Streak Display -->
@@ -104,8 +104,8 @@
                         <canvas id="performance-chart"></canvas>
                     </div>
                     <div class="card chart-card">
-                        <h3>キャラクター使用率</h3>
-                        <canvas id="sf6-metrics-chart"></canvas>
+                        <h3>エージェント使用率</h3>
+                        <canvas id="valorant-metrics-chart"></canvas>
                     </div>
                 </div>
 
@@ -229,8 +229,8 @@
             <!-- Analysis Page -->
             <div id="analysis" class="page">
                 <div class="page-header">
-                    <h2>🥊 Street Fighter 6 試合分析</h2>
-                    <p>SF6の試合データ入力と対戦分析</p>
+                    <h2>🎯 VALORANT 試合分析</h2>
+                    <p>VALORANTの試合データ入力と対戦分析</p>
                 </div>
 
                 <!-- Quick Match Input -->
@@ -668,18 +668,18 @@
                         <div class="upload-instructions">
                             <h4>📋 使い方</h4>
                             <ol>
-                                <li>Street Fighter 6の戦績画面のスクリーンショットを撮影</li>
+                                <li>VALORANTの戦績画面のスクリーンショットを撮影</li>
                                 <li>下のボタンから画像ファイルを選択</li>
-                                <li>AIが自動的にキャラクター別の試合数と勝率を抽出</li>
+                                <li>AIが自動的にエージェント別の試合数と勝率を抽出</li>
                                 <li>データを確認して保存</li>
                             </ol>
-                            <p class="note">※ 対応形式: 「試合数と勝率%」「勝利数/試合数」の両方</p>
+                            <p class="note">※ 現在、VALORANT向けには利用できません。個別入力をご利用ください。</p>
                         </div>
 
-                        <div class="upload-section">
+                        <!--<div class="upload-section">
                             <input type="file" id="batch-screenshot-input" accept="image/*" style="display: none;">
-                            <button type="button" id="select-screenshot-btn" class="btn-primary">
-                                📷 スクリーンショットを選択
+                            <button type="button" id="select-screenshot-btn" class="btn-primary" disabled>
+                                📷 スクリーンショットを選択（VALORANT未対応）
                             </button>
                             <div id="selected-file-info" class="file-info" style="display: none;">
                                 <span id="file-name"></span>
@@ -690,13 +690,13 @@
                         <div id="batch-preview-section" class="preview-section" style="display: none;">
                             <h4>📊 抽出されたデータ</h4>
                             <div id="batch-data-preview" class="data-preview">
-                                <!-- 抽出データがここに表示される -->
+                                抽出データがここに表示される
                             </div>
                             <div class="batch-actions">
-                                <button type="button" id="save-batch-data-btn" class="btn-primary">
+                                <button type="button" id="save-batch-data-btn" class="btn-primary" disabled>
                                     💾 データを保存
                                 </button>
-                                <button type="button" id="cancel-batch-btn" class="btn-secondary">
+                                <button type="button" id="cancel-batch-btn" class="btn-secondary" disabled>
                                     ❌ キャンセル
                                 </button>
                             </div>
@@ -707,7 +707,7 @@
                             <p>AIが画像を分析中...</p>
                         </div>
                     </div>
-                </div>
+                </div>-->
 
                 <!-- Traditional Match Input (Collapsible) -->
                 <div class="card detailed-match-card collapsed" id="detailed-match-card">
@@ -1020,12 +1020,12 @@
                         </div>
 
                         <div class="modal-body">
-                            <!-- SF6 Knowledge Base Status -->
-                            <div class="sf6-knowledge-status" id="sf6-knowledge-status">
+                            <!-- VALORANT Knowledge Base Status -->
+                            <div class="valorant-knowledge-status" id="valorant-knowledge-status">
                                 <div class="knowledge-indicator">
                                     <span class="indicator-icon">📚</span>
                                     <div class="indicator-text">
-                                        <span class="indicator-label">SF6知識ベース:</span>
+                                        <span class="indicator-label">VALORANT知識ベース:</span>
                                         <span class="indicator-value" id="kb-status-text">確認中...</span>
                                     </div>
                                     <button class="btn-icon" id="reload-kb-btn" title="知識ベースを再読み込み">
@@ -1038,7 +1038,7 @@
                                         <span>📊 データサイズ: <strong id="kb-data-size">0</strong>文字</span>
                                     </div>
                                     <p class="kb-help-text">
-                                        💡 データソースページでSF6攻略資料をアップロードすると、より精度の高いプランが生成されます
+                                        💡 データソースページでVALORANT攻略資料をアップロードすると、より精度の高いプランが生成されます
                                     </p>
                                 </div>
                             </div>
@@ -1551,7 +1551,7 @@
                     <div class="profile-summary">
                         <div class="summary-item">
                             <span class="summary-label">選択ゲーム:</span>
-                            <span class="summary-value" id="summary-game">Street Fighter 6</span>
+                            <span class="summary-value" id="summary-game">VALORANT</span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">スキルレベル:</span>

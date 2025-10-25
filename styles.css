@@ -1,66 +1,66 @@
-/* Global Reset and Variables */
+﻿/* Global Reset and Variables */
 :root {
-  /* Default Dark Mode Colors */
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-card: #16213e;
+  /* Default Dark Mode Colors - VALORANT Theme */
+  --bg-primary: #0f1923;
+  --bg-secondary: #1c2e3a;
+  --bg-card: #1c2e3a;
   --text-primary: #ffffff;
-  --text-secondary: #b8c5d6;
-  --text-muted: #7a8496;
+  --text-secondary: #b8e0f0;
+  --text-muted: #7a9fb5;
   
-  /* Accent Colors */
-  --color-primary: #0f3460;
-  --color-accent: #e94560;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+  /* Accent Colors - VALORANT Inspired */
+  --color-primary: #0d3d56;
+  --color-accent: #ff4655;
+  --color-success: #00c896;
+  --color-warning: #ffb800;
+  --color-danger: #ff4655;
   
   /* Glass Effect */
-  --glass-bg: rgba(22, 33, 62, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(28, 46, 58, 0.8);
+  --glass-border: rgba(0, 200, 255, 0.2);
   --backdrop-blur: blur(10px);
   
-  /* Shadows */
-  --shadow-small: 0 2px 8px rgba(0, 0, 0, 0.15);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.25);
-  --shadow-large: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --shadow-neon: 0 0 20px rgba(233, 69, 96, 0.3);
+  /* Shadows - VALORANT Glow */
+  --shadow-small: 0 2px 8px rgba(0, 200, 255, 0.15);
+  --shadow-medium: 0 4px 16px rgba(0, 200, 255, 0.25);
+  --shadow-large: 0 8px 32px rgba(0, 200, 255, 0.35);
+  --shadow-neon: 0 0 20px rgba(0, 200, 255, 0.5);
 
-/* Light Theme Variables - Premium Enhanced */
+/* Light Theme Variables - VALORANT Light Mode */
 [data-theme="light"] {
-  /* Light Mode Colors - Premium palette with depth */
-  --bg-primary: linear-gradient(135deg, #ffffff 0%, #f8fafc 25%, #f1f5f9 50%, #e2e8f0 100%);
-  --bg-secondary: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
-  --bg-card: linear-gradient(145deg, #ffffff 0%, #f8fafc 80%);
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
+  /* Light Mode Colors - VALORANT palette */
+  --bg-primary: linear-gradient(135deg, #f0f8ff 0%, #e6f4f9 25%, #dceef6 50%, #c8e3f0 100%);
+  --bg-secondary: linear-gradient(145deg, #f0f8ff 0%, #c8e3f0 100%);
+  --bg-card: linear-gradient(145deg, #ffffff 0%, #f0f8ff 80%);
+  --text-primary: #0a1f2e;
+  --text-secondary: #2a4a5e;
+  --text-muted: #5a7a8e;
   
-  /* Light Mode Accent Colors - Premium gradient system */
-  --color-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  --color-accent: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --color-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --color-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --color-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  /* Light Mode Accent Colors - VALORANT */
+  --color-primary: linear-gradient(135deg, #0d7ea8 0%, #0a5a7f 100%);
+  --color-accent: linear-gradient(135deg, #ff4655 0%, #e03545 100%);
+  --color-success: linear-gradient(135deg, #00c896 0%, #00a078 100%);
+  --color-warning: linear-gradient(135deg, #ffb800 0%, #d99c00 100%);
+  --color-danger: linear-gradient(135deg, #ff4655 0%, #e03545 100%);
   
-  /* Light Mode Glass Effect - Premium frosted glass */
+  /* Light Mode Glass Effect - VALORANT */
   --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-border: rgba(13, 126, 168, 0.15);
   --glass-highlight: rgba(255, 255, 255, 0.95);
-  --glass-shadow: rgba(15, 23, 42, 0.04);
+  --glass-shadow: rgba(13, 126, 168, 0.08);
   
-  /* Light Mode Shadows - Sophisticated depth system */
-  --shadow-small: 0 1px 3px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.08);
-  --shadow-medium: 0 4px 6px rgba(15, 23, 42, 0.10), 0 2px 4px rgba(15, 23, 42, 0.06);
-  --shadow-large: 0 10px 15px rgba(15, 23, 42, 0.12), 0 4px 6px rgba(15, 23, 42, 0.08);
-  --shadow-premium: 0 20px 25px rgba(15, 23, 42, 0.15), 0 10px 10px rgba(15, 23, 42, 0.08);
-  --shadow-neon: 0 0 0 1px rgba(59, 130, 246, 0.2), 0 4px 12px rgba(59, 130, 246, 0.15);
+  /* Light Mode Shadows - VALORANT Glow */
+  --shadow-small: 0 1px 3px rgba(13, 126, 168, 0.15), 0 1px 2px rgba(13, 126, 168, 0.1);
+  --shadow-medium: 0 4px 6px rgba(13, 126, 168, 0.18), 0 2px 4px rgba(13, 126, 168, 0.12);
+  --shadow-large: 0 10px 15px rgba(13, 126, 168, 0.2), 0 4px 6px rgba(13, 126, 168, 0.15);
+  --shadow-premium: 0 20px 25px rgba(13, 126, 168, 0.25), 0 10px 10px rgba(13, 126, 168, 0.18);
+  --shadow-neon: 0 0 0 1px rgba(0, 200, 255, 0.3), 0 4px 12px rgba(0, 200, 255, 0.25);
   
-  /* Light Mode Premium Effects */
-  --shimmer: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  --premium-glow: 0 0 20px rgba(59, 130, 246, 0.25);
-  --card-border: rgba(226, 232, 240, 0.8);
-  --card-highlight: rgba(255, 255, 255, 0.6);
+  /* Light Mode VALORANT Effects */
+  --shimmer: linear-gradient(90deg, transparent, rgba(0, 200, 255, 0.3), transparent);
+  --premium-glow: 0 0 20px rgba(0, 200, 255, 0.3);
+  --card-border: rgba(200, 227, 240, 0.8);
+  --card-highlight: rgba(240, 248, 255, 0.6);
 }
   
   /* Borders */
@@ -517,7 +517,7 @@ body {
   font-size: var(--font-size-3xl);
   box-shadow: var(--shadow-neon);
   border: 3px solid rgba(255, 255, 255, 0.2);
-  /* ダークテーマでのアイコン視認性 */
+  /* ダークチE�Eマでのアイコン視認性 */
   color: rgba(255, 255, 255, 0.95);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
@@ -1545,7 +1545,7 @@ body {
 
 .btn-primary {
   width: 100%;
-  background: linear-gradient(135deg, var(--color-accent), #c73650);
+  background: linear-gradient(135deg, var(--color-accent), #ff4655);
   color: white;
   border: none;
   padding: var(--spacing-md) var(--spacing-xl);
@@ -2670,7 +2670,7 @@ body {
 }
 
 .milestones-list li::before {
-  content: "✅";
+  content: "✓";
   position: absolute;
   left: 0;
 }
@@ -2893,7 +2893,7 @@ body {
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
 
-/* コメント機能のスタイル */
+/* コメント機�Eのスタイル */
 .feedback-comment-section {
   margin-top: var(--spacing-lg);
   padding: var(--spacing-lg);
@@ -3185,7 +3185,7 @@ body {
   background: linear-gradient(90deg, var(--color-accent), var(--color-success));
   border-radius: 4px;
   transition: width 0.3s ease;
-  width: 50%; /* デフォルトステップ1 */
+  width: 50%; /* チE��ォルトスチE��チE */
 }
 
 .progress-text {
@@ -3357,7 +3357,7 @@ body {
 }
 
 .skill-features li:before {
-  content: "✓ ";
+  content: "✁E";
   color: var(--color-success);
   font-weight: bold;
   margin-right: var(--spacing-xs);
@@ -5475,7 +5475,7 @@ input[type="date"]:focus {
   }
   
   .user-name {
-    display: none; /* ユーザー名を非表示にしてスペースを節約 */
+    display: none; /* ユーザー名を非表示にしてスペ�Eスを節紁E*/
   }
   
   .stats-grid {
@@ -6018,7 +6018,7 @@ input[type="date"]:focus {
 }
 
 .game-option.selected::after {
-  content: '✓';
+  content: "✓";
   position: absolute;
   top: 8px;
   right: 8px;
@@ -6191,7 +6191,7 @@ input[type="date"]:focus {
 }
 
 .milestones-list li::before {
-  content: "✅ ";
+  content: "✁E";
   margin-right: var(--spacing-xs);
 }
 
@@ -6685,7 +6685,7 @@ input[type="date"]:focus {
   transform: rotate(-90deg);
 }
 
-/* 詳細データ入力セクション */
+/* 詳細チE�Eタ入力セクション */
 .detailed-data-section {
   margin-top: var(--spacing-xl);
   padding: var(--spacing-lg);
@@ -6781,7 +6781,7 @@ input[type="date"]:focus {
   }
 }
 
-/* 気づきタグ機能のスタイル */
+/* 気づきタグ機�Eのスタイル */
 .insight-section {
     margin-top: 1.5rem;
     padding-top: 1.5rem;
@@ -6914,7 +6914,7 @@ input[type="date"]:focus {
     cursor: not-allowed;
 }
 
-/* レスポンシブ対応 */
+/* レスポンシブ対忁E*/
 @media (max-width: 768px) {
     .insight-actions {
         flex-direction: column;
@@ -6999,7 +6999,7 @@ input[type="date"]:focus {
     margin-bottom: 0.25rem;
 }
 
-/* レスポンシブ対応 */
+/* レスポンシブ対忁E*/
 @media (max-width: 768px) {
     .refined-header {
         flex-direction: column;
@@ -7078,7 +7078,7 @@ input[type="date"]:focus {
     line-height: 1.4;
 }
 
-/* ダークモード対応 */
+/* ダークモード対忁E*/
 [data-theme="dark"] .grounding-sources-display {
     background: linear-gradient(145deg, #1a2332, var(--glass-bg));
     border-color: #2a4a6b;
@@ -7101,7 +7101,7 @@ input[type="date"]:focus {
     color: #66b3ff;
 }
 
-/* レスポンシブ対応 */
+/* レスポンシブ対忁E*/
 @media (max-width: 768px) {
     .sources-header {
         flex-direction: column;
@@ -7968,7 +7968,7 @@ input[type="date"]:focus {
   margin-bottom: var(--spacing-lg);
 }
 
-/* データタイプヘッダー */
+/* チE�Eタタイプ�EチE��ー */
 .data-type-header {
   margin-bottom: var(--spacing-md);
 }
@@ -8353,7 +8353,7 @@ input[type="date"]:focus {
 .match-checkbox:has(input:checked)::before {
   background: linear-gradient(135deg, 
     var(--color-accent) 0%, 
-    #c73650 100%
+    #ff4655 100%
   );
   border-color: var(--color-accent);
   box-shadow: 
@@ -8378,7 +8378,7 @@ input[type="date"]:focus {
 
 /* Checkmark Icon */
 .match-checkbox::after {
-  content: '✓';
+  content: "✓";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -9060,3 +9060,4 @@ input[type="date"]:focus {
 .win-streak-banner[data-streak="0"] {
   display: none;
 }
+

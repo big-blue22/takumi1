@@ -1,4 +1,4 @@
-// app.js - 完全修復版
+// app.js - 完�E修復牁E
 class App {
     constructor() {
         this.currentPage = 'dashboard';
@@ -11,10 +11,10 @@ class App {
         this.lastSuccessfulAPICall = Date.now();
         this.consecutiveErrors = 0;
         
-        // サービスの初期化
+        // サービスの初期匁E
         this.initializeServices();
         
-        // DOMContentLoadedで初期化
+        // DOMContentLoadedで初期匁E
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.init());
         } else {
@@ -23,7 +23,7 @@ class App {
     }
     
     initializeServices() {
-        // APIサービスが存在する場合のみ初期化
+        // APIサービスが存在する場合�Eみ初期匁E
         if (typeof AICoachingService !== 'undefined') {
             this.aiService = new AICoachingService();
         }
@@ -43,7 +43,7 @@ class App {
             this.geminiService = new GeminiService();
         }
         
-        // プレイヤー統計マネージャー
+        // プレイヤー統計�Eネ�Eジャー
         if (typeof PlayerStatsManager !== 'undefined') {
             this.playerStatsManager = new PlayerStatsManager();
         }
@@ -59,51 +59,51 @@ class App {
     async init() {
         console.log('App initializing...');
         
-        // テーマの初期化
+        // チE�Eマ�E初期匁E
         this.initTheme();
         
         // すべてのモーダルを非表示にする
         this.hideAllModals();
         
-        // 統一APIマネージャーの初期化完了を待つ
+        // 統一APIマネージャーの初期化完亁E��征E��
         await this.waitForUnifiedAPIManager();
 
-        // 1. 最優先で初回設定（スキルレベルなど）が必要かチェック
+        // 1. 最優先で初回設定（スキルレベルなど�E�が忁E��かチェチE��
         if (this.needsInitialSetup()) {
-            console.log('初回設定が必要です。初期設定画面を表示します。');
+            console.log('初回設定が忁E��です。�E期設定画面を表示します、E);
             this.showInitialSetupModal();
-            return; // 初期設定が完了するまで他の処理を中断
+            return; // 初期設定が完亁E��るまで他�E処琁E��中断
         }
         
-        // 2. 初回設定が完了していれば、次にAPI設定をチェック
+        // 2. 初回設定が完亁E��てぁE��ば、次にAPI設定をチェチE��
         const apiCheckResult = await this.performBackgroundAPICheck();
 
         if (apiCheckResult.success) {
-            console.log('バックグラウンドAPI接続成功');
+            console.log('バックグラウンドAPI接続�E劁E);
             this.closeInitialSetupModal(); // 不要なモーダルを閉じる
 
             // メイン画面へ遷移
             console.log('メイン画面へ遷移');
             await this.initializeMainApp();
 
-            // 過負荷状態の場合は追加メッセージを表示
+            // 過負荷状態�E場合�E追加メチE��ージを表示
             if (apiCheckResult.overloaded) {
-                this.showToast('⚠️ Gemini APIが過負荷状態です。時間をおいて再度お試しください。', 'warning');
+                this.showToast('⚠�E�EGemini APIが過負荷状態です。時間をおいて再度お試しください、E, 'warning');
             }
         } else {
-            console.log('API未設定または接続失敗');
+            console.log('API未設定また�E接続失敁E);
 
-            // 503エラーの場合は特別なメッセージ
+            // 503エラーの場合�E特別なメチE��ージ
             if (apiCheckResult.error && (
                 apiCheckResult.error.message.includes('503') ||
                 apiCheckResult.error.message.includes('過負荷') ||
                 apiCheckResult.error.message.includes('overloaded')
             )) {
-                this.showToast('⚠️ Gemini APIが一時的に過負荷中です。APIキーは保存されているので、後ほど自動的に利用可能になります。', 'warning');
-                // 過負荷の場合でもアプリは起動する
+                this.showToast('⚠�E�EGemini APIが一時的に過負荷中です、EPIキーは保存されてぁE��ので、後ほど自動的に利用可能になります、E, 'warning');
+                // 過負荷の場合でもアプリは起動すめE
                 await this.initializeMainApp();
             } else {
-                // API未設定または接続失敗時はAPI設定画面を表示
+                // API未設定また�E接続失敗時はAPI設定画面を表示
                 this.showInitialAPISetupModal();
                 this.setupInitialAPIModalListeners();
             }
@@ -112,7 +112,7 @@ class App {
         console.log('App initialized successfully');
     }
     
-    // テーマ管理
+    // チE�Eマ管琁E
     initTheme() {
         this.applyTheme(this.currentTheme);
         
@@ -123,13 +123,13 @@ class App {
                 this.applyTheme(this.currentTheme);
                 localStorage.setItem('theme', this.currentTheme);
                 
-                // テーマ変更時にグラフを再描画
+                // チE�Eマ変更時にグラフを再描画
                 this.refreshChartsForTheme();
             });
         }
     }
     
-    // テーマ変更時にグラフを再描画
+    // チE�Eマ変更時にグラフを再描画
     refreshChartsForTheme() {
         if (this.currentPage === 'dashboard') {
             this.renderWinRateTrendChart();
@@ -143,9 +143,9 @@ class App {
         
         if (theme === 'light') {
             root.setAttribute('data-theme', 'light');
-            if (themeBtn) themeBtn.textContent = '☀️';
+            if (themeBtn) themeBtn.textContent = '☀�E�E;
             
-            // ライトモードのスタイル
+            // ライトモード�Eスタイル
             root.style.setProperty('--bg-primary', '#ffffff');
             root.style.setProperty('--bg-secondary', '#f5f5f5');
             root.style.setProperty('--bg-card', '#ffffff');
@@ -158,7 +158,7 @@ class App {
             root.setAttribute('data-theme', 'dark');
             if (themeBtn) themeBtn.textContent = '🌙';
             
-            // ダークモードのスタイル
+            // ダークモード�Eスタイル
             root.style.setProperty('--bg-primary', '#1a1a2e');
             root.style.setProperty('--bg-secondary', '#16213e');
             root.style.setProperty('--bg-card', '#0f1924');
@@ -170,7 +170,7 @@ class App {
         }
     }
     
-    // 認証チェック
+    // 認証チェチE��
     checkAuthentication() {
         const storedUser = sessionStorage.getItem('currentUser');
         const isGuest = sessionStorage.getItem('isGuest');
@@ -210,7 +210,7 @@ class App {
         }
         
         if (userTypeIndicator) {
-            userTypeIndicator.textContent = isGuest ? 'ゲスト' : 'ユーザー';
+            userTypeIndicator.textContent = isGuest ? 'ゲスチE : 'ユーザー';
             userTypeIndicator.className = isGuest ? 'user-type guest' : 'user-type registered';
         }
     }
@@ -233,10 +233,10 @@ class App {
         });
     }
 
-    // 統一APIマネージャーの初期化完了を待つ
+    // 統一APIマネージャーの初期化完亁E��征E��
     async waitForUnifiedAPIManager() {
         let attempts = 0;
-        const maxAttempts = 50; // 5秒待機
+        const maxAttempts = 50; // 5秒征E��E
         
         while (!window.unifiedApiManager && attempts < maxAttempts) {
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -244,46 +244,46 @@ class App {
         }
         
         if (!window.unifiedApiManager) {
-            console.error('統一APIマネージャーの初期化に失敗');
+            console.error('統一APIマネージャーの初期化に失敁E);
             throw new Error('統一APIマネージャーが利用できません');
         }
         
-        console.log('統一APIマネージャー初期化完了');
+        console.log('統一APIマネージャー初期化完亁E);
     }
 
-    // バックグラウンドでAPI設定をチェック
+    // バックグラウンドでAPI設定をチェチE��
     async performBackgroundAPICheck() {
         try {
             if (!window.unifiedApiManager) {
                 return { success: false, reason: 'manager_unavailable' };
             }
             
-            // 保存済みAPIキーがあるかチェック
+            // 保存済みAPIキーがあるかチェチE��
             const hasStoredKey = window.unifiedApiManager.isConfigured();
             
             if (!hasStoredKey) {
-                console.log('APIキーが保存されていません');
+                console.log('APIキーが保存されてぁE��せん');
                 return { success: false, reason: 'no_api_key' };
             }
             
-            console.log('保存済みAPIキーを発見、バックグラウンドで接続テスト中...');
+            console.log('保存済みAPIキーを発見、バチE��グラウンドで接続テスト中...');
             
-            // バックグラウンドで接続テストを実行
+            // バックグラウンドで接続テストを実衁E
             const result = await window.unifiedApiManager.validateAPIKey();
             
-            console.log('バックグラウンド接続テスト成功:', result);
+            console.log('バックグラウンド接続テスト�E劁E', result);
             this.syncAPIKeyInputs();
             
             return { success: true, result: result };
             
         } catch (error) {
-            console.warn('バックグラウンド接続テストに失敗:', error);
+            console.warn('バックグラウンド接続テストに失敁E', error);
             
-            // 503エラー（サーバー過負荷）の場合は、初期設定モーダルを表示せずに
-            // APIキーが設定済みとしてアプリを起動する
+            // 503エラー�E�サーバ�E過負荷�E��E場合�E、�E期設定モーダルを表示せずに
+            // APIキーが設定済みとしてアプリを起動すめE
             if (error.message && (error.message.includes('overloaded') || error.message.includes('503'))) {
-                console.log('Gemini APIサーバーが過負荷中ですが、APIキーは設定済みのためアプリを起動します');
-                this.showToast('⚠️ Gemini APIが一時的に過負荷中です。AI機能は後ほど利用可能になります。', 'warning');
+                console.log('Gemini APIサーバ�Eが過負荷中ですが、APIキーは設定済みのためアプリを起動しまぁE);
+                this.showToast('⚠�E�EGemini APIが一時的に過負荷中です、EI機�Eは後ほど利用可能になります、E, 'warning');
                 this.syncAPIKeyInputs();
                 return { success: true, overloaded: true };
             }
@@ -296,38 +296,38 @@ class App {
         }
     }
 
-    // メインアプリを初期化(API接続成功時)
+    // メインアプリを�E期化(API接続�E功時)
     async initializeMainApp() {
-        // 統一APIマネージャーからGeminiServiceへのAPIキー同期を確保
+        // 統一APIマネージャーからGeminiServiceへのAPIキー同期を確俁E
         if (window.unifiedApiManager && window.unifiedApiManager.isConfigured()) {
             window.unifiedApiManager.updateLegacyAPIKeys();
         }
         
-        // ログインチェック
+        // ログインチェチE��
         this.checkAuthentication();
         
-        // 残りの初期化を実行
+        // 残りの初期化を実衁E
         this.continueInitialization();
         
-        // ゲーム選択とダッシュボード機能の初期化
+        // ゲーム選択とダチE��ュボ�Eド機�Eの初期匁E
         this.initGameSelection();
         this.initializeSkillLevel();
         this.initDailyCoaching();
         this.initDashboardGoals();
 
-        // その他のナビゲーション機能
+        // そ�E他�Eナビゲーション機�E
         this.initNavigationHelpers();
         
-        // 連勝記録の初期化
+        // 連勝記録の初期匁E
         this.initWinStreak();
         
-        // 初期ページの表示
+        // 初期ペ�Eジの表示
         this.showPage(this.currentPage);
         
-        // チャートの初期化
+        // チャート�E初期匁E
         this.initCharts();
         
-        // データのロード
+        // チE�EタのローチE
         this.loadUserData();
         
         // ログイン画面を表示
@@ -336,37 +336,37 @@ class App {
         }, 100);
     }
 
-    // API設定チェックと初期化（従来のメソッド、互換性のため残す）
+    // API設定チェチE��と初期化（従来のメソチE��、互換性のため残す�E�E
     async checkAndInitializeAPI() {
-        // 新しいフローに置き換えられたため、何もしない
+        // 新しいフローに置き換えられたため、何もしなぁE
         console.log('checkAndInitializeAPIは新しいフローに置き換えられました');
     }
     
-    // 初期化の続行（APIキー設定後）
+    // 初期化�E続行！EPIキー設定後！E
     continueInitialization() {
-        // APIキー初期設定が必要な場合はスキップ
+        // APIキー初期設定が忁E��な場合�EスキチE�E
         if (window.unifiedApiManager?.needsInitialSetup()) {
             return;
         }
         
-        // イベントリスナーの設定
+        // イベントリスナ�Eの設宁E
         this.setupEventListeners();
         
-        // ナビゲーションの初期化
+        // ナビゲーションの初期匁E
         this.initNavigation();
         
-        // チャット機能の初期化
+        // チャチE��機�Eの初期匁E
         this.initChat();
         
 
-        // コーチング機能のフィードバックボタンを設定
+        // コーチング機�EのフィードバチE��ボタンを設宁E
         this.setupCoachingFeedbackListeners();
 
-        // 気づきタグ機能のイベントリスナー設定
+        // 気づきタグ機�Eのイベントリスナ�E設宁E
         this.setupInsightTagsListeners();
     }
     
-    // 初期APIセットアップモーダルを表示
+    // 初期APIセチE��アチE�Eモーダルを表示
     showInitialAPISetupModal() {
         const modal = document.getElementById('api-initial-setup-modal');
         if (modal) {
@@ -375,7 +375,7 @@ class App {
             
             console.log('初期API設定モーダルを表示');
             
-            // 入力フィールドの初期状態をチェック
+            // 入力フィールド�E初期状態をチェチE��
             setTimeout(() => {
                 const apiKeyInput = document.getElementById('initial-api-key');
                 if (apiKeyInput) {
@@ -385,17 +385,17 @@ class App {
         }
     }
     
-    // 初期APIセットアップモーダルのイベントリスナー設定
+    // 初期APIセチE��アチE�Eモーダルのイベントリスナ�E設宁E
     setupInitialAPIModalListeners() {
-        // 重複登録を防ぐ
+        // 重褁E��録を防ぁE
         if (window.apiModalListenersSet) {
-            console.log('APIモーダルリスナーは既に設定済み');
+            console.log('APIモーダルリスナ�Eは既に設定済み');
             return;
         }
         
-        console.log('APIモーダルリスナーを設定中...');
+        console.log('APIモーダルリスナ�Eを設定中...');
         
-        // イベント委譲を使用してdocumentレベルでイベントをキャッチ
+        // イベント委譲を使用してdocumentレベルでイベントをキャチE��
         document.addEventListener('click', (e) => {
             if (e.target.id === 'test-initial-api') {
                 e.preventDefault();
@@ -412,7 +412,7 @@ class App {
             }
         });
         
-        // 入力フィールドのイベントも設定
+        // 入力フィールド�Eイベントも設宁E
         const apiKeyInput = document.getElementById('initial-api-key');
         if (apiKeyInput && !apiKeyInput.hasAttribute('data-listeners-added')) {
             apiKeyInput.addEventListener('input', (e) => {
@@ -429,12 +429,12 @@ class App {
             apiKeyInput.setAttribute('data-listeners-added', 'true');
         }
         
-        // 重複設定防止フラグを設定
+        // 重褁E��定防止フラグを設宁E
         window.apiModalListenersSet = true;
-        console.log('APIモーダルリスナー設定完了');
+        console.log('APIモーダルリスナ�E設定完亁E);
     }
     
-    // APIキー表示/非表示切り替え
+    // APIキー表示/非表示刁E��替ぁE
     toggleInitialAPIKeyVisibility() {
         const apiKeyInput = document.getElementById('initial-api-key');
         const toggleBtn = document.getElementById('toggle-initial-key');
@@ -442,11 +442,11 @@ class App {
         if (apiKeyInput && toggleBtn) {
             const isPassword = apiKeyInput.type === 'password';
             apiKeyInput.type = isPassword ? 'text' : 'password';
-            toggleBtn.textContent = isPassword ? '🙈' : '👁️';
+            toggleBtn.textContent = isPassword ? '🙈' : '👁�E�E;
         }
     }
     
-    // 初期APIキー入力の検証
+    // 初期APIキー入力�E検証
     validateInitialAPIKeyInput(apiKey) {
         const testBtn = document.getElementById('test-initial-api');
         const saveBtn = document.getElementById('save-initial-api');
@@ -456,11 +456,11 @@ class App {
         const validation = window.unifiedApiManager.validateAPIKeyStrength(apiKey);
         const isValid = validation.valid;
         
-        // ボタンの有効化/無効化
+        // ボタンの有効匁E無効匁E
         if (testBtn) testBtn.disabled = !isValid;
         if (saveBtn) saveBtn.disabled = !isValid;
         
-        // 視覚的フィードバック
+        // 視覚的フィードバチE��
         const inputWrapper = document.querySelector('#initial-api-key').parentNode;
         if (inputWrapper) {
             inputWrapper.classList.remove('input-valid', 'input-invalid');
@@ -476,7 +476,7 @@ class App {
     
     
     
-    // 初期API接続テスト
+    // 初期API接続テスチE
     async testInitialAPIConnection() {
         const apiKeyInput = document.getElementById('initial-api-key');
         const testBtn = document.getElementById('test-initial-api');
@@ -494,11 +494,11 @@ class App {
         
         const apiKey = apiKeyInput.value;
         if (!apiKey) {
-            this.showToast('APIキーを入力してください', 'warning');
+            this.showToast('APIキーを�E力してください', 'warning');
             return;
         }
         
-        // APIキーの強度チェック
+        // APIキーの強度チェチE��
         const validation = window.unifiedApiManager.validateAPIKeyStrength(apiKey);
         if (!validation.valid) {
             this.showToast(`APIキーエラー: ${validation.issues[0]}`, 'error');
@@ -507,26 +507,26 @@ class App {
         
         const originalText = testBtn.textContent;
         testBtn.disabled = true;
-        testBtn.textContent = 'テスト中...';
+        testBtn.textContent = 'チE��ト中...';
         
         try {
-            // 一時的にAPIキーを設定
+            // 一時的にAPIキーを設宁E
             const originalApiKey = window.unifiedApiManager.getAPIKey();
             await window.unifiedApiManager.setAPIKey(apiKey);
             
-            // 接続テストを実行
+            // 接続テストを実衁E
             await window.unifiedApiManager.validateAPIKey();
             
-            this.showToast('接続テストに成功しました！', 'success');
+            this.showToast('接続テストに成功しました�E�E, 'success');
             
-            // テスト成功時に入力欄を緑色に
+            // チE��ト�E功時に入力欁E��緑色に
             const inputWrapper = apiKeyInput.parentNode;
             if (inputWrapper) {
                 inputWrapper.classList.remove('input-invalid');
                 inputWrapper.classList.add('input-valid');
             }
             
-            // 元のAPIキーを復元（テストだけなので）
+            // 允E�EAPIキーを復允E��テストだけなので�E�E
             if (originalApiKey) {
                 await window.unifiedApiManager.setAPIKey(originalApiKey);
             } else {
@@ -534,10 +534,10 @@ class App {
             }
             
         } catch (error) {
-            console.error('API接続テストに失敗:', error);
+            console.error('API接続テストに失敁E', error);
             this.showToast(`接続テストに失敗しました: ${error.message}`, 'error');
             
-            // テスト失敗時に入力欄を赤色に
+            // チE��ト失敗時に入力欁E��赤色に
             const inputWrapper = apiKeyInput.parentNode;
             if (inputWrapper) {
                 inputWrapper.classList.remove('input-valid');
@@ -549,7 +549,7 @@ class App {
         }
     }
     
-    // 初期モーダルからAPIキーを保存
+    // 初期モーダルからAPIキーを保孁E
     async saveInitialAPIKeyFromModal() {
         const apiKeyInput = document.getElementById('initial-api-key');
         const saveBtn = document.getElementById('save-initial-api');
@@ -560,21 +560,21 @@ class App {
         }
         
         if (!window.unifiedApiManager) {
-            console.error('統合APIマネージャーが利用できません');
+            console.error('統吁EPIマネージャーが利用できません');
             this.showToast('APIマネージャーが利用できません', 'error');
             return;
         }
         
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) {
-            this.showToast('APIキーを入力してください', 'warning');
+            this.showToast('APIキーを�E力してください', 'warning');
             return;
         }
         
-        // APIキーの形式チェック
+        // APIキーの形式チェチE��
         const validation = window.unifiedApiManager.validateAPIKeyStrength(apiKey);
         if (!validation.valid) {
-            this.showToast(`APIキーが無効です: ${validation.issues.join(', ')}`, 'error');
+            this.showToast(`APIキーが無効でぁE ${validation.issues.join(', ')}`, 'error');
             return;
         }
         
@@ -583,22 +583,22 @@ class App {
         saveBtn.textContent = '保存中...';
         
         try {
-            // APIキーを統合マネージャーに保存
+            // APIキーを統合�Eネ�Eジャーに保孁E
             window.unifiedApiManager.setAPIKey(apiKey);
             
-            // 既存の入力フィールドも同期
+            // 既存�E入力フィールドも同期
             this.syncAPIKeyInputs();
             
             this.showToast('APIキーを保存しました', 'success');
             this.closeInitialAPISetupModal();
             
-            // APIキー設定完了後、メインアプリを初期化
+            // APIキー設定完亁E��、メインアプリを�E期化
             setTimeout(async () => {
                 await this.initializeMainApp();
             }, 500);
             
         } catch (error) {
-            console.error('APIキー保存に失敗:', error);
+            console.error('APIキー保存に失敁E', error);
             this.showToast(`保存に失敗しました: ${error.message}`, 'error');
         } finally {
             saveBtn.disabled = false;
@@ -606,31 +606,31 @@ class App {
         }
     }
     
-    // 自動接続テスト実行
+    // 自動接続テスト実衁E
     async performAutoConnectionTest() {
         if (!window.unifiedApiManager) {
             throw new Error('統一APIマネージャーが利用できません');
         }
 
         if (!window.unifiedApiManager.isConfigured()) {
-            throw new Error('APIキーが設定されていません');
+            throw new Error('APIキーが設定されてぁE��せん');
         }
 
         try {
-            // ローディング状態を表示（APIモーダルが非表示の場合はトースト表示）
+            // ローチE��ング状態を表示�E�EPIモーダルが非表示の場合�Eト�Eスト表示�E�E
             const apiModal = document.getElementById('api-initial-setup-modal');
             if (!apiModal || apiModal.classList.contains('hidden')) {
                 this.showToast('保存済みAPIキーで接続テスト中...', 'info');
             }
 
-            // 統一APIマネージャーを使って接続テスト
+            // 統一APIマネージャーを使って接続テスチE
             const result = await window.unifiedApiManager.validateAPIKey();
             
-            console.log('自動接続テスト成功:', result);
+            console.log('自動接続テスト�E劁E', result);
             return result;
             
         } catch (error) {
-            console.error('自動接続テスト失敗:', error);
+            console.error('自動接続テスト失敁E', error);
             throw error;
         }
     }
@@ -640,31 +640,31 @@ class App {
         let errorMessage = '';
         let shouldShowModal = true;
         
-        // エラータイプ別のメッセージ設定
+        // エラータイプ別のメチE��ージ設宁E
         if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-            errorMessage = '保存されたAPIキーが無効です。新しいAPIキーを設定してください。';
+            errorMessage = '保存されたAPIキーが無効です。新しいAPIキーを設定してください、E;
         } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
-            errorMessage = 'APIキーの権限が不足しています。Gemini API の有効なキーを使用してください。';
+            errorMessage = 'APIキーの権限が不足してぁE��す、Eemini API の有効なキーを使用してください、E;
         } else if (error.message.includes('404') || error.message.includes('Not Found')) {
-            errorMessage = 'APIエンドポイントが見つかりません。しばらく後に再試行してください。';
+            errorMessage = 'APIエンド�Eイントが見つかりません。しばらく後に再試行してください、E;
         } else if (error.message.includes('429') || error.message.includes('Rate limit')) {
-            errorMessage = 'APIの利用制限に達しました。しばらく後に再試行してください。';
+            errorMessage = 'APIの利用制限に達しました。しばらく後に再試行してください、E;
         } else if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
-            errorMessage = 'Gemini APIサーバーに問題が発生しています。しばらく後に再試行してください。';
+            errorMessage = 'Gemini APIサーバ�Eに問題が発生してぁE��す。しばらく後に再試行してください、E;
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
-            errorMessage = 'ネットワーク接続に問題があります。インターネット接続を確認してください。';
+            errorMessage = 'ネットワーク接続に問題があります。インターネット接続を確認してください、E;
         } else {
             errorMessage = `保存されたAPIキーでの接続に失敗しました: ${error.message}`;
         }
         
-        // エラートーストを表示
+        // エラート�Eストを表示
         this.showToast(errorMessage, 'warning');
         
         // 初期設定画面を表示
         setTimeout(() => {
             this.showInitialAPISetupModal();
             
-            // 初期設定画面内でエラーメッセージをハイライト
+            // 初期設定画面冁E��エラーメチE��ージをハイライチE
             const errorHelp = document.querySelector('#api-initial-setup-modal .error-help');
             if (errorHelp) {
                 errorHelp.textContent = errorMessage;
@@ -673,18 +673,18 @@ class App {
         }, 1000);
     }
 
-    // 初期APIセットアップをスキップ
+    // 初期APIセチE��アチE�EをスキチE�E
     skipInitialAPISetup() {
-        this.showToast('API設定をスキップしました。一部機能が制限されます。', 'info');
+        this.showToast('API設定をスキチE�Eしました。一部機�Eが制限されます、E, 'info');
         this.closeInitialAPISetupModal();
         
-        // スキップ後もメインアプリを初期化
+        // スキチE�E後もメインアプリを�E期化
         setTimeout(async () => {
             await this.initializeMainApp();
         }, 500);
     }
     
-    // 初期APIセットアップモーダルを閉じる
+    // 初期APIセチE��アチE�Eモーダルを閉じる
     closeInitialAPISetupModal() {
         const modal = document.getElementById('api-initial-setup-modal');
         if (modal) {
@@ -693,7 +693,7 @@ class App {
         }
     }
     
-    // APIセットアップモーダルを閉じる
+    // APIセチE��アチE�Eモーダルを閉じる
     closeAPISetupModal() {
         const modal = document.getElementById('api-setup-modal');
         if (modal) {
@@ -701,7 +701,7 @@ class App {
         }
     }
     
-    // APIキー入力フィールドの同期
+    // APIキー入力フィールド�E同期
     syncAPIKeyInputs() {
         if (!window.unifiedApiManager) return;
         
@@ -727,7 +727,7 @@ class App {
                 if (page) {
                     this.showPage(page);
                     
-                    // アクティブクラスの更新
+                    // アクチE��ブクラスの更新
                     navBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                 }
@@ -738,19 +738,19 @@ class App {
     showPage(pageId) {
         console.log('Showing page:', pageId);
         
-        // すべてのページを非表示
+        // すべてのペ�Eジを非表示
         const pages = document.querySelectorAll('.page');
         pages.forEach(page => {
             page.classList.remove('active');
         });
         
-        // 指定されたページを表示
+        // 持E��されたペ�Eジを表示
         const targetPage = document.getElementById(pageId);
         if (targetPage) {
             targetPage.classList.add('active');
             this.currentPage = pageId;
             
-            // ページ固有の初期化
+            // ペ�Eジ固有�E初期匁E
             this.initPageContent(pageId);
         }
     }
@@ -781,9 +781,9 @@ class App {
         }
     }
     
-    // イベントリスナー設定
+    // イベントリスナ�E設宁E
     setupEventListeners() {
-        // ログイン/登録タブ切り替え
+        // ログイン/登録タブ�Eり替ぁE
         const tabBtns = document.querySelectorAll('.tab-btn');
         tabBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -810,7 +810,7 @@ class App {
             });
         }
         
-        // ゲストボタン
+        // ゲスト�Eタン
         const guestBtn = document.getElementById('guest-btn');
         if (guestBtn) {
             guestBtn.addEventListener('click', () => {
@@ -818,7 +818,7 @@ class App {
             });
         }
         
-        // ログアウトボタン
+        // ログアウト�Eタン
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
@@ -835,7 +835,7 @@ class App {
             });
         }
 
-        // クイック試合入力フォーム
+        // クイチE��試合�E力フォーム
         const quickMatchForm = document.getElementById('quick-match-form');
         if (quickMatchForm) {
             quickMatchForm.addEventListener('submit', (e) => {
@@ -844,13 +844,13 @@ class App {
             });
         }
 
-        // クイック入力のイベントリスナー
+        // クイチE��入力�Eイベントリスナ�E
         this.setupQuickMatchListeners();
         
-        // まとめて入力のイベントリスナー
+        // まとめて入力�Eイベントリスナ�E
         this.setupBatchInputListeners();
         
-        // プラン付き目標作成ボタン
+        // プラン付き目標作�Eボタン
         const createWithPlanBtn = document.getElementById('create-with-plan-btn');
         if (createWithPlanBtn) {
             createWithPlanBtn.addEventListener('click', () => {
@@ -858,7 +858,7 @@ class App {
             });
         }
 
-        // コーチングプランモーダルイベント
+        // コーチングプランモーダルイベンチE
         this.initCoachingPlanModal();
         
         // API設定フォーム
@@ -877,12 +877,12 @@ class App {
                 const apiKeyInput = document.getElementById('api-key');
                 if (apiKeyInput) {
                     apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
-                    toggleApiKey.textContent = apiKeyInput.type === 'password' ? '👁️' : '👁️‍🗨️';
+                    toggleApiKey.textContent = apiKeyInput.type === 'password' ? '👁�E�E : '👁�E�‍🗨�E�E;
                 }
             });
         }
         
-        // APIテストボタン
+        // APIチE��ト�Eタン
         const testApiBtn = document.getElementById('test-api-btn');
         if (testApiBtn) {
             testApiBtn.addEventListener('click', () => {
@@ -906,7 +906,7 @@ class App {
             });
         }
         
-        // Street Fighter 6専用アプリのため、ゲーム選択機能は無効化
+        // Street Fighter 6専用アプリのため、ゲーム選択機�Eは無効匁E
 
         // スキルレベル変更ボタン
         const changeSkillBtn = document.getElementById('change-skill-btn');
@@ -916,7 +916,7 @@ class App {
             });
         }
 
-        // スキルレベル選択確定ボタン
+        // スキルレベル選択確定�Eタン
         const confirmSkillBtn = document.getElementById('confirm-skill-btn');
         if (confirmSkillBtn) {
             confirmSkillBtn.addEventListener('click', () => {
@@ -932,7 +932,7 @@ class App {
             });
         }
 
-        // アプリ初期化ボタン
+        // アプリ初期化�Eタン
         const resetBtn = document.getElementById('reset-app-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
@@ -966,7 +966,7 @@ class App {
         }
     }
     
-    // タブ切り替え
+    // タブ�Eり替ぁE
     switchTab(tabName) {
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -988,7 +988,7 @@ class App {
         });
     }
     
-    // ログイン処理
+    // ログイン処琁E
     handleLogin() {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
@@ -1005,7 +1005,7 @@ class App {
                 this.showToast(result.message, 'error');
             }
         } else {
-            // モックログイン
+            // モチE��ログイン
             this.currentUser = { username: username };
             sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
             this.updateUserDisplay(username);
@@ -1014,7 +1014,7 @@ class App {
         }
     }
     
-    // 登録処理
+    // 登録処琁E
     handleRegister() {
         const username = document.getElementById('register-username').value;
         const email = document.getElementById('register-email').value;
@@ -1029,14 +1029,14 @@ class App {
         if (this.authService) {
             const result = this.authService.register(username, password, email);
             if (result.success) {
-                this.showToast('登録が完了しました。ログインしてください。', 'success');
+                this.showToast('登録が完亁E��ました。ログインしてください、E, 'success');
                 this.switchTab('login');
             } else {
                 this.showToast(result.message, 'error');
             }
         } else {
-            // モック登録
-            this.showToast('登録が完了しました', 'success');
+            // モチE��登録
+            this.showToast('登録が完亁E��ました', 'success');
             this.switchTab('login');
         }
     }
@@ -1050,7 +1050,7 @@ class App {
         this.showToast('ゲストとしてログインしました', 'info');
     }
     
-    // ログアウト
+    // ログアウチE
     handleLogout() {
         this.currentUser = null;
         this.isGuest = false;
@@ -1065,7 +1065,7 @@ class App {
         const matchData = {
             result: document.getElementById('match-result').value,
             character: document.getElementById('character-select').value,
-            // キャラクター・ラウンド結果指標のみ
+            // キャラクター・ラウンド結果持E���Eみ
             playerCharacter: document.getElementById('player-character').value,
             opponentCharacter: document.getElementById('opponent-character').value,
             roundsWon: parseInt(document.getElementById('rounds-won').value || 0),
@@ -1073,18 +1073,18 @@ class App {
             duration: parseFloat(document.getElementById('match-duration').value)
         };
 
-        // 1) 分析結果の表示
+        // 1) 刁E��結果の表示
         this.analyzeMatch(matchData);
 
-        // 2) 試合を保存し、ダッシュボード統計を更新（連動）
+        // 2) 試合を保存し、ダチE��ュボ�Eド統計を更新�E�連動！E
         this.storeMatchAndRefresh(matchData);
         document.getElementById('match-form').reset();
-        this.showToast('分析を実行しています...', 'info');
+        this.showToast('刁E��を実行してぁE��ぁE..', 'info');
     }
 
-    // クイック試合入力のイベントリスナーを設定
+    // クイチE��試合�E力�Eイベントリスナ�Eを設宁E
     setupQuickMatchListeners() {
-        // 自分のキャラクター選択
+        // 自刁E�Eキャラクター選抁E
         const characterOptions = document.querySelectorAll('#player-character-grid .char-option');
         characterOptions.forEach(option => {
             option.addEventListener('click', () => {
@@ -1092,7 +1092,7 @@ class App {
             });
         });
 
-        // 相手キャラクター選択
+        // 相手キャラクター選抁E
         const opponentOptions = document.querySelectorAll('#opponent-character-grid .char-option');
         opponentOptions.forEach(option => {
             option.addEventListener('click', () => {
@@ -1100,10 +1100,10 @@ class App {
             });
         });
 
-        // キャラクター検索機能
+        // キャラクター検索機�E
         this.setupCharacterFiltering();
 
-        // スコア選択
+        // スコア選抁E
         const scoreOptions = document.querySelectorAll('.score-option');
         scoreOptions.forEach(option => {
             option.addEventListener('click', () => {
@@ -1111,7 +1111,7 @@ class App {
             });
         });
 
-        // 決着方法選択
+        // 決着方法選抁E
         const decisionOptions = document.querySelectorAll('.decision-option');
         decisionOptions.forEach(option => {
             option.addEventListener('click', () => {
@@ -1119,7 +1119,7 @@ class App {
             });
         });
 
-        // リセットボタン
+        // リセチE��ボタン
         const resetBtn = document.getElementById('reset-quick-form');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
@@ -1127,17 +1127,17 @@ class App {
             });
         }
 
-        // 気づきタグ機能
+        // 気づきタグ機�E
         this.setupInsightTagsListeners();
 
-        // 詳細入力の折りたたみ
+        // 詳細入力�E折りたたみ
         window.toggleDetailedInput = () => {
             const detailedCard = document.getElementById('detailed-match-card');
             detailedCard.classList.toggle('collapsed');
         };
     }
 
-    // キャラクター検索フィルタリング機能の設定
+    // キャラクター検索フィルタリング機�Eの設宁E
     setupCharacterFiltering() {
         // プレイヤーキャラクター検索
         const playerSearchInput = document.getElementById('player-character-search');
@@ -1156,7 +1156,7 @@ class App {
         }
     }
 
-    // キャラクターフィルタリング処理
+    // キャラクターフィルタリング処琁E
     filterCharacters(searchTerm, gridSelector) {
         const grid = document.querySelector(gridSelector);
         if (!grid) return;
@@ -1168,7 +1168,7 @@ class App {
             const characterName = character.dataset.char.toLowerCase();
             const characterDisplayName = character.querySelector('.char-name').textContent.toLowerCase();
 
-            // キャラクター名（英語）または表示名（日本語）で検索
+            // キャラクター名（英語）また�E表示名（日本語）で検索
             const matches = characterName.includes(searchTerm) ||
                            characterDisplayName.includes(searchTerm);
 
@@ -1180,22 +1180,22 @@ class App {
             }
         });
 
-        // 結果が見つからない場合のメッセージ表示（オプション）
+        // 結果が見つからなぁE��合�EメチE��ージ表示�E�オプション�E�E
         this.updateFilterMessage(gridSelector, visibleCount, searchTerm);
     }
 
-    // フィルタリング結果メッセージの更新
+    // フィルタリング結果メチE��ージの更新
     updateFilterMessage(gridSelector, visibleCount, searchTerm) {
         const grid = document.querySelector(gridSelector);
         if (!grid) return;
 
-        // 既存のメッセージを削除
+        // 既存�EメチE��ージを削除
         const existingMessage = grid.querySelector('.filter-message');
         if (existingMessage) {
             existingMessage.remove();
         }
 
-        // 検索結果が0件で検索語がある場合にメッセージを表示
+        // 検索結果ぁE件で検索語がある場合にメチE��ージを表示
         if (visibleCount === 0 && searchTerm !== '') {
             const message = document.createElement('div');
             message.className = 'filter-message';
@@ -1209,68 +1209,68 @@ class App {
         }
     }
 
-    // 自分のキャラクター選択処理
+    // 自刁E�Eキャラクター選択�E琁E
     selectCharacter(option) {
-        // 他の選択を解除（自分のキャラクターグリッドのみ）
+        // 他�E選択を解除�E��E刁E�EキャラクターグリチE��のみ�E�E
         document.querySelectorAll('#player-character-grid .char-option').forEach(opt => {
             opt.classList.remove('selected');
         });
 
-        // 新しい選択をアクティブにする
+        // 新しい選択をアクチE��ブにする
         option.classList.add('selected');
 
-        // hidden inputに値を設定
+        // hidden inputに値を設宁E
         document.getElementById('selected-character').value = option.dataset.char;
 
         this.updateSubmitButton();
     }
 
-    // 相手キャラクター選択処理
+    // 相手キャラクター選択�E琁E
     selectOpponent(option) {
-        // 他の選択を解除（相手キャラクターグリッドのみ）
+        // 他�E選択を解除�E�相手キャラクターグリチE��のみ�E�E
         document.querySelectorAll('#opponent-character-grid .char-option').forEach(opt => {
             opt.classList.remove('selected');
         });
 
-        // 新しい選択をアクティブにする
+        // 新しい選択をアクチE��ブにする
         option.classList.add('selected');
 
-        // hidden inputに値を設定
+        // hidden inputに値を設宁E
         document.getElementById('selected-opponent').value = option.dataset.char;
 
         this.updateSubmitButton();
     }
 
-    // スコア選択処理
+    // スコア選択�E琁E
     selectScore(option) {
-        // 他の選択を解除
+        // 他�E選択を解除
         document.querySelectorAll('.score-option').forEach(opt => {
             opt.classList.remove('selected');
         });
 
-        // 新しい選択をアクティブにする
+        // 新しい選択をアクチE��ブにする
         option.classList.add('selected');
 
-        // hidden inputに値を設定
+        // hidden inputに値を設宁E
         const score = option.dataset.score;
-        const result = option.dataset.result || 'loss'; // data-result属性から取得
+        const result = option.dataset.result || 'loss'; // data-result属性から取征E
         document.getElementById('selected-score').value = score;
-        document.getElementById('selected-result').value = result; // 結果も保存
+        document.getElementById('selected-result').value = result; // 結果も保孁E
 
         this.updateSubmitButton();
     }
 
-    // 決着方法選択処理
+    // 決着方法選択�E琁E
     selectDecision(option) {
-        // 他の選択を解除
+        // 他�E選択を解除
         document.querySelectorAll('.decision-option').forEach(opt => {
             opt.classList.remove('selected');
         });
 
-        // 新しい選択をアクティブにする
+        // 新しい選択をアクチE��ブにする
         option.classList.add('selected');
 
-        // hidden inputに値を設定
+        // hidden inputに値を設宁E
         document.getElementById('selected-decision').value = option.dataset.decision;
 
         this.updateSubmitButton();
@@ -1288,10 +1288,10 @@ class App {
         submitBtn.disabled = !isComplete;
     }
 
-    // クイックフォームをリセット
-    // 気づきタグ機能のイベントリスナー設定
+    // クイチE��フォームをリセチE��
+    // 気づきタグ機�Eのイベントリスナ�E設宁E
     setupInsightTagsListeners() {
-        // 感想入力のテキストカウンター
+        // 感想入力�EチE��ストカウンター
         const feelingsInput = document.getElementById('match-feelings');
         const charCountElement = document.getElementById('feelings-char-count');
         const generateTagsBtn = document.getElementById('generate-tags-btn');
@@ -1301,34 +1301,34 @@ class App {
                 const length = e.target.value.length;
                 charCountElement.textContent = length;
 
-                // 10文字以上で生成ボタン有効化
+                // 10斁E��以上で生�Eボタン有効匁E
                 generateTagsBtn.disabled = length < 10;
-                console.log(`入力文字数: ${length}, ボタン状態: ${generateTagsBtn.disabled ? '無効' : '有効'}`);
+                console.log(`入力文字数: ${length}, ボタン状慁E ${generateTagsBtn.disabled ? '無効' : '有効'}`);
             });
         } else {
-            console.warn('感想入力の必要な要素が見つかりません:', {
+            console.warn('感想入力�E忁E��な要素が見つかりません:', {
                 feelingsInput: !!feelingsInput,
                 charCountElement: !!charCountElement,
                 generateTagsBtn: !!generateTagsBtn
             });
         }
 
-        // タグ生成ボタン（重複防止のため、onclickで設定）
+        // タグ生�Eボタン�E�重褁E��止のため、onclickで設定！E
         if (generateTagsBtn) {
-            // onclickは常に1つだけなので重複しない
+            // onclickは常に1つだけなので重褁E��なぁE
             generateTagsBtn.onclick = () => {
-                console.log('タグ生成ボタンがクリックされました');
+                console.log('タグ生�EボタンがクリチE��されました');
                 this.generateInsightTags();
             };
         } else {
             console.warn('generate-tags-btn要素が見つかりません');
         }
 
-        // タグ再生成ボタン
+        // タグ再生成�Eタン
         const regenerateTagsBtn = document.getElementById('regenerate-tags-btn');
         if (regenerateTagsBtn) {
             regenerateTagsBtn.onclick = () => {
-                console.log('タグ再生成ボタンがクリックされました');
+                console.log('タグ再生成�EタンがクリチE��されました');
                 this.generateInsightTags();
             };
         }
@@ -1349,7 +1349,7 @@ class App {
             });
         }
 
-        // タグ編集ボタン
+        // タグ編雁E�Eタン
         const editTagsBtn = document.getElementById('edit-tags-btn');
         if (editTagsBtn) {
             editTagsBtn.addEventListener('click', () => {
@@ -1358,29 +1358,29 @@ class App {
         }
     }
 
-    // 気づきタグ生成
+    // 気づきタグ生�E
     async generateInsightTags() {
         // 多重実行を防止
         if (this._isGeneratingTags) {
-            console.warn('⚠️ タグ生成は既に実行中です');
+            console.warn('⚠�E�Eタグ生�Eは既に実行中でぁE);
             return;
         }
         
         const feelingsInput = document.getElementById('match-feelings');
-        // クローンで置き換えた後も正しく取得できるように、毎回DOMから取得
+        // クローンで置き換えた後も正しく取得できるように、毎回DOMから取征E
         const generateBtn = document.getElementById('generate-tags-btn');
         const analysisSource = document.querySelector('input[name="analysis-source"]:checked');
 
         if (!feelingsInput || !feelingsInput.value.trim()) {
-            this.showToast('❌ 感想を入力してください', 'error');
+            this.showToast('❁E感想を�E力してください', 'error');
             return;
         }
         if (!this.geminiService) {
-            this.showToast('❌ AIサービスが初期化されていません', 'error');
+            this.showToast('❁EAIサービスが�E期化されてぁE��せん', 'error');
             return;
         }
         if (!analysisSource) {
-            this.showToast('❌ 情報ソースを選択してください', 'error');
+            this.showToast('❁E惁E��ソースを選択してください', 'error');
             return;
         }
 
@@ -1388,10 +1388,10 @@ class App {
         let analysisMode = 'browsing';
 
         try {
-            this._isGeneratingTags = true; // フラグを立てる
+            this._isGeneratingTags = true; // フラグを立てめE
             if (generateBtn) {
                 generateBtn.disabled = true;
-                generateBtn.textContent = '🤖 分析中...';
+                generateBtn.textContent = '🤁E刁E��中...';
             }
 
             if (analysisSource.value === 'file') {
@@ -1399,7 +1399,7 @@ class App {
                 const selectedCheckboxes = document.querySelectorAll('input[name="source-file"]:checked');
 
                 if (selectedCheckboxes.length === 0) {
-                    throw new Error('分析に使用するファイルを1つ以上選択してください。');
+                    throw new Error('刁E��に使用するファイルめEつ以上選択してください、E);
                 }
 
                 const fileContents = [];
@@ -1414,69 +1414,69 @@ class App {
                 });
 
                 if (fileContents.length === 0) {
-                    throw new Error('選択されたファイルの読み込みに失敗しました。');
+                    throw new Error('選択されたファイルの読み込みに失敗しました、E);
                 }
 
-                // ファイルサイズ警告（6000文字制限をユーザーに通知）
+                // ファイルサイズ警告！E000斁E��制限をユーザーに通知�E�E
                 if (totalSize > 6000) {
-                    this.showToast(`⚠️ 選択されたファイルは${totalSize}文字です。AIの分析には最初の6,000文字のみが使用されます。`, 'warning');
+                    this.showToast(`⚠�E�E選択されたファイルは${totalSize}斁E��です、EIの刁E��には最初�E6,000斁E���Eみが使用されます。`, 'warning');
                 }
 
                 fileContent = fileContents.join('\n\n');
             }
 
-            // Geminiサービスを使用してタグ生成
+            // Geminiサービスを使用してタグ生�E
             const result = await this.geminiService.generateInsightTags(
                 feelingsInput.value.trim(),
                 analysisMode,
                 fileContent
             );
 
-            // 推敲結果があれば表示
+            // 推敲結果があれ�E表示
             if (result.refinedContent) {
                 this.displayRefinedContent(result.refinedContent);
             }
 
-            // グラウンディングソース情報があれば表示
+            // グラウンチE��ングソース惁E��があれ�E表示
             if (result.groundingSources) {
                 this.displayGroundingSources(result.groundingSources);
             }
 
-            // 生成されたタグを表示
+            // 生�Eされたタグを表示
             this.displayGeneratedTags(result.tags);
 
-            // コンテナを表示
+            // コンチE��を表示
             const generatedTagsContainer = document.getElementById('generated-tags-container');
             if (generatedTagsContainer) {
                 generatedTagsContainer.style.display = 'block';
             }
 
-            // フォールバックモードかグラウンディング成功かに応じてメッセージを表示
+            // フォールバックモードかグラウンチE��ング成功かに応じてメチE��ージを表示
             if (result.fallbackMode) {
-                this.showToast('✅ 推敲・AI分析を完了しました（通常モード）', 'success');
+                this.showToast('✁E推敲・AI刁E��を完亁E��ました�E�通常モード！E, 'success');
             } else if (result.groundingSources && result.groundingSources.totalSources > 0) {
-                this.showToast(`✅ 推敲・分析完了（参考情報${result.groundingSources.totalSources}件）`, 'success');
+                this.showToast(`✁E推敲・刁E��完亁E��参老E��報${result.groundingSources.totalSources}件�E�`, 'success');
             } else {
-                this.showToast('✅ 推敲・AI分析を完了しました', 'success');
+                this.showToast('✁E推敲・AI刁E��を完亁E��ました', 'success');
             }
 
         } catch (error) {
-            console.error('タグ生成エラー:', error);
-            this.showToast('❌ タグ生成に失敗しました: ' + error.message, 'error');
+            console.error('タグ生�Eエラー:', error);
+            this.showToast('❁Eタグ生�Eに失敗しました: ' + error.message, 'error');
         } finally {
             this._isGeneratingTags = false; // フラグを解除
-            // ボタンを再度取得して状態を更新
+            // ボタンを�E度取得して状態を更新
             const finalBtn = document.getElementById('generate-tags-btn');
             if (finalBtn) {
                 finalBtn.disabled = false;
-                finalBtn.textContent = '🤖 AIでタグ生成';
+                finalBtn.textContent = '🤁EAIでタグ生�E';
             }
         }
     }
 
     // 推敲結果を表示
     displayRefinedContent(refinedContent) {
-        // 推敲結果を表示する要素を動的に作成
+        // 推敲結果を表示する要素を動皁E��作�E
         let refinedDisplay = document.getElementById('refined-content-display');
         if (!refinedDisplay) {
             refinedDisplay = document.createElement('div');
@@ -1490,14 +1490,14 @@ class App {
 
         refinedDisplay.innerHTML = `
             <div class="refined-header">
-                <h5>🔍 AI分析結果</h5>
+                <h5>🔍 AI刁E��結果</h5>
                 <button type="button" class="btn-text" onclick="this.parentElement.parentElement.style.display='none'">
-                    ✕ 閉じる
+                    ✁E閉じめE
                 </button>
             </div>
             <div class="refined-content">
                 <div class="refined-section">
-                    <strong>構造化された内容:</strong>
+                    <strong>構造化された冁E��:</strong>
                     <p>${refinedContent.structuredContent}</p>
                 </div>
                 ${refinedContent.extractedElements && refinedContent.extractedElements.length > 0 ? `
@@ -1510,7 +1510,7 @@ class App {
                 ` : ''}
                 ${refinedContent.keyPoints && refinedContent.keyPoints.length > 0 ? `
                 <div class="refined-section">
-                    <strong>重要ポイント:</strong>
+                    <strong>重要�EインチE</strong>
                     <ul>
                         ${refinedContent.keyPoints.map(point => `<li>${point}</li>`).join('')}
                     </ul>
@@ -1518,7 +1518,7 @@ class App {
                 ` : ''}
                 ${refinedContent.metaInsights && refinedContent.metaInsights.length > 0 ? `
                 <div class="refined-section">
-                    <strong>🌐 最新メタ情報:</strong>
+                    <strong>🌐 最新メタ惁E��:</strong>
                     <ul>
                         ${refinedContent.metaInsights.map(insight => `<li>${insight}</li>`).join('')}
                     </ul>
@@ -1530,9 +1530,9 @@ class App {
         refinedDisplay.style.display = 'block';
     }
 
-    // 検索ソース情報を表示
+    // 検索ソース惁E��を表示
     displayGroundingSources(groundingSources) {
-        // 検索ソース表示要素を動的に作成
+        // 検索ソース表示要素を動皁E��作�E
         let sourcesDisplay = document.getElementById('grounding-sources-display');
         if (!sourcesDisplay) {
             sourcesDisplay = document.createElement('div');
@@ -1551,9 +1551,9 @@ class App {
 
         sourcesDisplay.innerHTML = `
             <div class="sources-header">
-                <h5>📚 参考にした情報源 (${groundingSources.totalSources}件)</h5>
+                <h5>📚 参老E��した惁E��溁E(${groundingSources.totalSources}件)</h5>
                 <button type="button" class="btn-text" onclick="this.parentElement.parentElement.style.display='none'">
-                    ✕ 閉じる
+                    ✁E閉じめE
                 </button>
             </div>
             <div class="sources-content">
@@ -1573,7 +1573,7 @@ class App {
         sourcesDisplay.style.display = 'block';
     }
 
-    // 生成されたタグを表示
+    // 生�Eされたタグを表示
     displayGeneratedTags(tags) {
         const tagsList = document.getElementById('generated-tags-list');
         if (!tagsList) return;
@@ -1588,30 +1588,30 @@ class App {
         });
     }
 
-    // 生成されたタグを採用
+    // 生�Eされたタグを採用
     acceptGeneratedTags() {
         const generatedTags = document.querySelectorAll('#generated-tags-list .generated-tag');
         const tags = Array.from(generatedTags).map(tag => tag.textContent);
 
-        // 最終タグとして設定
+        // 最終タグとして設宁E
         this.setFinalTags(tags);
 
-        // コンテナを切り替え
+        // コンチE��を�Eり替ぁE
         document.getElementById('generated-tags-container').style.display = 'none';
         document.getElementById('final-tags-container').style.display = 'block';
 
-        // hiddenフィールドに保存
+        // hiddenフィールドに保孁E
         document.getElementById('selected-tags').value = tags.join(',');
         document.getElementById('match-feelings-hidden').value = document.getElementById('match-feelings').value;
     }
 
-    // 生成されたタグをクリア
+    // 生�Eされたタグをクリア
     clearGeneratedTags() {
         document.getElementById('generated-tags-container').style.display = 'none';
         document.getElementById('generated-tags-list').innerHTML = '';
     }
 
-    // 最終タグを設定
+    // 最終タグを設宁E
     setFinalTags(tags) {
         const finalTagsList = document.getElementById('final-tags-list');
         if (!finalTagsList) return;
@@ -1626,9 +1626,9 @@ class App {
         });
     }
 
-    // 最終タグを編集
+    // 最終タグを編雁E
     editFinalTags() {
-        // 最終タグコンテナを非表示にして生成されたタグコンテナを再表示
+        // 最終タグコンチE��を非表示にして生�EされたタグコンチE��を�E表示
         document.getElementById('final-tags-container').style.display = 'none';
         document.getElementById('generated-tags-container').style.display = 'block';
 
@@ -1637,12 +1637,12 @@ class App {
     }
 
     resetQuickForm() {
-        // 選択状態をリセット
+        // 選択状態をリセチE��
         document.querySelectorAll('.char-option, .score-option, .decision-option').forEach(opt => {
             opt.classList.remove('selected');
         });
 
-        // hidden inputをリセット
+        // hidden inputをリセチE��
         document.getElementById('selected-character').value = '';
         document.getElementById('selected-opponent').value = '';
         document.getElementById('selected-score').value = '';
@@ -1650,7 +1650,7 @@ class App {
         document.getElementById('selected-tags').value = '';
         document.getElementById('match-feelings-hidden').value = '';
 
-        // 気づきタグ関連もリセット
+        // 気づきタグ関連もリセチE��
         const feelingsInput = document.getElementById('match-feelings');
         if (feelingsInput) {
             feelingsInput.value = '';
@@ -1664,9 +1664,9 @@ class App {
         this.updateSubmitButton();
     }
 
-    // === まとめて入力機能（スクリーンショットアップロード） ===
+    // === まとめて入力機�E�E�スクリーンショチE��アチE�Eロード！E===
 
-    // まとめて入力のイベントリスナーを設定
+    // まとめて入力�Eイベントリスナ�Eを設宁E
     setupBatchInputListeners() {
         const selectBtn = document.getElementById('select-screenshot-btn');
         const fileInput = document.getElementById('batch-screenshot-input');
@@ -1674,7 +1674,7 @@ class App {
         const saveBatchBtn = document.getElementById('save-batch-data-btn');
         const cancelBatchBtn = document.getElementById('cancel-batch-btn');
 
-        // スクリーンショット選択ボタン
+        // スクリーンショチE��選択�Eタン
         if (selectBtn && fileInput) {
             selectBtn.addEventListener('click', () => {
                 fileInput.click();
@@ -1695,7 +1695,7 @@ class App {
             });
         }
 
-        // データ保存ボタン
+        // チE�Eタ保存�Eタン
         if (saveBatchBtn) {
             saveBatchBtn.addEventListener('click', () => {
                 this.saveBatchMatchData();
@@ -1710,11 +1710,11 @@ class App {
         }
     }
 
-    // スクリーンショットアップロード処理
+    // スクリーンショチE��アチE�Eロード�E琁E
     async handleScreenshotUpload(file) {
-        console.log('📸 スクリーンショットアップロード:', file.name);
+        console.log('📸 スクリーンショチE��アチE�EローチE', file.name);
 
-        // ファイル情報を表示
+        // ファイル惁E��を表示
         const fileInfo = document.getElementById('selected-file-info');
         const fileName = document.getElementById('file-name');
         if (fileInfo && fileName) {
@@ -1722,37 +1722,37 @@ class App {
             fileInfo.style.display = 'flex';
         }
 
-        // ローディング表示
+        // ローチE��ング表示
         const loadingEl = document.getElementById('batch-loading');
         const previewSection = document.getElementById('batch-preview-section');
         if (loadingEl) loadingEl.style.display = 'block';
         if (previewSection) previewSection.style.display = 'none';
 
         try {
-            // Gemini APIで画像を分析
+            // Gemini APIで画像を刁E��
             const result = await window.geminiService.analyzeMatchImage(file);
             
-            console.log('✅ 画像分析結果:', result);
+            console.log('✁E画像�E析結果:', result);
 
-            // 抽出データを保存（dataTypeも含める）
+            // 抽出チE�Eタを保存！EataTypeも含める�E�E
             this.batchMatchData = result.matches;
             this.batchDataType = result.dataType || 'unknown';
 
             // プレビューを表示
             this.displayBatchDataPreview(result.matches, this.batchDataType);
 
-            // ローディングを非表示、プレビューを表示
+            // ローチE��ングを非表示、�Eレビューを表示
             if (loadingEl) loadingEl.style.display = 'none';
             if (previewSection) previewSection.style.display = 'block';
 
-            this.showToast('データを正常に抽出しました！', 'success');
+            this.showToast('チE�Eタを正常に抽出しました�E�E, 'success');
 
         } catch (error) {
-            console.error('❌ 画像分析エラー:', error);
+            console.error('❁E画像�E析エラー:', error);
             
             if (loadingEl) loadingEl.style.display = 'none';
             
-            this.showToast('画像の分析に失敗しました: ' + error.message, 'error');
+            this.showToast('画像�E刁E��に失敗しました: ' + error.message, 'error');
             this.clearBatchInput();
         }
     }
@@ -1765,22 +1765,22 @@ class App {
         previewContainer.innerHTML = '';
 
         if (!matches || matches.length === 0) {
-            previewContainer.innerHTML = '<p class="no-data">データが抽出できませんでした</p>';
+            previewContainer.innerHTML = '<p class="no-data">チE�Eタが抽出できませんでした</p>';
             return;
         }
 
-        // データタイプのヘッダーを追加
+        // チE�Eタタイプ�Eヘッダーを追加
         const dataTypeHeader = document.createElement('div');
         dataTypeHeader.className = 'data-type-header';
         const dataTypeLabel = dataType === 'player_characters' ? '📊 使用キャラクター別成績' 
                              : dataType === 'opponent_characters' ? '🎯 対戦相手別成績' 
-                             : '❓ 形式不明';
+                             : '❁E形式不�E';
         const dataTypeClass = dataType === 'player_characters' ? 'player-data' 
                             : dataType === 'opponent_characters' ? 'opponent-data' 
                             : 'unknown-data';
         dataTypeHeader.innerHTML = `
             <div class="data-type-badge ${dataTypeClass}">
-                <span class="badge-icon">${dataType === 'player_characters' ? '📊' : dataType === 'opponent_characters' ? '🎯' : '❓'}</span>
+                <span class="badge-icon">${dataType === 'player_characters' ? '📊' : dataType === 'opponent_characters' ? '🎯' : '❁E}</span>
                 <span class="badge-text">${dataTypeLabel}</span>
             </div>
         `;
@@ -1793,7 +1793,7 @@ class App {
         });
 
         if (filteredMatches.length === 0) {
-            previewContainer.innerHTML += '<p class="no-data">保存可能なキャラクターデータがありませんでした</p>';
+            previewContainer.innerHTML += '<p class="no-data">保存可能なキャラクターチE�Eタがありませんでした</p>';
             return;
         }
 
@@ -1812,15 +1812,15 @@ class App {
         `;
         table.appendChild(thead);
 
-        // データ行（ALLを除外）
+        // チE�Eタ行！ELLを除外！E
         const tbody = document.createElement('tbody');
         filteredMatches.forEach(match => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${match.character}</strong></td>
-                <td>${match.totalMatches}試合</td>
+                <td>${match.totalMatches}試吁E/td>
                 <td>${match.winRate.toFixed(2)}%</td>
-                <td>${match.wins}勝</td>
+                <td>${match.wins}勁E/td>
             `;
             tbody.appendChild(row);
         });
@@ -1828,11 +1828,11 @@ class App {
 
         previewContainer.appendChild(table);
 
-        // サマリー情報（ALLのデータを使用して正確な総試合数を表示）
+        // サマリー惁E���E�ELLのチE�Eタを使用して正確な総試合数を表示�E�E
         const summary = document.createElement('div');
         summary.className = 'batch-summary';
         
-        // ALLデータがあればそれを総試合数として使用、なければ各キャラの合計
+        // ALLチE�Eタがあれ�Eそれを総試合数として使用、なければ吁E��ャラの合訁E
         const allData = matches.find(m => m.character.toUpperCase() === 'ALL');
         const totalMatches = allData ? allData.totalMatches : filteredMatches.reduce((sum, m) => sum + m.totalMatches, 0);
         const totalWins = allData ? allData.wins : filteredMatches.reduce((sum, m) => sum + m.wins, 0);
@@ -1845,7 +1845,7 @@ class App {
             </div>
             <div class="summary-item">
                 <span class="summary-label">総試合数:</span>
-                <span class="summary-value">${totalMatches}試合</span>
+                <span class="summary-value">${totalMatches}試吁E/span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">総合勝率:</span>
@@ -1854,16 +1854,16 @@ class App {
         `;
         previewContainer.appendChild(summary);
 
-        // 元のデータにALLが含まれていた場合の注意メッセージ
+        // 允E�EチE�EタにALLが含まれてぁE��場合�E注意メチE��ージ
         if (allData) {
             const note = document.createElement('p');
             note.className = 'batch-note';
-            note.innerHTML = `💡 総試合数 ${totalMatches}試合（勝率 ${avgWinRate}%）は「ALL」から取得されました。個別キャラクターデータのみ保存されます。`;
+            note.innerHTML = `💡 総試合数 ${totalMatches}試合（勝玁E${avgWinRate}%�E��E「ALL」から取得されました。個別キャラクターチE�Eタのみ保存されます。`;
             previewContainer.appendChild(note);
         }
     }
 
-    // バッチマッチデータを保存
+    // バッチ�EチE��チE�Eタを保孁E
     saveBatchMatchData() {
         if (!this.batchMatchData || this.batchMatchData.length === 0) {
             this.showToast('保存するデータがありません', 'error');
@@ -1871,10 +1871,10 @@ class App {
         }
 
         try {
-            // 既存のギャラリーデータを取得
-            const galleryData = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+            // 既存�EギャラリーチE�Eタを取征E
+            const galleryData = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
             
-            // 現在の日時
+            // 現在の日晁E
             const timestamp = new Date().toISOString();
             
             // ALLと試合数0を除外してフィルタリング
@@ -1884,16 +1884,16 @@ class App {
             });
 
             if (validMatches.length === 0) {
-                this.showToast('保存可能なデータがありませんでした', 'warning');
+                this.showToast('保存可能なチE�Eタがありませんでした', 'warning');
                 return;
             }
 
             let savedCount = 0;
             
-            // 各キャラクターのデータをギャラリーに追加
+            // 吁E��ャラクターのチE�Eタをギャラリーに追加
             validMatches.forEach(match => {
 
-                // 勝利と敗北に分けて試合データを作成
+                // 勝利と敗北に刁E��て試合データを作�E
                 const wins = match.wins;
                 const losses = match.totalMatches - match.wins;
 
@@ -1905,16 +1905,16 @@ class App {
                         date: new Date().toLocaleDateString('ja-JP'),
                         playerCharacter: match.character,
                         character: match.character,
-                        opponentCharacter: 'Unknown', // 対戦相手は不明
+                        opponentCharacter: 'Unknown', // 対戦相手�E不�E
                         opponent: 'Unknown',
                         result: 'WIN',
-                        score: '3-0', // スコアは不明のためデフォルト
+                        score: '3-0', // スコアは不�EのためチE��ォルチE
                         roundsWon: 3,
                         roundsLost: 0,
                         decision: 'unknown',
                         source: 'batch_screenshot',
-                        insightTags: ['#一括入力'],
-                        feelings: 'スクリーンショットから一括入力されたデータ'
+                        insightTags: ['#一括入劁E],
+                        feelings: 'スクリーンショチE��から一括入力されたチE�Eタ'
                     };
                     galleryData.push(matchEntry);
                     savedCount++;
@@ -1936,33 +1936,33 @@ class App {
                         roundsLost: 3,
                         decision: 'unknown',
                         source: 'batch_screenshot',
-                        insightTags: ['#一括入力'],
-                        feelings: 'スクリーンショットから一括入力されたデータ'
+                        insightTags: ['#一括入劁E],
+                        feelings: 'スクリーンショチE��から一括入力されたチE�Eタ'
                     };
                     galleryData.push(matchEntry);
                     savedCount++;
                 }
             });
 
-            // ローカルストレージに保存
-            localStorage.setItem('sf6_gallery', JSON.stringify(galleryData));
+            // ローカルストレージに保孁E
+            localStorage.setItem('valorant_gallery', JSON.stringify(galleryData));
 
-            // ダッシュボードを更新
+            // ダチE��ュボ�Eドを更新
             this.loadDashboard();
             
-            // ギャラリーも更新（現在ギャラリーページにいる場合）
+            // ギャラリーも更新�E�現在ギャラリーペ�EジにぁE��場合！E
             const currentPage = document.querySelector('.page.active');
             if (currentPage && currentPage.id === 'gallery') {
                 this.loadGallery();
             }
 
-            // 連勝記録をリセット
+            // 連勝記録をリセチE��
             this.resetWinStreak();
 
-            // 成功メッセージ（実際に保存された試合数とキャラクター数を表示）
+            // 成功メチE��ージ�E�実際に保存された試合数とキャラクター数を表示�E�E
             const characterCount = validMatches.length;
             this.showToast(
-                `✅ ${characterCount}キャラクター、合計${savedCount}試合のデータを保存しました！\n連勝記録はリセットされました。`,
+                `✁E${characterCount}キャラクター、合訁E{savedCount}試合�EチE�Eタを保存しました�E�\n連勝記録はリセチE��されました。`,
                 'success'
             );
 
@@ -1970,20 +1970,20 @@ class App {
             this.clearBatchInput();
 
         } catch (error) {
-            console.error('❌ バッチデータ保存エラー:', error);
-            this.showToast('データの保存に失敗しました: ' + error.message, 'error');
+            console.error('❁Eバッチデータ保存エラー:', error);
+            this.showToast('チE�Eタの保存に失敗しました: ' + error.message, 'error');
         }
     }
 
-    // バッチ入力をクリア
+    // バッチ�E力をクリア
     clearBatchInput() {
-        // ファイル入力をリセット
+        // ファイル入力をリセチE��
         const fileInput = document.getElementById('batch-screenshot-input');
         if (fileInput) {
             fileInput.value = '';
         }
 
-        // ファイル情報を非表示
+        // ファイル惁E��を非表示
         const fileInfo = document.getElementById('selected-file-info');
         if (fileInfo) {
             fileInfo.style.display = 'none';
@@ -1995,28 +1995,28 @@ class App {
             previewSection.style.display = 'none';
         }
 
-        // ローディングを非表示
+        // ローチE��ングを非表示
         const loadingEl = document.getElementById('batch-loading');
         if (loadingEl) {
             loadingEl.style.display = 'none';
         }
 
-        // データをクリア
+        // チE�Eタをクリア
         this.batchMatchData = null;
     }
 
-    // クイック試合入力の送信処理
+    // クイチE��試合�E力�E送信処琁E
     handleQuickMatchSubmit() {
         const character = document.getElementById('selected-character').value;
         const opponent = document.getElementById('selected-opponent').value;
         const score = document.getElementById('selected-score').value;
         const decision = document.getElementById('selected-decision').value;
 
-        // 気づきタグデータを取得
+        // 気づきタグチE�Eタを取征E
         const insightTags = document.getElementById('selected-tags').value;
         const feelings = document.getElementById('match-feelings-hidden').value;
 
-        // スコアと結果を取得（data-result属性から）
+        // スコアと結果を取得！Eata-result属性から�E�E
         const selectedScoreOption = document.querySelector(`.score-option[data-score="${score}"]`);
         const result = selectedScoreOption ? selectedScoreOption.dataset.result : 'loss';
         const [roundsWon, roundsLost] = score.split('-').map(num => parseInt(num));
@@ -2028,37 +2028,37 @@ class App {
             opponentCharacter: opponent,
             roundsWon: roundsWon,
             roundsLost: roundsLost,
-            duration: 3, // デフォルト3分
+            duration: 3, // チE��ォルチE刁E
             decision: decision, // 決着方法を追加
-            insightTags: insightTags ? insightTags.split(',').filter(tag => tag.trim()) : [], // 気づきタグ配列
+            insightTags: insightTags ? insightTags.split(',').filter(tag => tag.trim()) : [], // 気づきタグ配�E
             feelings: feelings || '', // プレイヤーの感想
             timestamp: Date.now()
         };
 
-        // 分析結果の表示
+        // 刁E��結果の表示
         this.analyzeMatch(matchData);
 
-        // 試合を保存し、ダッシュボード統計を更新
+        // 試合を保存し、ダチE��ュボ�Eド統計を更新
         this.storeMatchAndRefresh(matchData);
 
         // 連勝記録を更新
         this.updateWinStreak(matchData.result);
 
-        // フォームをリセット
+        // フォームをリセチE��
         this.resetQuickForm();
 
-        this.showToast('🥊 試合が記録されました！', 'success');
+        this.showToast('🥁E試合が記録されました�E�E, 'success');
     }
 
-    // 分析ページの入力をローカルに保存し、ダッシュボードを更新
+    // 刁E��ペ�Eジの入力をローカルに保存し、ダチE��ュボ�Eドを更新
     storeMatchAndRefresh(matchData) {
         try {
-            // 保存フォーマットへ整形（キャラクター・ラウンド情報のみ）
+            // 保存フォーマットへ整形�E�キャラクター・ラウンド情報のみ�E�E
             const newMatch = {
                 id: Date.now(),
                 result: matchData.result || 'WIN',
                 character: matchData.character || 'Unknown',
-                // キャラクター・ラウンド結果指標
+                // キャラクター・ラウンド結果持E��E
                 playerCharacter: matchData.playerCharacter || 'Unknown',
                 opponentCharacter: matchData.opponentCharacter || 'Unknown',
                 roundsWon: matchData.roundsWon || 0,
@@ -2069,18 +2069,18 @@ class App {
                 gameMode: 'Ranked'
             };
 
-            // 直近試合へ追加（最大50件）
+            // 直近試合へ追加�E�最大50件�E�E
             const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
             matches.unshift(newMatch);
             if (matches.length > 50) matches.length = 50;
             localStorage.setItem('recentMatches', JSON.stringify(matches));
             
-            // sf6_galleryにも保存（統一ストレージ）
-            const galleryData = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+            // valorant_galleryにも保存（統一ストレージ�E�E
+            const galleryData = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
             galleryData.unshift(newMatch);
-            localStorage.setItem('sf6_gallery', JSON.stringify(galleryData));
+            localStorage.setItem('valorant_gallery', JSON.stringify(galleryData));
 
-            // 基本統計の計算（勝率のみ）
+            // 基本統計�E計算（勝玁E�Eみ�E�E
             const totalMatches = matches.length;
             const wins = matches.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
             const winRate = totalMatches ? +(((wins / totalMatches) * 100).toFixed(1)) : 0;
@@ -2113,7 +2113,7 @@ class App {
         }
     }
     
-    // API設定保存
+    // API設定保孁E
     handleApiSave() {
         const provider = document.getElementById('api-provider').value;
         const apiKey = document.getElementById('api-key').value;
@@ -2131,16 +2131,16 @@ class App {
         this.showToast('API設定を保存しました', 'success');
     }
     
-    // API接続テスト
+    // API接続テスチE
     async testApiConnection() {
         this.showLoading();
         
         setTimeout(() => {
             this.hideLoading();
             if (Math.random() > 0.5) {
-                this.showToast('API接続成功', 'success');
+                this.showToast('API接続�E劁E, 'success');
             } else {
-                this.showToast('API接続失敗: キーを確認してください', 'error');
+                this.showToast('API接続失敁E キーを確認してください', 'error');
             }
         }, 1000);
     }
@@ -2173,35 +2173,35 @@ class App {
             } else {
                 statusIndicator.classList.remove('online');
                 statusIndicator.classList.add('offline');
-                statusText.textContent = 'API未設定';
+                statusText.textContent = 'API未設宁E;
             }
         }
     }
     
-    // チャート初期化
+    // チャート�E期化
     initCharts() {
-        // ダッシュボードページに遷移した時にグラフを描画
+        // ダチE��ュボ�Eド�Eージに遷移した時にグラフを描画
         this.renderWinRateTrendChart();
         this.renderCharacterUsageChart();
     }
 
-    // 勝率トレンドグラフの描画
+    // 勝率トレンドグラフ�E描画
     renderWinRateTrendChart() {
         const canvas = document.getElementById('performance-chart');
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
 
-        // 既存のチャートを破棄
+        // 既存�Eチャートを破棁E
         if (this.winRateTrendChart) {
             this.winRateTrendChart.destroy();
         }
 
-        // 両方のストレージからデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        // 両方のストレージからチE�Eタを取得してマ�Eジ
+        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
-        // 重複を排除してマージ
+        // 重褁E��排除してマ�Eジ
         const matchesMap = new Map();
         [...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
@@ -2210,33 +2210,33 @@ class App {
         });
         
         const matches = Array.from(matchesMap.values())
-            .sort((a, b) => (b.id || 0) - (a.id || 0)); // 新しい順
+            .sort((a, b) => (b.id || 0) - (a.id || 0)); // 新しい頁E
 
         if (matches.length === 0) {
-            // データがない場合は空のグラフを表示
+            // チE�EタがなぁE��合�E空のグラフを表示
             ctx.font = '20px sans-serif';
             ctx.fillStyle = '#e94560';
             ctx.textAlign = 'center';
-            ctx.fillText('📝 記録しよう！', canvas.width / 2, canvas.height / 2);
+            ctx.fillText('📝 記録しよぁE��E, canvas.width / 2, canvas.height / 2);
             return;
         }
 
-        // 1. 直近10試合ごとの勝率推移を計算
+        // 1. 直迁E0試合ごとの勝率推移を計箁E
         const batchSize = 10;
         const batches = [];
         for (let i = 0; i < matches.length; i += batchSize) {
             const batch = matches.slice(i, i + batchSize);
             const wins = batch.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
             const winRate = (wins / batch.length * 100).toFixed(1);
-            // 最初のバッチは「直近10試合」、それ以降は試合範囲を表示
-            const label = i === 0 ? '直近10試合' : `試合${i + 1}-${Math.min(i + batchSize, matches.length)}`;
+            // 最初�Eバッチ�E「直迁E0試合」、それ以降�E試合篁E��を表示
+            const label = i === 0 ? '直迁E0試吁E : `試吁E{i + 1}-${Math.min(i + batchSize, matches.length)}`;
             batches.push({
                 label: label,
                 winRate: parseFloat(winRate)
             });
         }
 
-        // 2. 対戦キャラクターごとの累計勝率を計算
+        // 2. 対戦キャラクターごとの累計勝玁E��計箁E
         const opponentStats = {};
         matches.forEach(match => {
             const opponent = match.opponentCharacter || 'Unknown';
@@ -2249,7 +2249,7 @@ class App {
             }
         });
 
-        // 最も勝率が低いキャラクターを抽出（対戦回数が多い方を優先）
+        // 最も勝玁E��低いキャラクターを抽出�E�対戦回数が多い方を優先！E
         let opponentWinRates = [];
         
         if (Object.keys(opponentStats).length > 0) {
@@ -2260,28 +2260,28 @@ class App {
                     total: stats.total
                 }));
             
-            // 最低勝率を特定
+            // 最低勝玁E��特宁E
             const minWinRate = Math.min(...winRateData.map(d => d.winRate));
             
-            // 最低勝率のキャラクターを抽出
+            // 最低勝玁E�Eキャラクターを抽出
             const lowestWinRateChars = winRateData.filter(d => d.winRate === minWinRate);
             
-            // 対戦回数が最も多いキャラクターを選択
+            // 対戦回数が最も多いキャラクターを選抁E
             const selectedChar = lowestWinRateChars.sort((a, b) => b.total - a.total)[0];
             
             opponentWinRates = [selectedChar];
         }
 
-        // 対戦データがない場合のダミーラベル
+        // 対戦チE�EタがなぁE��合�Eダミ�Eラベル
         const opponentLabels = opponentWinRates.length > 0 
             ? opponentWinRates.map(o => `vs ${o.opponent}`)
-            : ['📝 記録しよう！'];
+            : ['📝 記録しよぁE��E];
         
         const opponentData = opponentWinRates.length > 0
             ? opponentWinRates.map(o => parseFloat(o.winRate))
             : [0];
 
-        // グラフの描画
+        // グラフ�E描画
         this.winRateTrendChart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -2325,7 +2325,7 @@ class App {
                     },
                     title: {
                         display: true,
-                        text: '直近10試合の勝率 & 最も勝率が低い対戦キャラクター',
+                        text: '直迁E0試合�E勝率 & 最も勝玁E��低い対戦キャラクター',
                         color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
                         font: {
                             size: 14,
@@ -2348,20 +2348,20 @@ class App {
                         callbacks: {
                             title: function(context) {
                                 const label = context[0].label;
-                                if (label === '直近10試合') {
-                                    // 「直近10試合」はそのまま表示
+                                if (label === '直迁E0試吁E) {
+                                    // 「直迁E0試合」�Eそ�Eまま表示
                                     return label;
                                 } else if (label.startsWith('#')) {
-                                    return '試合' + label.substring(1);
-                                } else if (label === '📝 記録しよう！') {
-                                    return '対戦データなし';
+                                    return '試吁E + label.substring(1);
+                                } else if (label === '📝 記録しよぁE��E) {
+                                    return '対戦チE�EタなぁE;
                                 }
                                 return label;
                             },
                             label: function(context) {
                                 const label = context.label;
-                                if (label === '📝 記録しよう！') {
-                                    return '対戦データを記録してください';
+                                if (label === '📝 記録しよぁE��E) {
+                                    return '対戦チE�Eタを記録してください';
                                 }
                                 return `勝率: ${context.parsed.y}%`;
                             }
@@ -2394,12 +2394,12 @@ class App {
                             callback: function(value, index, values) {
                                 const label = this.getLabelForValue(value);
                                 // ラベルを短縮表示
-                                if (label === '直近10試合') {
-                                    // 「直近10試合」はそのまま表示
+                                if (label === '直迁E0試吁E) {
+                                    // 「直迁E0試合」�Eそ�Eまま表示
                                     return label;
-                                } else if (label.startsWith('試合')) {
-                                    // 「試合11-20」を「#11-20」に短縮
-                                    return label.replace('試合', '#');
+                                } else if (label.startsWith('試吁E)) {
+                                    // 「試吁E1-20」を、E11-20」に短縮
+                                    return label.replace('試吁E, '#');
                                 } else if (label.startsWith('vs ')) {
                                     // 「vs Luke」を「Luke」に短縮
                                     return label.replace('vs ', '');
@@ -2416,23 +2416,23 @@ class App {
         });
     }
 
-    // キャラクター使用率グラフの描画
+    // キャラクター使用玁E��ラフ�E描画
     renderCharacterUsageChart() {
         const canvas = document.getElementById('sf6-metrics-chart');
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
 
-        // 既存のチャートを破棄
+        // 既存�Eチャートを破棁E
         if (this.characterUsageChart) {
             this.characterUsageChart.destroy();
         }
 
-        // 両方のストレージからデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        // 両方のストレージからチE�Eタを取得してマ�Eジ
+        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
-        // 重複を排除してマージ
+        // 重褁E��排除してマ�Eジ
         const matchesMap = new Map();
         [...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
@@ -2443,7 +2443,7 @@ class App {
         const matches = Array.from(matchesMap.values());
 
         if (matches.length === 0) {
-            // データがない場合は空のグラフを表示
+            // チE�EタがなぁE��合�E空のグラフを表示
             ctx.font = '16px sans-serif';
             ctx.fillStyle = '#888';
             ctx.textAlign = 'center';
@@ -2451,7 +2451,7 @@ class App {
             return;
         }
 
-        // キャラクター使用率を計算
+        // キャラクター使用玁E��計箁E
         const characterUsage = {};
         matches.forEach(match => {
             const character = match.playerCharacter || match.character || 'Unknown';
@@ -2461,7 +2461,7 @@ class App {
             characterUsage[character]++;
         });
 
-        // 使用率を計算してソート
+        // 使用玁E��計算してソーチE
         const characterData = Object.entries(characterUsage)
             .map(([character, count]) => ({
                 character,
@@ -2470,17 +2470,17 @@ class App {
             }))
             .sort((a, b) => b.count - a.count);
 
-        // 現在のテーマを取得（ライトモードかダークモードか）
+        // 現在のチE�Eマを取得（ライトモードかダークモードか�E�E
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
         const isDarkMode = currentTheme === 'dark';
         
-        // テーマに応じた色設定（より明確なコントラスト）
+        // チE�Eマに応じた色設定（より�E確なコントラスト！E
         const textColor = isDarkMode ? '#ffffff' : '#000000';
         const backgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)';
 
-        console.log('グラフ描画 - テーマ:', currentTheme, '文字色:', textColor);
+        console.log('グラフ描画 - チE�EチE', currentTheme, '斁E��色:', textColor);
 
-        // グラフの描画
+        // グラフ�E描画
         this.characterUsageChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -2517,7 +2517,7 @@ class App {
                         display: true,
                         position: 'right',
                         labels: {
-                            color: textColor,  // 明示的なテーマ対応の色
+                            color: textColor,  // 明示皁E��チE�Eマ対応�E色
                             font: {
                                 size: 13,
                                 weight: '500'
@@ -2532,13 +2532,13 @@ class App {
                                         const value = data.datasets[0].data[i];
                                         const percentage = ((value / matches.length) * 100).toFixed(1);
                                         return {
-                                            text: `${label}: ${percentage}% (${value}回)`,
+                                            text: `${label}: ${percentage}% (${value}囁E`,
                                             fillStyle: data.datasets[0].backgroundColor[i],
                                             strokeStyle: data.datasets[0].borderColor[i],
                                             lineWidth: 2,
                                             hidden: !chart.getDataVisibility(i),
                                             index: i,
-                                            fontColor: textColor  // 追加の色指定
+                                            fontColor: textColor  // 追加の色持E��E
                                         };
                                     });
                                 }
@@ -2563,7 +2563,7 @@ class App {
                                 const label = context.label || '';
                                 const value = context.parsed;
                                 const percentage = ((value / matches.length) * 100).toFixed(1);
-                                return `${label}: ${value}回 (${percentage}%)`;
+                                return `${label}: ${value}囁E(${percentage}%)`;
                             }
                         }
                     }
@@ -2571,7 +2571,7 @@ class App {
             }
         });
         
-        console.log('キャラクター使用率グラフ描画完了');
+        console.log('キャラクター使用玁E��ラフ描画完亁E);
     }
 
     // 勝率詳細モーダルを表示
@@ -2591,13 +2591,13 @@ class App {
         }
     }
 
-    // 勝率詳細データを読み込む
+    // 勝率詳細チE�Eタを読み込む
     loadWinRateDetailData() {
-        // 両方のストレージからデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        // 両方のストレージからチE�Eタを取得してマ�Eジ
+        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
-        // 重複を排除してマージ
+        // 重褁E��排除してマ�Eジ
         const matchesMap = new Map();
         [...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
@@ -2612,7 +2612,7 @@ class App {
             return;
         }
 
-        // 対戦キャラクターごとの統計を計算
+        // 対戦キャラクターごとの統計を計箁E
         const opponentStats = {};
         matches.forEach(match => {
             const opponent = match.opponentCharacter || 'Unknown';
@@ -2627,7 +2627,7 @@ class App {
             }
         });
 
-        // 統計データを配列に変換
+        // 統計データを�E列に変換
         this.opponentStatsData = Object.entries(opponentStats).map(([opponent, stats]) => ({
             opponent,
             wins: stats.wins,
@@ -2636,7 +2636,7 @@ class App {
             winRate: stats.total > 0 ? (stats.wins / stats.total * 100).toFixed(1) : 0
         }));
 
-        // サマリー情報を更新
+        // サマリー惁E��を更新
         const totalMatches = matches.length;
         const uniqueOpponents = this.opponentStatsData.length;
         const totalWins = matches.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
@@ -2649,11 +2649,11 @@ class App {
         // 初期表示
         this.renderOpponentStatsList();
 
-        // ソート・フィルターのイベントリスナー
+        // ソート�Eフィルターのイベントリスナ�E
         this.setupDetailControls();
     }
 
-    // 詳細コントロールのイベントリスナーを設定
+    // 詳細コントロールのイベントリスナ�Eを設宁E
     setupDetailControls() {
         const sortSelect = document.getElementById('sort-by');
         const minMatchesInput = document.getElementById('min-matches');
@@ -2674,7 +2674,7 @@ class App {
         const container = document.getElementById('opponent-stats-list');
         if (!container || !this.opponentStatsData) return;
 
-        // フィルター条件を取得
+        // フィルター条件を取征E
         const minMatches = parseInt(document.getElementById('min-matches').value) || 0;
         const sortBy = document.getElementById('sort-by').value;
 
@@ -2702,7 +2702,7 @@ class App {
 
         // リストを描画
         if (filteredData.length === 0) {
-            container.innerHTML = '<p class="no-data">条件に一致するデータがありません</p>';
+            container.innerHTML = '<p class="no-data">条件に一致するチE�Eタがありません</p>';
             return;
         }
 
@@ -2718,8 +2718,8 @@ class App {
                     </div>
                     <div class="opponent-details">
                         <span class="stat-detail">試合数: ${stat.total}</span>
-                        <span class="stat-detail wins">${stat.wins}勝</span>
-                        <span class="stat-detail losses">${stat.losses}敗</span>
+                        <span class="stat-detail wins">${stat.wins}勁E/span>
+                        <span class="stat-detail losses">${stat.losses}敁E/span>
                     </div>
                     <div class="winrate-bar">
                         <div class="winrate-fill ${winRateClass}" style="width: ${stat.winRate}%"></div>
@@ -2729,20 +2729,20 @@ class App {
         }).join('');
     }
 
-    // 勝率データをエクスポート
+    // 勝率チE�Eタをエクスポ�EチE
     exportWinRateData() {
         if (!this.opponentStatsData || this.opponentStatsData.length === 0) {
-            this.showToast('エクスポートするデータがありません', 'warning');
+            this.showToast('エクスポ�Eトするデータがありません', 'warning');
             return;
         }
 
-        // CSV形式でエクスポート
+        // CSV形式でエクスポ�EチE
         let csv = 'キャラクター,試合数,勝利数,敗北数,勝率(%)\n';
         this.opponentStatsData.forEach(stat => {
             csv += `${stat.opponent},${stat.total},${stat.wins},${stat.losses},${stat.winRate}\n`;
         });
 
-        // ダウンロード
+        // ダウンローチE
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
@@ -2753,10 +2753,10 @@ class App {
         link.click();
         document.body.removeChild(link);
 
-        this.showToast('データをエクスポートしました', 'success');
+        this.showToast('チE�Eタをエクスポ�Eトしました', 'success');
     }
     
-    // トースト表示
+    // ト�Eスト表示
     showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -2781,9 +2781,9 @@ class App {
         }, 3000);
     }
     
-    // ローディング表示（任意メッセージ対応）
+    // ローチE��ング表示�E�任意メチE��ージ対応！E
     showLoading(message = 'ロード中...') {
-        // テキストを更新（重複IDに対応して全て更新）
+        // チE��ストを更新�E�重複IDに対応して全て更新�E�E
         try {
             const msgNodes = document.querySelectorAll('#loading .loading-content p');
             if (msgNodes && msgNodes.length > 0) {
@@ -2806,20 +2806,20 @@ class App {
         }
     }
     
-    // 各ページのロード処理
+    // 吁E�Eージのロード�E琁E
     loadDashboard() {
-        // 新しい統計システムを使用
+        // 新しい統計シスチE��を使用
         if (this.playerStatsManager) {
             this.playerStatsManager.loadRecentMatches();
         } else {
             this.loadRecentMatches();
         }
-        // 新しい統計システムを使用
+        // 新しい統計シスチE��を使用
         if (this.playerStatsManager) {
             this.playerStatsManager.loadStatsToUI();
         }
 
-        // ダッシュボード目標を読み込み
+        // ダチE��ュボ�Eド目標を読み込み
         this.loadDashboardGoals();
 
         // グラフを描画
@@ -2842,7 +2842,7 @@ class App {
             const selectAllHtml = `
                 <div class="checkbox-item">
                     <input type="checkbox" id="select-all-files">
-                    <label for="select-all-files">すべてのファイルを選択</label>
+                    <label for="select-all-files">すべてのファイルを選抁E/label>
                 </div>
             `;
 
@@ -2867,7 +2867,7 @@ class App {
 
         } else {
             fileRadio.disabled = true;
-            fileListContainer.innerHTML = '<p>アップロードされたファイルはありません</p>';
+            fileListContainer.innerHTML = '<p>アチE�Eロードされたファイルはありません</p>';
         }
 
         // Add event listeners for radio buttons
@@ -2897,11 +2897,11 @@ class App {
         this.loadApiSettings();
     }
     
-    // データロード処理
+    // チE�Eタロード�E琁E
     loadUserData() {
-        // ユーザーデータのロード
+        // ユーザーチE�EタのローチE
         if (!this.isGuest && this.currentUser) {
-            // 保存されたデータをロード
+            // 保存されたチE�EタをローチE
         }
     }
     
@@ -2909,11 +2909,11 @@ class App {
         const container = document.getElementById('recent-matches');
         if (!container) return;
         
-        // 両方のストレージからデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        // 両方のストレージからチE�Eタを取得してマ�Eジ
+        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
-        // 重複を排除してマージ
+        // 重褁E��排除してマ�Eジ
         const matchesMap = new Map();
         [...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
@@ -2922,7 +2922,7 @@ class App {
         });
         
         const matches = Array.from(matchesMap.values())
-            .sort((a, b) => (b.id || 0) - (a.id || 0)) // 新しい順
+            .sort((a, b) => (b.id || 0) - (a.id || 0)) // 新しい頁E
             .slice(0, 10); // 最新10件のみ表示
         
         if (matches.length === 0) {
@@ -2934,18 +2934,18 @@ class App {
             <div class="match-item ${match.result.toLowerCase()}">
                 <span class="match-result">${match.result}</span>
                 <span class="match-character">キャラ: ${match.character}</span>
-                <span class="match-rounds">ラウンド: ${match.rounds}</span>
+                <span class="match-rounds">ラウンチE ${match.rounds}</span>
             </div>
         `).join('');
     }
     
     loadAiRecommendations() {
-        // この関数は削除されました - AIコーチング機能は無効化されています
+        // こ�E関数は削除されました - AIコーチング機�Eは無効化されてぁE��ぁE
         console.log('🚨 loadAiRecommendations called but AI coaching feature has been removed');
     }
     
     refreshAiRecommendations() {
-        // この関数は削除されました - AIコーチング機能は無効化されています
+        // こ�E関数は削除されました - AIコーチング機�Eは無効化されてぁE��ぁE
         console.log('🚨 refreshAiRecommendations called but AI coaching feature has been removed');
     }
     
@@ -2956,7 +2956,7 @@ class App {
         const goals = JSON.parse(localStorage.getItem('goals') || '[]');
 
         if (goals.length === 0) {
-            container.innerHTML = '<p class="no-data">目標がまだ設定されていません</p>';
+            container.innerHTML = '<p class="no-data">目標がまだ設定されてぁE��せん</p>';
             return;
         }
 
@@ -2973,7 +2973,7 @@ class App {
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: ${calculatedProgress}%"></div>
                     </div>
-                    <span class="progress-text">${calculatedProgress}% (日数ベース)</span>
+                    <span class="progress-text">${calculatedProgress}% (日数ベ�Eス)</span>
                 </div>
                 <div class="goal-actions">
                     <button class="btn-danger btn-sm" onclick="app.deleteGoal(${goal.id})">削除</button>
@@ -2991,7 +2991,7 @@ class App {
     }
 
 
-    // デバッグ用: 特定の目標の進捗を強制的に更新する関数
+    // チE��チE��用: 特定�E目標�E進捗を強制皁E��更新する関数
     forceUpdateGoalByTitle(title, progress) {
         try {
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
@@ -3022,7 +3022,7 @@ class App {
             // リストを更新
             this.loadGoalsList();
 
-            // 現在のページがダッシュボードの場合のみ更新
+            // 現在のペ�EジがダチE��ュボ�Eド�E場合�Eみ更新
             if (this.currentPage === 'dashboard') {
                 this.loadDashboardGoals();
             }
@@ -3030,7 +3030,7 @@ class App {
             this.showToast('目標を削除しました', 'success');
         } catch (error) {
             console.error('Failed to delete goal:', error);
-            this.showToast('目標の削除に失敗しました', 'error');
+            this.showToast('目標�E削除に失敗しました', 'error');
         }
     }
 
@@ -3045,7 +3045,7 @@ class App {
         if (resultsContainer) {
             resultsContainer.innerHTML = `
                 <div class="card">
-                    <h3>試合分析結果</h3>
+                    <h3>試合�E析結果</h3>
                     <div class="analysis-stats">
                         <div class="stat-section">
                             <h4>試合情報</h4>
@@ -3067,7 +3067,7 @@ class App {
                     </div>
                     <div class="analysis-feedback">
                         <h4>パフォーマンス評価</h4>
-                        <p>試合データが記録されました。キャラクター対戦データを蓄積中...</p>
+                        <p>試合データが記録されました。キャラクター対戦チE�Eタを蓄積中...</p>
                     </div>
                 </div>
             `;
@@ -3104,7 +3104,7 @@ class App {
         
         container.innerHTML = html;
         
-        // ゲーム選択カードのクリックイベントを設定
+        // ゲーム選択カード�EクリチE��イベントを設宁E
         this.setupGameCards();
     }
     
@@ -3139,7 +3139,7 @@ class App {
             
             localStorage.setItem('selectedGame', gameId);
             this.hideGameSelector();
-            this.showToast(`ゲームを${gameName}に変更しました`, 'success');
+            this.showToast(`ゲームめE{gameName}に変更しました`, 'success');
         }
     }
     
@@ -3160,22 +3160,22 @@ class App {
         this.updateApiStatus(!!hasKey);
     }
 
-    // === チャット機能 ===
+    // === チャチE��機�E ===
     initChat() {
         console.log('Initializing chat...');
         
         // API設定関連
         this.setupChatApiSettings();
         
-        // チャット入力関連
+        // チャチE��入力関連
         this.setupChatInput();
         
-        // メッセージ履歴を復元
+        // メチE��ージ履歴を復允E
         this.loadChatHistory();
     }
     
     setupChatApiSettings() {
-        // APIキー設定
+        // APIキー設宁E
         const saveKeyBtn = document.getElementById('save-gemini-key');
         const testConnectionBtn = document.getElementById('test-gemini-connection');
         const toggleKeyBtn = document.getElementById('toggle-gemini-key');
@@ -3193,11 +3193,11 @@ class App {
             toggleKeyBtn.addEventListener('click', () => {
                 const isPassword = apiKeyInput.type === 'password';
                 apiKeyInput.type = isPassword ? 'text' : 'password';
-                toggleKeyBtn.textContent = isPassword ? '🙈' : '👁️';
+                toggleKeyBtn.textContent = isPassword ? '🙈' : '👁�E�E;
             });
         }
         
-        // 既存のAPIキーを読み込み
+        // 既存�EAPIキーを読み込み
         if (apiKeyInput && this.geminiService) {
             apiKeyInput.value = this.geminiService.getApiKey();
         }
@@ -3244,7 +3244,7 @@ class App {
         
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) {
-            this.showToast('APIキーを入力してください', 'warning');
+            this.showToast('APIキーを�E力してください', 'warning');
             return;
         }
         
@@ -3252,7 +3252,7 @@ class App {
             // 統一APIマネージャーを使用
             if (window.unifiedApiManager) {
                 await window.unifiedApiManager.setAPIKey(apiKey);
-                // 他の入力フィールドも同期
+                // 他�E入力フィールドも同期
                 this.syncAPIKeyInputs();
                 this.showToast('APIキーを保存しました', 'success');
             } else if (this.geminiService) {
@@ -3260,7 +3260,7 @@ class App {
                 this.geminiService.setApiKey(apiKey);
                 this.showToast('Gemini APIキーを保存しました', 'success');
             } else {
-                this.showToast('APIサービスが初期化されていません', 'error');
+                this.showToast('APIサービスが�E期化されてぁE��せん', 'error');
             }
         } catch (error) {
             this.showToast(`APIキー保存に失敗しました: ${error.message}`, 'error');
@@ -3269,25 +3269,25 @@ class App {
     
     async testGeminiConnection() {
         if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
-            this.showToast('Gemini APIキーが設定されていません', 'error');
+            this.showToast('Gemini APIキーが設定されてぁE��せん', 'error');
             return;
         }
         
         const testBtn = document.getElementById('test-gemini-connection');
         if (testBtn) {
             testBtn.disabled = true;
-            testBtn.textContent = 'テスト中...';
+            testBtn.textContent = 'チE��ト中...';
         }
         
         try {
             await window.unifiedApiManager.validateAPIKey();
             this.showToast('接続テストに成功しました', 'success');
         } catch (error) {
-            this.showToast(`接続テストに失敗: ${error.message}`, 'error');
+            this.showToast(`接続テストに失敁E ${error.message}`, 'error');
         } finally {
             if (testBtn) {
                 testBtn.disabled = false;
-                testBtn.textContent = '接続テスト';
+                testBtn.textContent = '接続テスチE;
             }
         }
     }
@@ -3298,21 +3298,21 @@ class App {
         
         if (!chatInput) return;
         
-        // APIが設定されているか確認
+        // APIが設定されてぁE��か確誁E
         if (!window.unifiedApiManager || !window.unifiedApiManager.isConfigured()) {
-            this.showToast('Gemini APIキーが設定されていません', 'warning');
+            this.showToast('Gemini APIキーが設定されてぁE��せん', 'warning');
             return;
         }
         
         const message = chatInput.value.trim();
         if (!message) return;
         
-        // UIを無効化
+        // UIを無効匁E
         chatInput.disabled = true;
         if (sendBtn) sendBtn.disabled = true;
         
         try {
-            // ユーザーメッセージを表示
+            // ユーザーメチE��ージを表示
             this.addChatMessage(message, 'user');
             
             // 入力フィールドをクリア
@@ -3331,14 +3331,14 @@ class App {
             // AIの応答を表示
             this.addChatMessage(response.response, 'ai');
             
-            // 履歴を保存
+            // 履歴を保孁E
             this.saveChatHistory();
             
         } catch (error) {
             this.hideTypingIndicator();
-            this.showToast(`メッセージ送信エラー: ${error.message}`, 'error');
+            this.showToast(`メチE��ージ送信エラー: ${error.message}`, 'error');
         } finally {
-            // UIを再有効化
+            // UIを�E有効匁E
             chatInput.disabled = false;
             if (sendBtn) sendBtn.disabled = false;
         }
@@ -3353,7 +3353,7 @@ class App {
         
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
-        avatar.textContent = type === 'user' ? '👤' : '🤖';
+        avatar.textContent = type === 'user' ? '👤' : '🤁E;
         
         const content = document.createElement('div');
         content.className = 'message-content';
@@ -3379,7 +3379,7 @@ class App {
         // スクロール
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         
-        // メッセージを配列に追加
+        // メチE��ージを�E列に追加
         this.chatMessages.push({
             text: text,
             type: type,
@@ -3396,10 +3396,10 @@ class App {
         indicator.id = 'typing-indicator';
         
         indicator.innerHTML = `
-            <div class="message-avatar">🤖</div>
+            <div class="message-avatar">🤁E/div>
             <div class="message-content">
                 <div class="message-text">
-                    <span>AI が入力中</span>
+                    <span>AI が�E力中</span>
                     <div class="typing-dots">
                         <div class="typing-dot"></div>
                         <div class="typing-dot"></div>
@@ -3424,20 +3424,20 @@ class App {
         const messagesContainer = document.getElementById('chat-messages');
         if (!messagesContainer) return;
         
-        // 最初のAIメッセージ以外を削除
+        // 最初�EAIメチE��ージ以外を削除
         const messages = messagesContainer.querySelectorAll('.chat-message');
         messages.forEach((msg, index) => {
             if (index > 0) msg.remove();
         });
         
-        // データをクリア
+        // チE�Eタをクリア
         this.chatMessages = [];
         if (this.geminiService) {
             this.geminiService.clearChatHistory();
         }
         
         this.saveChatHistory();
-        this.showToast('チャット履歴をクリアしました', 'success');
+        this.showToast('チャチE��履歴をクリアしました', 'success');
     }
     
     saveChatHistory() {
@@ -3449,7 +3449,7 @@ class App {
             const history = localStorage.getItem('chat-history');
             if (history) {
                 this.chatMessages = JSON.parse(history);
-                // UIは復元しない（新しいセッションとして開始）
+                // UIは復允E��なぁE��新しいセチE��ョンとして開始！E
             }
         } catch (error) {
             console.warn('Failed to load chat history:', error);
@@ -3458,11 +3458,11 @@ class App {
     }
 
 
-    // === ゲーム選択とダッシュボード機能 ===
+    // === ゲーム選択とダチE��ュボ�Eド機�E ===
     initGameSelection() {
         console.log('Initializing game selection...');
         
-        // ゲーム選択誘導ボタン
+        // ゲーム選択誘導�Eタン
         const gotoGameSelectionBtn = document.getElementById('goto-game-selection');
         if (gotoGameSelectionBtn) {
             gotoGameSelectionBtn.addEventListener('click', () => {
@@ -3470,22 +3470,22 @@ class App {
             });
         }
         
-        // ゲームカードのクリックイベントを設定
+        // ゲームカード�EクリチE��イベントを設宁E
         this.setupGameActionButtons();
         
-        // 初期状態のチェック
+        // 初期状態�EチェチE��
         this.checkGameSelection();
     }
     
     setupGameCardEvents() {
-        // ゲームカードの初回設定
+        // ゲームカード�E初回設宁E
         this.setupGameCards();
         
-        // ゲームカードが動的生成される場合のための再試行機構
+        // ゲームカードが動的生�Eされる場合�Eための再試行機槁E
         setTimeout(() => this.setupGameCards(), 500);
         setTimeout(() => this.setupGameCards(), 1500);
         
-        // 確認・キャンセルボタンの設定
+        // 確認�Eキャンセルボタンの設宁E
         this.setupGameActionButtons();
     }
     
@@ -3494,7 +3494,7 @@ class App {
         console.log(`Found ${gameCards.length} game cards`);
         
         gameCards.forEach((card) => {
-            // クリックイベントリスナー追加
+            // クリチE��イベントリスナ�E追加
             card.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -3502,7 +3502,7 @@ class App {
                 this.selectGame(card);
             });
             
-            // キーボードアクセシビリティ
+            // キーボ�EドアクセシビリチE��
             card.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -3510,7 +3510,7 @@ class App {
                 }
             });
             
-            // マウスオーバー効果
+            // マウスオーバ�E効极E
             card.addEventListener('mouseenter', () => {
                 if (!card.classList.contains('selected')) {
                     card.style.transform = 'scale(1.02)';
@@ -3523,11 +3523,11 @@ class App {
                 }
             });
             
-            // クリック可能であることを明示するスタイル
+            // クリチE��可能であることを�E示するスタイル
             card.style.cursor = 'pointer';
         });
         
-        // 現在選択されているゲームがあれば表示
+        // 現在選択されてぁE��ゲームがあれ�E表示
         this.restoreGameSelection();
     }
     
@@ -3574,10 +3574,10 @@ class App {
     }
     
     goToGameSelection() {
-        // 設定タブに移動
+        // 設定タブに移勁E
         this.showPage('settings');
         
-        // ナビゲーションのアクティブ状態を更新
+        // ナビゲーションのアクチE��ブ状態を更新
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
             btn.classList.remove('active');
@@ -3618,7 +3618,7 @@ class App {
             // ゲームが選択済み
             this.updateUIWithGameData(JSON.parse(selectedGameData));
         } else {
-            // Street Fighter 6専用なので、ゲームデータを自動設定
+            // Street Fighter 6専用なので、ゲームチE�Eタを�E動設宁E
             const sf6GameData = {
                 id: 'sf6',
                 name: 'Street Fighter 6',
@@ -3633,11 +3633,11 @@ class App {
     }
     
     selectGame(gameCard) {
-        // 他のカードの選択を解除
+        // 他�Eカード�E選択を解除
         const allCards = document.querySelectorAll('.game-option');
         allCards.forEach(card => card.classList.remove('selected'));
         
-        // 選択したカードをハイライト
+        // 選択したカードをハイライチE
         gameCard.classList.add('selected');
     }
     
@@ -3648,11 +3648,11 @@ class App {
             return;
         }
         
-        // ゲーム情報を取得
+        // ゲーム惁E��を取征E
         const gameId = selectedCard.dataset.gameId;
         const gameName = selectedCard.dataset.gameName || selectedCard.querySelector('.game-option-name').textContent;
         const gameIcon = selectedCard.dataset.gameIcon || selectedCard.querySelector('.game-option-icon').textContent;
-        const categoryName = selectedCard.dataset.category || selectedCard.closest('.game-category-section')?.querySelector('.category-title')?.textContent || 'その他';
+        const categoryName = selectedCard.dataset.category || selectedCard.closest('.game-category-section')?.querySelector('.category-title')?.textContent || 'そ�E仁E;
         
         const gameData = {
             id: gameId,
@@ -3661,7 +3661,7 @@ class App {
             category: categoryName
         };
         
-        // LocalStorageに保存
+        // LocalStorageに保孁E
         localStorage.setItem('selectedGame', gameId);
         localStorage.setItem('selectedGameData', JSON.stringify(gameData));
         
@@ -3675,7 +3675,7 @@ class App {
         // コーチングを更新
         this.refreshDailyCoaching();
 
-        // ダッシュボードに戻る
+        // ダチE��ュボ�Eドに戻めE
         setTimeout(() => {
             this.showPage('dashboard');
             const navBtns = document.querySelectorAll('.nav-btn');
@@ -3689,7 +3689,7 @@ class App {
     }
     
     updateUIWithGameData(gameData) {
-        // ダッシュボード更新
+        // ダチE��ュボ�Eド更新
         const playerGame = document.getElementById('player-game');
         const currentGameName = document.getElementById('current-game-name');
         const currentGameIcon = document.getElementById('current-game-icon');
@@ -3700,7 +3700,7 @@ class App {
         if (currentGameIcon) currentGameIcon.textContent = gameData.icon;
         if (currentGameCategory) currentGameCategory.textContent = gameData.category;
         
-        // サンプルデータを表示
+        // サンプルチE�Eタを表示
         this.loadSampleGameData(gameData);
     }
     
@@ -3711,7 +3711,7 @@ class App {
             playerName.textContent = `${gameData.name} プレイヤー`;
         }
 
-        // ランクを設定（固定の例。ここはランダムではないため従来通り）
+        // ランクを設定（固定�E例。ここ�EランダムではなぁE��め従来通り�E�E
         const playerRank = document.getElementById('player-rank');
         if (playerRank) {
             const ranks = {
@@ -3724,15 +3724,15 @@ class App {
             playerRank.textContent = ranks[gameData.name] || 'Platinum II';
         }
 
-        // 1) まずは保存済みの統計があればそれを使用（安定表示）
+        // 1) まず�E保存済みの統計があればそれを使用�E�安定表示�E�E
         let stableStats = null;
         if (this.playerStatsManager && this.playerStatsManager.hasValidStats()) {
             stableStats = this.playerStatsManager.getPlayerStats();
         }
 
-        // 2) 保存済みの統計がない場合は何もしない（初期状態は「-」のまま）
+        // 2) 保存済みの統計がなぁE��合�E何もしなぁE���E期状態�E、E」�Eまま�E�E
 
-        // 3) UI へ反映（存在しなければハイフンのまま）
+        // 3) UI へ反映�E�存在しなければハイフンのまま�E�E
         if (stableStats) {
             const mapping = {
                 'win-rate': `${Number(stableStats.winRate).toFixed(0)}%`,
@@ -3747,7 +3747,7 @@ class App {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
             });
-            // チャート初期化（保存している場合のみ）
+            // チャート�E期化�E�保存してぁE��場合�Eみ�E�E
             if (this.playerStatsManager) {
                 this.playerStatsManager.loadStatsToUI();
             }
@@ -3763,10 +3763,10 @@ class App {
         const playerGame = document.getElementById('player-game');
         const currentGameName = document.getElementById('current-game-name');
         
-        if (playerGame) playerGame.textContent = 'ゲーム未選択';
+        if (playerGame) playerGame.textContent = 'ゲーム未選抁E;
         if (currentGameName) currentGameName.textContent = 'ゲームを選択してください';
         
-        // 統計を「-」に戻す
+        // 統計を、E」に戻ぁE
         ['win-rate', 'avg-drive-rush-attempts', 'drive-impact-success-rate', 'burnout-frequency', 'anti-air-success-rate', 'throw-tech-rate', 'games-played'].forEach(id => {
             const element = document.getElementById(id);
             if (element) element.textContent = '-';
@@ -3787,12 +3787,12 @@ class App {
         }
     }
 
-    // スキルレベル選択関連のメソッド
+    // スキルレベル選択関連のメソチE��
     showSkillSelector() {
         const selector = document.getElementById('skill-selector');
         if (selector) {
             selector.classList.remove('hidden');
-            // スキルレベルオプションのクリックイベントを設定
+            // スキルレベルオプションのクリチE��イベントを設宁E
             this.setupSkillOptions();
         }
     }
@@ -3817,11 +3817,11 @@ class App {
     }
 
     selectSkillLevel(skillOption) {
-        // 他のオプションの選択を解除
+        // 他�Eオプションの選択を解除
         const allOptions = document.querySelectorAll('.skill-option');
         allOptions.forEach(option => option.classList.remove('selected'));
 
-        // 選択したオプションをハイライト
+        // 選択したオプションをハイライチE
         skillOption.classList.add('selected');
     }
 
@@ -3835,7 +3835,7 @@ class App {
         const skillLevel = selectedOption.dataset.skill;
         const skillInfo = this.getSkillLevelInfo(skillLevel);
 
-        // LocalStorageに保存
+        // LocalStorageに保孁E
         localStorage.setItem('playerSkillLevel', skillLevel);
         localStorage.setItem('playerSkillLevelData', JSON.stringify(skillInfo));
 
@@ -3843,7 +3843,7 @@ class App {
         this.updateSkillLevelUI(skillInfo);
         this.hideSkillSelector();
 
-        this.showToast(`スキルレベルを${skillInfo.name}に設定しました`, 'success');
+        this.showToast(`スキルレベルめE{skillInfo.name}に設定しました`, 'success');
 
         // コーチングを更新
         this.refreshDailyCoaching();
@@ -3852,18 +3852,18 @@ class App {
     getSkillLevelInfo(skillLevel) {
         const skillLevels = {
             beginner: {
-                name: '初心者',
-                description: '基本的なゲームメカニクスを学習中',
+                name: '初忁E��E,
+                description: '基本皁E��ゲームメカニクスを学習中',
                 icon: '🌱'
             },
             intermediate: {
-                name: '中級者',
-                description: 'ゲームの基本は理解し、上達を目指している',
+                name: '中級老E,
+                description: 'ゲームの基本は琁E��し、上達を目持E��てぁE��',
                 icon: '📊'
             },
             advanced: {
-                name: '上級者',
-                description: '高度な戦略と技術を身につけている',
+                name: '上級老E,
+                description: '高度な戦略と技術を身につけてぁE��',
                 icon: '🏆'
             }
         };
@@ -3881,7 +3881,7 @@ class App {
     }
 
     initializeSkillLevel() {
-        // 保存済みのスキルレベルがあれば復元
+        // 保存済みのスキルレベルがあれ�E復允E
         const savedSkillLevel = localStorage.getItem('playerSkillLevel');
         const savedSkillData = localStorage.getItem('playerSkillLevelData');
 
@@ -3889,7 +3889,7 @@ class App {
             const skillInfo = JSON.parse(savedSkillData);
             this.updateSkillLevelUI(skillInfo);
         } else {
-            // デフォルトで中級者を設定
+            // チE��ォルトで中級老E��設宁E
             const defaultSkill = this.getSkillLevelInfo('intermediate');
             this.updateSkillLevelUI(defaultSkill);
             localStorage.setItem('playerSkillLevel', 'intermediate');
@@ -3897,9 +3897,9 @@ class App {
         }
     }
 
-    // 日替わりコーチング機能の初期化
+    // 日替わりコーチング機�Eの初期匁E
     initDailyCoaching() {
-        // CoachingServiceを初期化
+        // CoachingServiceを�E期化
         if (typeof CoachingService !== 'undefined') {
             this.coachingService = new CoachingService();
         } else {
@@ -3918,29 +3918,29 @@ class App {
         if (!this.coachingService) return;
 
         try {
-            // ユーザープロファイルを取得
+            // ユーザープロファイルを取征E
             const userProfile = this.getUserProfile();
 
             if (!userProfile.gameGenre || !userProfile.skillLevel) {
-                // プロファイルが設定されていない場合はプレースホルダーを表示
+                // プロファイルが設定されてぁE��ぁE��合�Eプレースホルダーを表示
                 this.showCoachingPlaceholder();
                 return;
             }
 
-            // ローディング状態を表示
+            // ローチE��ング状態を表示
             this.showCoachingLoading();
 
-            // 本日のコーチングアドバイスを取得（非同期）
+            // 本日のコーチングアドバイスを取得（非同期�E�E
             const dailyAdvice = await this.coachingService.getDailyCoaching(userProfile);
 
             if (dailyAdvice) {
                 this.displayCoachingAdvice(dailyAdvice);
 
-                // ソース表示（デバッグ用）
+                // ソース表示�E�デバッグ用�E�E
                 if (dailyAdvice.source === 'gemini') {
                     console.log('CoachingService: Using AI-generated advice');
                 } else if (dailyAdvice.source === 'cached_fallback') {
-                    this.showToast('レート制限のため、最近のアドバイスを表示しています', 'info');
+                    this.showToast('レート制限�Eため、最近�Eアドバイスを表示してぁE��ぁE, 'info');
                 } else if (dailyAdvice.source === 'fallback') {
                     console.log('CoachingService: Using fallback static advice');
                 }
@@ -3954,14 +3954,14 @@ class App {
     }
 
     getUserProfile() {
-        // ゲーム情報を取得
+        // ゲーム惁E��を取征E
         const selectedGame = localStorage.getItem('selectedGame');
         const gameData = localStorage.getItem('selectedGameData');
 
-        // スキルレベル情報を取得
+        // スキルレベル惁E��を取征E
         const skillLevel = localStorage.getItem('playerSkillLevel');
 
-        // 目標情報を取得
+        // 目標情報を取征E
         const currentGoals = this.getCurrentGoalsFromStorage();
         const weeklyGoals = this.getWeeklyGoalsFromStorage();
 
@@ -3969,12 +3969,12 @@ class App {
 
         if (selectedGame && gameData) {
             const game = JSON.parse(gameData);
-            // ゲームカテゴリをジャンルにマッピング
+            // ゲームカチE��リをジャンルにマッピング
             const categoryToGenre = {
                 'FPS': 'fps',
                 'MOBA': 'moba',
                 '格闘ゲーム': 'fighting',
-                'ストラテジー': 'strategy'
+                'ストラチE��ー': 'strategy'
             };
             gameGenre = categoryToGenre[game.category] || 'universal';
         }
@@ -3988,7 +3988,7 @@ class App {
     }
 
     displayCoachingAdvice(advice) {
-        // HTMLエレメントを取得
+        // HTMLエレメントを取征E
         const headlineEl = document.getElementById('coaching-headline');
         const coreContentEl = document.getElementById('coaching-core-content');
         const practicalStepEl = document.getElementById('coaching-practical-step');
@@ -3996,7 +3996,7 @@ class App {
         const goalConnectionEl = document.getElementById('coaching-goal-connection');
         const goalConnectionContainer = document.getElementById('coaching-goal-connection-container');
 
-        // コンテンツを更新
+        // コンチE��チE��更新
         if (headlineEl) headlineEl.textContent = advice.headline;
         if (coreContentEl) coreContentEl.textContent = advice.coreContent;
         if (practicalStepEl) practicalStepEl.textContent = advice.practicalStep;
@@ -4013,10 +4013,10 @@ class App {
             goalConnectionContainer.style.display = 'none';
         }
 
-        // 今日のアドバイスIDを保存（フィードバック用）
+        // 今日のアドバイスIDを保存（フィードバチE��用�E�E
         this.currentAdviceId = advice.id;
 
-        // フィードバックボタンの状態を復元
+        // フィードバチE��ボタンの状態を復允E
         this.restoreFeedbackState();
     }
 
@@ -4027,10 +4027,10 @@ class App {
 
         if (headlineEl) headlineEl.textContent = 'コーチングを準備中...';
         if (coreContentEl) {
-            coreContentEl.textContent = 'ゲームを選択してスキルレベルを設定すると、パーソナライズされたコーチングアドバイスが表示されます。';
+            coreContentEl.textContent = 'ゲームを選択してスキルレベルを設定すると、パーソナライズされたコーチングアドバイスが表示されます、E;
         }
         if (practicalStepEl) {
-            practicalStepEl.textContent = '設定を完了して、今日のアドバイスを受け取りましょう！';
+            practicalStepEl.textContent = '設定を完亁E��て、今日のアドバイスを受け取りましょぁE��E;
         }
 
         this.currentAdviceId = null;
@@ -4043,10 +4043,10 @@ class App {
 
         if (headlineEl) headlineEl.textContent = 'AIが今日のアドバイスを生成中...';
         if (coreContentEl) {
-            coreContentEl.textContent = 'あなたのプロフィールとフィードバック履歴を分析して、最適なコーチングアドバイスを作成しています。少々お待ちください。';
+            coreContentEl.textContent = 'あなた�EプロフィールとフィードバチE��履歴を�E析して、最適なコーチングアドバイスを作�EしてぁE��す。少、E��征E��ください、E;
         }
         if (practicalStepEl) {
-            practicalStepEl.textContent = '⏳ 生成中...';
+            practicalStepEl.textContent = '⏳ 生�E中...';
         }
 
         this.currentAdviceId = null;
@@ -4060,19 +4060,19 @@ class App {
         if (headlineEl) headlineEl.textContent = 'コーチング取得中にエラーが発生しました';
         if (coreContentEl) {
             if (error.message && error.message.includes('Rate limit')) {
-                coreContentEl.textContent = 'APIの利用制限に達しました。しばらく時間をおいてから再度お試しください。設定画面から手動でリフレッシュすることも可能です。';
+                coreContentEl.textContent = 'APIの利用制限に達しました。しばらく時間をおぁE��から再度お試しください。設定画面から手動でリフレチE��ュすることも可能です、E;
             } else {
-                coreContentEl.textContent = 'アドバイスの取得中に問題が発生しました。ネットワーク接続とAPI設定を確認してください。';
+                coreContentEl.textContent = 'アドバイスの取得中に問題が発生しました。ネチE��ワーク接続とAPI設定を確認してください、E;
             }
         }
         if (practicalStepEl) {
-            practicalStepEl.textContent = 'しばらくしてからページを再読み込みしてみてください。';
+            practicalStepEl.textContent = 'し�Eらくしてからペ�Eジを�E読み込みしてみてください、E;
         }
 
         this.currentAdviceId = null;
     }
 
-    // 初期設定モーダル関連のメソッド
+    // 初期設定モーダル関連のメソチE��
     showInitialSetupModal() {
         const modal = document.getElementById('initial-setup-modal');
         if (modal) {
@@ -4080,7 +4080,7 @@ class App {
             modal.style.display = 'flex';
             this.currentSetupStep = 1;
 
-            // Street Fighter 6固定なので、ゲーム選択をスキップ
+            // Street Fighter 6固定なので、ゲーム選択をスキチE�E
             this.selectedGameData = {
                 id: 'sf6',
                 name: 'Street Fighter 6',
@@ -4089,10 +4089,10 @@ class App {
             };
             this.selectedSkillLevel = null;
 
-            // 初期設定リスナーを設定
+            // 初期設定リスナ�Eを設宁E
             this.setupInitialSetupListeners();
 
-            // ボタンの初期状態を確認
+            // ボタンの初期状態を確誁E
             this.debugButtonStates();
         }
     }
@@ -4126,7 +4126,7 @@ class App {
         Object.keys(gameCategories).forEach(categoryId => {
             const category = gameCategories[categoryId];
 
-            if (categoryId === 'other') return; // カスタムゲームは除外
+            if (categoryId === 'other') return; // カスタムゲームは除夁E
 
             category.games.forEach(game => {
                 const gameCard = document.createElement('div');
@@ -4158,14 +4158,14 @@ class App {
     selectSetupGame(gameCard) {
         console.log('selectSetupGame called, gameCard:', gameCard);
 
-        // 他のカードの選択を解除
+        // 他�Eカード�E選択を解除
         const allCards = document.querySelectorAll('.game-option-card');
         allCards.forEach(card => card.classList.remove('selected'));
 
-        // 選択したカードをハイライト
+        // 選択したカードをハイライチE
         gameCard.classList.add('selected');
 
-        // ゲームデータを保存
+        // ゲームチE�Eタを保孁E
         this.selectedGameData = {
             id: gameCard.dataset.gameId,
             name: gameCard.dataset.gameName,
@@ -4175,7 +4175,7 @@ class App {
 
         console.log('Selected game data:', this.selectedGameData);
 
-        // 次へボタンを有効化
+        // 次へボタンを有効匁E
         const nextBtn = document.getElementById('setup-game-next');
         if (nextBtn) {
             nextBtn.disabled = false;
@@ -4186,17 +4186,17 @@ class App {
     }
 
     selectSetupSkill(skillCard) {
-        // 他のカードの選択を解除
+        // 他�Eカード�E選択を解除
         const allCards = document.querySelectorAll('.skill-card');
         allCards.forEach(card => card.classList.remove('selected'));
 
-        // 選択したカードをハイライト
+        // 選択したカードをハイライチE
         skillCard.classList.add('selected');
 
-        // スキルレベルを保存
+        // スキルレベルを保孁E
         this.selectedSkillLevel = skillCard.dataset.skill;
 
-        // 完了ボタンを有効化
+        // 完亁E�Eタンを有効匁E
         const completeBtn = document.getElementById('setup-skill-complete');
         if (completeBtn) {
             completeBtn.disabled = false;
@@ -4212,11 +4212,11 @@ class App {
             return;
         }
 
-        // ステップ1を非表示、ステップ2を表示
+        // スチE��チEを非表示、スチE��チEを表示
         document.getElementById('setup-step-1').classList.add('hidden');
         document.getElementById('setup-step-2').classList.remove('hidden');
 
-        // プログレスバーを更新
+        // プログレスバ�Eを更新
         this.updateSetupProgress(2);
 
         this.currentSetupStep = 2;
@@ -4224,11 +4224,11 @@ class App {
     }
 
     backToGameSelection() {
-        // ステップ2を非表示、ステップ1を表示
+        // スチE��チEを非表示、スチE��チEを表示
         document.getElementById('setup-step-2').classList.add('hidden');
         document.getElementById('setup-step-1').classList.remove('hidden');
 
-        // プログレスバーを更新
+        // プログレスバ�Eを更新
         this.updateSetupProgress(1);
 
         this.currentSetupStep = 1;
@@ -4237,7 +4237,7 @@ class App {
     completeInitialSetup() {
         if (!this.selectedSkillLevel) return;
 
-        // Street Fighter 6固定なので、ゲームデータを自動設定
+        // Street Fighter 6固定なので、ゲームチE�Eタを�E動設宁E
         this.selectedGameData = {
             id: 'sf6',
             name: 'Street Fighter 6',
@@ -4245,7 +4245,7 @@ class App {
             category: '格闘ゲーム'
         };
 
-        // 設定を保存
+        // 設定を保孁E
         localStorage.setItem('selectedGame', this.selectedGameData.id);
         localStorage.setItem('selectedGameData', JSON.stringify(this.selectedGameData));
         localStorage.setItem('playerSkillLevel', this.selectedSkillLevel);
@@ -4253,22 +4253,22 @@ class App {
         const skillInfo = this.getSkillLevelInfo(this.selectedSkillLevel);
         localStorage.setItem('playerSkillLevelData', JSON.stringify(skillInfo));
 
-        // 初回設定完了フラグを設定
+        // 初回設定完亁E��ラグを設宁E
         localStorage.setItem('initialSetupCompleted', 'true');
 
         // ゲーム選択ガイダンスを非表示に
         this.hideGameSelectionGuidance();
 
-        // 完了画面を表示
+        // 完亁E��面を表示
         this.showSetupCompletion();
     }
 
     showSetupCompletion() {
-        // すべてのステップを非表示にして完了画面を表示
+        // すべてのスチE��プを非表示にして完亁E��面を表示
         document.getElementById('setup-step-1').classList.add('hidden');
         document.getElementById('setup-step-complete').classList.remove('hidden');
 
-        // プログレスバーを完了状態に
+        // プログレスバ�Eを完亁E��態に
         this.updateSetupProgress(3);
 
         // サマリーを更新
@@ -4290,15 +4290,15 @@ class App {
             switch (step) {
                 case 1:
                     progressFill.style.width = '33%';
-                    progressText.textContent = 'ステップ 1 / 3';
+                    progressText.textContent = 'スチE��チE1 / 3';
                     break;
                 case 2:
                     progressFill.style.width = '66%';
-                    progressText.textContent = 'ステップ 2 / 3';
+                    progressText.textContent = 'スチE��チE2 / 3';
                     break;
                 case 3:
                     progressFill.style.width = '100%';
-                    progressText.textContent = '完了';
+                    progressText.textContent = '完亁E;
                     break;
             }
         }
@@ -4308,22 +4308,22 @@ class App {
         // 初期設定モーダルを閉じる
         this.closeInitialSetupModal();
 
-        // 完了メッセージを表示し、ページをリロードして初期化プロセスを再実行
-        this.showToast('設定を保存しました。アプリを起動します...', 'success');
+        // 完亁E��チE��ージを表示し、�Eージをリロードして初期化�Eロセスを�E実衁E
+        this.showToast('設定を保存しました。アプリを起動しまぁE..', 'success');
         setTimeout(() => {
             window.location.reload();
-        }, 1000); // 1秒待ってからリロード
+        }, 1000); // 1秒征E��てからリローチE
     }
 
     setupInitialSetupListeners() {
         console.log('Setting up initial setup listeners...');
 
-        // 既存のリスナーをクリア（重複防止）
+        // 既存�Eリスナ�Eをクリア�E�重褁E��止�E�E
         this.clearInitialSetupListeners();
 
-        // Street Fighter 6専用なので、ゲーム選択ステップは不要
+        // Street Fighter 6専用なので、ゲーム選択スチE��プ�E不要E
 
-        // スキル完了ボタン
+        // スキル完亁E�Eタン
         const skillCompleteBtn = document.getElementById('setup-skill-complete');
         if (skillCompleteBtn) {
             this.skillCompleteHandler = () => {
@@ -4332,7 +4332,7 @@ class App {
             skillCompleteBtn.addEventListener('click', this.skillCompleteHandler);
         }
 
-        // アプリ開始ボタン
+        // アプリ開始�Eタン
         const startAppBtn = document.getElementById('setup-start-app');
         if (startAppBtn) {
             this.startAppHandler = async () => {
@@ -4341,34 +4341,34 @@ class App {
             startAppBtn.addEventListener('click', this.startAppHandler);
         }
 
-        // スキルカードのクリックイベント
+        // スキルカード�EクリチE��イベンチE
         const skillCards = document.querySelectorAll('.skill-card');
         skillCards.forEach(card => {
             const skillHandler = () => {
                 this.selectSetupSkill(card);
             };
             card.addEventListener('click', skillHandler);
-            // ハンドラーを保存（後でクリーンアップ用）
+            // ハンドラーを保存（後でクリーンアチE�E用�E�E
             card._skillHandler = skillHandler;
         });
     }
 
     clearInitialSetupListeners() {
-        // Street Fighter 6専用なので、ゲーム選択関連のリスナーは不要
+        // Street Fighter 6専用なので、ゲーム選択関連のリスナ�Eは不要E
 
-        // スキル完了ボタンのリスナーを削除
+        // スキル完亁E�Eタンのリスナ�Eを削除
         const skillCompleteBtn = document.getElementById('setup-skill-complete');
         if (skillCompleteBtn && this.skillCompleteHandler) {
             skillCompleteBtn.removeEventListener('click', this.skillCompleteHandler);
         }
 
-        // アプリ開始ボタンのリスナーを削除
+        // アプリ開始�Eタンのリスナ�Eを削除
         const startAppBtn = document.getElementById('setup-start-app');
         if (startAppBtn && this.startAppHandler) {
             startAppBtn.removeEventListener('click', this.startAppHandler);
         }
 
-        // スキルカードのリスナーを削除
+        // スキルカード�Eリスナ�Eを削除
         const skillCards = document.querySelectorAll('.skill-card');
         skillCards.forEach(card => {
             if (card._skillHandler) {
@@ -4397,22 +4397,22 @@ class App {
         console.log('=== End Button Debug ===');
     }
 
-    // 初回設定が必要かチェック（Street Fighter 6専用）
+    // 初回設定が忁E��かチェチE���E�Etreet Fighter 6専用�E�E
     needsInitialSetup() {
         const setupCompleted = localStorage.getItem('initialSetupCompleted');
         console.log('Setup check - setupCompleted:', setupCompleted);
 
-        // 明示的に初期設定完了フラグがtrueの場合は不要
+        // 明示皁E��初期設定完亁E��ラグがtrueの場合�E不要E
         if (setupCompleted === 'true') {
             return false;
         }
 
-        // Street Fighter 6専用なので、スキルレベルのみをチェック
+        // Street Fighter 6専用なので、スキルレベルのみをチェチE��
         const hasSkill = localStorage.getItem('skillLevel') || localStorage.getItem('playerSkillLevel');
 
         console.log('Setup check - hasSkill:', hasSkill);
 
-        // スキルレベルが設定されていない場合のみ初期設定が必要
+        // スキルレベルが設定されてぁE��ぁE��合�Eみ初期設定が忁E��E
         return !hasSkill;
     }
 
@@ -4426,42 +4426,42 @@ class App {
             });
         });
 
-        // コメント機能のリスナー
+        // コメント機�Eのリスナ�E
         this.setupCommentFeedbackListeners();
         
-        // 履歴機能のリスナー
+        // 履歴機�Eのリスナ�E
         this.setupCoachingHistoryListeners();
     }
     
-    // 履歴機能のイベントリスナー設定
+    // 履歴機�Eのイベントリスナ�E設宁E
     setupCoachingHistoryListeners() {
         const historyButton = document.getElementById('history-button');
         const closeModalButton = document.getElementById('close-modal-button');
         const modalOverlay = document.getElementById('modal-overlay');
         const searchInput = document.getElementById('search-history-input');
         
-        // 履歴ボタンクリック
+        // 履歴ボタンクリチE��
         if (historyButton) {
             historyButton.addEventListener('click', () => {
                 this.showCoachingHistoryModal();
             });
         }
         
-        // 閉じるボタンクリック
+        // 閉じる�EタンクリチE��
         if (closeModalButton) {
             closeModalButton.addEventListener('click', () => {
                 this.hideCoachingHistoryModal();
             });
         }
         
-        // オーバーレイクリック
+        // オーバ�EレイクリチE��
         if (modalOverlay) {
             modalOverlay.addEventListener('click', () => {
                 this.hideCoachingHistoryModal();
             });
         }
         
-        // 検索入力
+        // 検索入劁E
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 this.filterCoachingHistory(e.target.value);
@@ -4478,11 +4478,11 @@ class App {
             // 履歴を読み込んで表示
             this.displayCoachingHistory();
             
-            // モーダルとオーバーレイを表示
+            // モーダルとオーバ�Eレイを表示
             modal.style.display = 'flex';
             overlay.style.display = 'block';
             
-            // アニメーション用に少し遅延
+            // アニメーション用に少し遁E��
             setTimeout(() => {
                 modal.style.opacity = '1';
                 overlay.style.opacity = '1';
@@ -4497,7 +4497,7 @@ class App {
         const searchInput = document.getElementById('search-history-input');
         
         if (modal && overlay) {
-            // フェードアウト
+            // フェードアウチE
             modal.style.opacity = '0';
             overlay.style.opacity = '0';
             
@@ -4518,15 +4518,15 @@ class App {
         const container = document.getElementById('history-list-container');
         if (!container || !this.coachingService) return;
         
-        // 履歴を取得（検索キーワードがあれば絞り込み）
+        // 履歴を取得（検索キーワードがあれば絞り込み�E�E
         const history = keyword 
             ? this.coachingService.searchHistory(keyword)
             : this.coachingService.getHistory();
         
-        // コンテナをクリア
+        // コンチE��をクリア
         container.innerHTML = '';
         
-        // 履歴がない場合
+        // 履歴がなぁE��吁E
         if (history.length === 0) {
             if (keyword) {
                 container.innerHTML = `
@@ -4540,19 +4540,19 @@ class App {
                 container.innerHTML = `
                     <div class="no-history-message">
                         <h4>まだ履歴がありません</h4>
-                        <p>コーチングアドバイスが生成されると、ここに履歴が表示されます</p>
+                        <p>コーチングアドバイスが生成されると、ここに履歴が表示されまぁE/p>
                     </div>
                 `;
             }
             return;
         }
         
-        // 履歴アイテムを生成
+        // 履歴アイチE��を生戁E
         history.forEach(item => {
             const itemEl = document.createElement('div');
             itemEl.className = 'history-item';
             
-            // 日付のフォーマット
+            // 日付�EフォーマッチE
             const date = new Date(item.timestamp);
             const dateStr = date.toLocaleDateString('ja-JP', {
                 year: 'numeric',
@@ -4567,7 +4567,7 @@ class App {
                 <div class="history-item-headline">${item.headline}</div>
                 <div class="history-item-content">${item.coreContent}</div>
                 <div class="history-item-step">
-                    <strong>実践ステップ:</strong> ${item.practicalStep}
+                    <strong>実践スチE��チE</strong> ${item.practicalStep}
                 </div>
                 ${item.goalConnection ? `
                 <div class="history-item-goal">
@@ -4591,18 +4591,18 @@ class App {
         const cancelBtn = document.getElementById('cancel-feedback-btn');
         const charCountSpan = document.getElementById('comment-char-count');
 
-        // テキストエリアの文字数カウント
+        // チE��ストエリアの斁E��数カウンチE
         if (commentTextarea && charCountSpan) {
             commentTextarea.addEventListener('input', (e) => {
                 const count = e.target.value.length;
                 charCountSpan.textContent = count;
 
-                // ボタン状態の更新
+                // ボタン状態�E更新
                 if (submitBtn) {
                     submitBtn.disabled = count === 0 || count > 500;
                 }
 
-                // 文字数警告の色変更
+                // 斁E��数警告�E色変更
                 const counter = document.querySelector('.comment-counter');
                 if (counter) {
                     counter.classList.remove('warning', 'error');
@@ -4616,7 +4616,7 @@ class App {
             });
         }
 
-        // フィードバック送信ボタン
+        // フィードバチE��送信ボタン
         if (submitBtn) {
             submitBtn.addEventListener('click', () => {
                 this.submitFeedbackWithComment();
@@ -4633,11 +4633,11 @@ class App {
 
     handleCoachingFeedback(feedbackType, buttonEl) {
         if (!this.coachingService || !this.currentAdviceId) {
-            this.showToast('フィードバックを送信できませんでした', 'error');
+            this.showToast('フィードバチE��を送信できませんでした', 'error');
             return;
         }
 
-        // 選択されたフィードバックタイプを保存
+        // 選択されたフィードバチE��タイプを保孁E
         this.selectedFeedbackType = feedbackType;
         this.selectedFeedbackButton = buttonEl;
 
@@ -4677,14 +4677,14 @@ class App {
 
     submitFeedbackWithComment() {
         if (!this.coachingService || !this.currentAdviceId || !this.selectedFeedbackType) {
-            this.showToast('フィードバックを送信できませんでした', 'error');
+            this.showToast('フィードバチE��を送信できませんでした', 'error');
             return;
         }
 
         const commentTextarea = document.getElementById('feedback-comment');
         const comment = commentTextarea ? commentTextarea.value.trim() : '';
 
-        // フィードバックを記録（コメント付き）
+        // フィードバチE��を記録�E�コメント付き�E�E
         this.coachingService.recordFeedback(this.currentAdviceId, this.selectedFeedbackType, comment);
 
         // 進捗統計を更新
@@ -4692,20 +4692,20 @@ class App {
             this.updateCoachingProgress();
         }, 150);
 
-        // UIをリセット
+        // UIをリセチE��
         this.hideCommentSection();
         this.resetCommentForm();
 
-        // トーストメッセージを表示
+        // ト�EストメチE��ージを表示
         const feedbackMessages = {
-            helpful: 'フィードバックありがとうございます！',
-            too_easy: '次回はより挑戦的なアドバイスを提供します',
-            too_hard: '次回はより基本的なアドバイスを提供します'
+            helpful: 'フィードバチE��ありがとぁE��ざいます！E,
+            too_easy: '次回�Eより挑戦皁E��アドバイスを提供しまぁE,
+            too_hard: '次回�Eより基本皁E��アドバイスを提供しまぁE
         };
 
         let message = feedbackMessages[this.selectedFeedbackType];
         if (comment.length > 0) {
-            message += '\nコメントは明日のコーチングに反映されます！';
+            message += '\nコメント�E明日のコーチングに反映されます！E;
         }
 
         this.showToast(message, 'success');
@@ -4716,12 +4716,12 @@ class App {
     }
 
     cancelFeedbackComment() {
-        // フィードバックボタンの選択状態をリセット
+        // フィードバチE��ボタンの選択状態をリセチE��
         if (this.selectedFeedbackButton) {
             this.resetFeedbackButtons();
         }
 
-        // コメントセクションを隠す
+        // コメントセクションを隠ぁE
         this.hideCommentSection();
         this.resetCommentForm();
 
@@ -4754,58 +4754,58 @@ class App {
     }
 
     updateFeedbackButtonState(selectedButton) {
-        // すべてのフィードバックボタンから選択状態を削除
+        // すべてのフィードバチE��ボタンから選択状態を削除
         const allButtons = document.querySelectorAll('.feedback-btn');
         allButtons.forEach(btn => {
             btn.classList.remove('selected');
-            this.updateFeedbackButtonText(btn, false); // テキストもリセット
+            this.updateFeedbackButtonText(btn, false); // チE��ストもリセチE��
         });
 
         // 選択されたボタンに選択状態を追加
         selectedButton.classList.add('selected');
-        this.updateFeedbackButtonText(selectedButton, true); // 選択状態のテキストに変更
+        this.updateFeedbackButtonText(selectedButton, true); // 選択状態�EチE��ストに変更
     }
 
     resetFeedbackButtons() {
         const allButtons = document.querySelectorAll('.feedback-btn');
         allButtons.forEach(btn => {
             btn.classList.remove('selected');
-            this.updateFeedbackButtonText(btn, false); // テキストもリセット
+            this.updateFeedbackButtonText(btn, false); // チE��ストもリセチE��
         });
     }
 
-    // 今日のフィードバック状態を復元
+    // 今日のフィードバチE��状態を復允E
     restoreFeedbackState() {
         if (!this.coachingService) return;
 
         const feedbackStatus = this.coachingService.getTodaysFeedbackStatus();
 
         if (feedbackStatus.hasFeedback) {
-            // 該当するフィードバックボタンを選択状態にする
+            // 該当するフィードバチE��ボタンを選択状態にする
             const targetButton = document.querySelector(`.feedback-btn[data-feedback="${feedbackStatus.feedbackType}"]`);
             if (targetButton) {
-                this.resetFeedbackButtons(); // まず全てリセット
-                targetButton.classList.add('selected'); // 今日のフィードバックを選択状態に
-                this.updateFeedbackButtonText(targetButton, true); // 選択状態のテキストに更新
+                this.resetFeedbackButtons(); // まず�EてリセチE��
+                targetButton.classList.add('selected'); // 今日のフィードバチE��を選択状態に
+                this.updateFeedbackButtonText(targetButton, true); // 選択状態�EチE��ストに更新
             }
         } else {
-            // フィードバックがない場合は全てリセット
+            // フィードバチE��がなぁE��合�E全てリセチE��
             this.resetFeedbackButtons();
         }
     }
 
-    // フィードバックボタンのテキストを更新
+    // フィードバチE��ボタンのチE��ストを更新
     updateFeedbackButtonText(button, isSelected) {
         const feedbackType = button.dataset.feedback;
         const originalTexts = {
-            helpful: '👍 役に立った',
-            too_easy: '😊 簡単すぎた',
+            helpful: '👍 役に立っぁE,
+            too_easy: '�E 簡単すぎた',
             too_hard: '😰 難しすぎた'
         };
         const selectedTexts = {
-            helpful: '✅ 役に立った',
-            too_easy: '✅ 簡単すぎた',
-            too_hard: '✅ 難しすぎた'
+            helpful: '✁E役に立っぁE,
+            too_easy: '✁E簡単すぎた',
+            too_hard: '✁E難しすぎた'
         };
 
         if (isSelected) {
@@ -4827,17 +4827,17 @@ class App {
         if (totalLessonsEl) totalLessonsEl.textContent = stats.totalLessons;
     }
 
-    // ゲームやスキルレベル変更時にコーチングを更新
+    // ゲームめE��キルレベル変更時にコーチングを更新
     async refreshDailyCoaching() {
         if (this.coachingService) {
             await this.loadDailyCoaching();
         }
     }
 
-    // アプリ全体の初期化（データ消去）
+    // アプリ全体�E初期化（データ消去�E�E
     resetAppData() {
         // 確認ダイアログ
-        const ok = confirm('アプリを初期化します。保存された試合・目標・APIキーなどのデータが削除されます。よろしいですか？');
+        const ok = confirm('アプリを�E期化します。保存された試合�E目標�EAPIキーなどのチE�Eタが削除されます。よろしぁE��すか�E�E);
         if (!ok) return;
 
         try {
@@ -4863,7 +4863,7 @@ class App {
             const sessionKeys = ['currentUser', 'isGuest'];
             sessionKeys.forEach(k => sessionStorage.removeItem(k));
 
-            // 内部サービスのクリーンアップ
+            // 冁E��サービスのクリーンアチE�E
             if (this.geminiService && typeof this.geminiService.clearApiKey === 'function') {
                 try { this.geminiService.clearApiKey(); } catch (e) { console.debug(e); }
             }
@@ -4871,30 +4871,30 @@ class App {
                 try { window.unifiedApiManager.clearAPIKey(); } catch (e) { console.debug(e); }
             }
 
-            // UI リセット
+            // UI リセチE��
             this.clearGameData();
             const statsIds = ['win-rate', 'avg-drive-rush-attempts', 'drive-impact-success-rate', 'burnout-frequency', 'anti-air-success-rate', 'throw-tech-rate', 'games-played'];
             statsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
             const matchesContainer = document.getElementById('recent-matches');
             if (matchesContainer) matchesContainer.innerHTML = '<p class="no-data">試合記録がまだありません</p>';
             const goalsList = document.getElementById('goals-list');
-            if (goalsList) goalsList.innerHTML = '<p class="no-data">目標がまだ設定されていません</p>';
-            // コーチング関連のキャッシュを削除
+            if (goalsList) goalsList.innerHTML = '<p class="no-data">目標がまだ設定されてぁE��せん</p>';
+            // コーチング関連のキャチE��ュを削除
             localStorage.removeItem('cached-coaching-advice');
             localStorage.removeItem('coaching-advice-update-time');
 
-            // スキルレベル関連のデータを削除
+            // スキルレベル関連のチE�Eタを削除
             localStorage.removeItem('playerSkillLevel');
             localStorage.removeItem('playerSkillLevelData');
 
-            // コーチング関連のデータを削除
+            // コーチング関連のチE�Eタを削除
             localStorage.removeItem('coaching_user_progress');
             localStorage.removeItem('coaching_feedback_history');
 
             // 初期設定フラグを削除
             localStorage.removeItem('initialSetupCompleted');
 
-            // コーチングキャッシュを削除
+            // コーチングキャチE��ュを削除
             const coachingKeys = Object.keys(localStorage).filter(key => key.startsWith('coaching_advice_'));
             coachingKeys.forEach(key => localStorage.removeItem(key));
 
@@ -4904,11 +4904,11 @@ class App {
             localStorage.removeItem('coaching_api_call_count');
             localStorage.removeItem('coaching_api_call_times');
 
-            // テーマをデフォルトに戻す
+            // チE�EマをチE��ォルトに戻ぁE
             this.currentTheme = 'dark';
             this.applyTheme(this.currentTheme);
 
-            this.showToast('アプリを初期化しました。ページを再読み込みします…', 'success');
+            this.showToast('アプリを�E期化しました。�Eージを�E読み込みします…', 'success');
             setTimeout(() => window.location.reload(), 600);
         } catch (e) {
             console.warn('Failed to reset app:', e);
@@ -4916,14 +4916,14 @@ class App {
         }
     }
 
-    // === ダッシュボード目標表示機能 ===
+    // === ダチE��ュボ�Eド目標表示機�E ===
     initDashboardGoals() {
         console.log('🎯 Initializing dashboard goals...');
 
-        // 既存の目標データをチェック・修正
+        // 既存�E目標データをチェチE��・修正
         this.checkAndFixGoalsData();
 
-        // イベントリスナー設定
+        // イベントリスナ�E設宁E
         const viewAllGoalsBtn = document.getElementById('view-all-goals');
         const addFirstGoalBtn = document.getElementById('add-first-goal');
 
@@ -4944,11 +4944,11 @@ class App {
         // 目標データを読み込み
         this.loadDashboardGoals();
 
-        // LocalStorageの変更を監視
+        // LocalStorageの変更を監要E
         this.setupGoalsStorageListener();
     }
 
-    // 目標データの整合性をチェック・修正
+    // 目標データの整合性をチェチE��・修正
     checkAndFixGoalsData() {
         try {
             const goalsData = localStorage.getItem('goals');
@@ -4960,27 +4960,27 @@ class App {
             console.log('🔧 Checking goals data integrity...');
 
             const fixedGoals = goals.map(goal => {
-                // 進捗値が不正な場合の修正
+                // 進捗値が不正な場合�E修正
                 if (typeof goal.progress !== 'number' || isNaN(goal.progress) || goal.progress < 0 || goal.progress > 100) {
-                    console.log(`🔧 Fixing invalid progress for goal "${goal.title}": ${goal.progress} → 0`);
+                    console.log(`🔧 Fixing invalid progress for goal "${goal.title}": ${goal.progress} ↁE0`);
                     goal.progress = 0;
                     dataFixed = true;
                 }
 
-                // IDが存在しない場合の修正
+                // IDが存在しなぁE��合�E修正
                 if (!goal.id) {
                     goal.id = Date.now() + Math.random();
                     dataFixed = true;
                 }
 
-                // createdAtが存在しない場合、現在の日付から推定して設定
+                // createdAtが存在しなぁE��合、現在の日付から推定して設宁E
                 if (!goal.createdAt) {
                     const deadline = new Date(goal.deadline);
                     const now = new Date();
 
-                    // 期限から遡って適切な作成日を推定
-                    // 期限が未来の場合：今日から2週間前を作成日とする
-                    // 期限が過去の場合：期限の1ヶ月前を作成日とする
+                    // 期限から遡って適刁E��作�E日を推宁E
+                    // 期限が未来の場合：今日から2週間前を作�E日とする
+                    // 期限が過去の場合：期限�E1ヶ月前を作�E日とする
                     let estimatedCreatedAt;
                     if (deadline > now) {
                         estimatedCreatedAt = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000)); // 2週間前
@@ -5012,7 +5012,7 @@ class App {
 
             console.log('🎯 Loading dashboard goals:', goals.length, 'goals found');
 
-            // データのクリーンアップは初期化時のみ実行（無限ループ防止）
+            // チE�EタのクリーンアチE�Eは初期化時のみ実行（無限ループ防止�E�E
             this.renderDashboardGoals(goals);
         } catch (error) {
             console.warn('Failed to load goals:', error);
@@ -5028,16 +5028,16 @@ class App {
         }
 
         if (goals.length === 0) {
-            // 目標なし
+            // 目標なぁE
             goalsList.innerHTML = `
                 <div class="no-goals-message">
-                    <h4>目標が設定されていません</h4>
-                    <p>パフォーマンス向上のための目標を設定しましょう</p>
-                    <button class="add-goal-btn" id="add-first-goal">最初の目標を追加</button>
+                    <h4>目標が設定されてぁE��せん</h4>
+                    <p>パフォーマンス向上�Eための目標を設定しましょぁE/p>
+                    <button class="add-goal-btn" id="add-first-goal">最初�E目標を追加</button>
                 </div>
             `;
 
-            // イベントリスナー再設定
+            // イベントリスナ�E再設宁E
             const addFirstGoalBtn = document.getElementById('add-first-goal');
             if (addFirstGoalBtn) {
                 addFirstGoalBtn.addEventListener('click', () => {
@@ -5049,19 +5049,19 @@ class App {
             return;
         }
 
-        // 目標をソート（期限が近い順、進捗が低い順）
+        // 目標をソート（期限が近い頁E��E��捗が低い頁E��E
         const sortedGoals = goals.sort((a, b) => {
             const dateA = new Date(a.deadline);
             const dateB = new Date(b.deadline);
             const progressA = a.progress || 0;
             const progressB = b.progress || 0;
 
-            // 期限が近い順
+            // 期限が近い頁E
             if (dateA !== dateB) {
                 return dateA - dateB;
             }
 
-            // 進捗が低い順
+            // 進捗が低い頁E
             return progressA - progressB;
         });
 
@@ -5074,13 +5074,13 @@ class App {
     }
     
     renderGoalItem(goal) {
-        // 日数ベースで進捗を計算
+        // 日数ベ�Eスで進捗を計箁E
         const progress = this.calculateProgressByDays(goal);
         const deadline = new Date(goal.deadline).toLocaleDateString('ja-JP');
         const isUrgent = this.isDeadlineUrgent(goal.deadline);
         const urgentClass = isUrgent ? 'urgent' : '';
 
-        // デバッグ時のみログ出力
+        // チE��チE��時�Eみログ出劁E
         if (window.DEBUG_GOALS) {
             console.log(`🎯 Rendering "${goal.title}": ${progress}%`);
         }
@@ -5089,7 +5089,7 @@ class App {
             <div class="dashboard-goal-item ${urgentClass}">
                 <div class="goal-item-header">
                     <h5 class="goal-item-title">${goal.title}</h5>
-                    <span class="goal-item-deadline">〜 ${deadline}</span>
+                    <span class="goal-item-deadline">、E${deadline}</span>
                 </div>
                 <div class="goal-progress-container">
                     <div class="goal-progress-bar">
@@ -5105,40 +5105,40 @@ class App {
         const now = new Date();
         const deadlineDate = new Date(deadline);
         const diffDays = (deadlineDate - now) / (1000 * 60 * 60 * 24);
-        return diffDays <= 7; // 7日以内は緊急
+        return diffDays <= 7; // 7日以冁E�E緊急
     }
 
-    // 日数ベースの進捗計算
+    // 日数ベ�Eスの進捗計箁E
     calculateProgressByDays(goal) {
         try {
             const now = new Date();
             const createdAt = goal.createdAt ? new Date(goal.createdAt) : null;
             const deadline = new Date(goal.deadline);
 
-            // 作成日が設定されていない場合はデフォルト値を返す
+            // 作�E日が設定されてぁE��ぁE��合�EチE��ォルト値を返す
             if (!createdAt) {
                 return 0;
             }
 
-            // 期限が過去の場合は100%
+            // 期限が過去の場合�E100%
             if (deadline <= now) {
                 return 100;
             }
 
-            // 作成日が未来の場合（データエラー）は作成日を今日に修正
+            // 作�E日が未来の場合（データエラー�E��E作�E日を今日に修正
             if (createdAt > now) {
-                console.warn(`⚠️ Goal "${goal.title}" has future createdAt, fixing to today`);
+                console.warn(`⚠�E�EGoal "${goal.title}" has future createdAt, fixing to today`);
                 createdAt = now;
             }
 
-            // 総日数と経過日数を計算
+            // 総日数と経過日数を計箁E
             const totalDays = (deadline - createdAt) / (1000 * 60 * 60 * 24);
             const elapsedDays = (now - createdAt) / (1000 * 60 * 60 * 24);
 
-            // 進捗率を計算（0-100%の範囲に制限）
+            // 進捗率を計算！E-100%の篁E��に制限！E
             const progress = Math.max(0, Math.min(100, (elapsedDays / totalDays) * 100));
 
-            // デバッグ時のみ詳細ログ
+            // チE��チE��時�Eみ詳細ログ
             if (window.DEBUG_GOALS) {
                 console.log(`📅 Progress: "${goal.title}" = ${Math.round(progress)}% (${elapsedDays.toFixed(1)}/${totalDays.toFixed(1)} days)`);
             }
@@ -5151,13 +5151,13 @@ class App {
     }
     
     setupGoalsStorageListener() {
-        // 重複リスナー防止のフラグ
+        // 重褁E��スナ�E防止のフラグ
         if (this.goalsListenerSetup) {
             return;
         }
         this.goalsListenerSetup = true;
 
-        // LocalStorageの変更を監視（他のタブからの変更のみ）
+        // LocalStorageの変更を監視（他�Eタブから�E変更のみ�E�E
         window.addEventListener('storage', (e) => {
             if (e.key === 'goals') {
                 console.log('🎯 Storage event detected from another tab');
@@ -5178,9 +5178,9 @@ class App {
         });
     }
 
-    // === ナビゲーション支援機能 ===
+    // === ナビゲーション支援機�E ===
     initNavigationHelpers() {
-        // 分析タブへのナビゲーションボタン
+        // 刁E��タブへのナビゲーションボタン
         const gotoAnalysisBtn = document.getElementById('goto-analysis');
         if (gotoAnalysisBtn) {
             gotoAnalysisBtn.addEventListener('click', () => {
@@ -5189,10 +5189,10 @@ class App {
             });
         }
         
-        // AI用目標設定ボタン
+        // AI用目標設定�Eタン
     }
 
-    // === データソース管理機能 (Client-Side) ===
+    // === チE�Eタソース管琁E���E (Client-Side) ===
     loadDataSourcePage() {
         const files = this.getLocalDataSources();
         this.renderDataSources(files);
@@ -5214,7 +5214,7 @@ class App {
         if (!listContainer) return;
 
         if (files.length === 0) {
-            listContainer.innerHTML = `<div class="no-files-message"><p>まだアップロードされたファイルがありません。</p></div>`;
+            listContainer.innerHTML = `<div class="no-files-message"><p>まだアチE�Eロードされたファイルがありません、E/p></div>`;
             return;
         }
 
@@ -5248,15 +5248,15 @@ class App {
             return;
         }
 
-        // ファイルサイズチェック（6000文字 ≈ 12KB程度）
-        const maxFileSize = 50 * 1024; // 50KB（約25,000文字）
+        // ファイルサイズチェチE���E�E000斁E��E≁E12KB程度�E�E
+        const maxFileSize = 50 * 1024; // 50KB�E�紁E5,000斁E��！E
         if (file.size > maxFileSize) {
-            this.showToast(`ファイルサイズが大きすぎます。最大50KB（約25,000文字）までです。現在: ${Math.round(file.size / 1024)}KB`, 'warning');
+            this.showToast(`ファイルサイズが大きすぎます。最大50KB�E�紁E5,000斁E��）までです。現在: ${Math.round(file.size / 1024)}KB`, 'warning');
             return;
         }
 
         uploadBtn.disabled = true;
-        uploadBtn.textContent = '処理中...';
+        uploadBtn.textContent = '処琁E��...';
 
         const reader = new FileReader();
 
@@ -5267,7 +5267,7 @@ class App {
 
                 if (file.name.toLowerCase().endsWith('.docx')) {
                     if (typeof mammoth === 'undefined') {
-                        throw new Error('DOCXパーサーがロードされていません。');
+                        throw new Error('DOCXパ�EサーがロードされてぁE��せん、E);
                     }
                     const arrayBuffer = e.target.result;
                     const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
@@ -5278,23 +5278,23 @@ class App {
                 }
 
                 localStorage.setItem(`datasource-${filename}`, textContent);
-                this.showToast(`「${filename}」をローカルに保存しました`, 'success');
+                this.showToast(`、E{filename}」をローカルに保存しました`, 'success');
                 fileInput.value = ''; // Reset file input
                 uploadBtn.disabled = true;
                 this.loadDataSourcePage();
             } catch (err) {
                 console.error('File processing error:', err);
-                this.showToast(`ファイル処理エラー: ${err.message}`, 'error');
+                this.showToast(`ファイル処琁E��ラー: ${err.message}`, 'error');
             } finally {
                 uploadBtn.disabled = false;
-                uploadBtn.textContent = 'アップロード';
+                uploadBtn.textContent = 'アチE�EローチE;
             }
         };
 
         reader.onerror = () => {
             this.showToast('ファイルの読み込みに失敗しました', 'error');
             uploadBtn.disabled = false;
-            uploadBtn.textContent = 'アップロード';
+            uploadBtn.textContent = 'アチE�EローチE;
         };
 
         if (file.name.toLowerCase().endsWith('.docx')) {
@@ -5310,13 +5310,13 @@ class App {
         if (content) {
             alert(`Content of ${filename}:\n\n${content.substring(0, 1000)}...`);
         } else {
-            this.showToast('ファイルの内容が見つかりませんでした', 'error');
+            this.showToast('ファイルの冁E��が見つかりませんでした', 'error');
         }
     }
 
     handleDeleteFile(event) {
         const filename = event.target.closest('.data-source-item').dataset.filename;
-        if (confirm(`本当にローカルストレージから「${filename}」を削除しますか？`)) {
+        if (confirm(`本当にローカルストレージから、E{filename}」を削除しますか�E�`)) {
             localStorage.removeItem(`datasource-${filename}`);
             this.showToast('ファイルを削除しました', 'success');
             this.loadDataSourcePage();
@@ -5324,16 +5324,16 @@ class App {
     }
 
 
-    // === 目標管理支援機能（コーチング用） ===
+    // === 目標管琁E��援機�E�E�コーチング用�E�E===
 
-    // 現在の目標をストレージから取得（コーチング用）
+    // 現在の目標をストレージから取得（コーチング用�E�E
     getCurrentGoalsFromStorage() {
         try {
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
-            // 今日以降の期限の目標を返す（現在進行中の目標）
+            // 今日以降�E期限の目標を返す�E�現在進行中の目標！E
             const today = new Date().toISOString().split('T')[0];
             return goals.filter(goal => {
-                if (!goal.deadline) return true; // 期限なしは現在目標として扱う
+                if (!goal.deadline) return true; // 期限なし�E現在目標として扱ぁE
                 return goal.deadline >= today;
             });
         } catch (error) {
@@ -5342,11 +5342,11 @@ class App {
         }
     }
 
-    // 今週の目標をストレージから取得（コーチング用）
+    // 今週の目標をストレージから取得（コーチング用�E�E
     getWeeklyGoalsFromStorage() {
         try {
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
-            // 今週内（今日から7日以内）の期限の目標を返す
+            // 今週冁E��今日から7日以冁E���E期限の目標を返す
             const today = new Date();
             const weekFromNow = new Date();
             weekFromNow.setDate(today.getDate() + 7);
@@ -5355,7 +5355,7 @@ class App {
             const weekFromNowStr = weekFromNow.toISOString().split('T')[0];
 
             return goals.filter(goal => {
-                if (!goal.deadline) return false; // 期限なしは週間目標から除外
+                if (!goal.deadline) return false; // 期限なし�E週間目標から除夁E
                 return goal.deadline >= todayStr && goal.deadline <= weekFromNowStr;
             });
         } catch (error) {
@@ -5364,11 +5364,11 @@ class App {
         }
     }
 
-    // === コーチングプラン機能 ===
+    // === コーチングプラン機�E ===
 
-    // プラン付き目標作成を開始
+    // プラン付き目標作�Eを開姁E
     handleCreateGoalWithPlan() {
-        // 空の目標データでモーダルを開く（モーダル内で入力）
+        // 空の目標データでモーダルを開く（モーダル冁E��入力！E
         const goalData = {
             title: '',
             deadline: '',
@@ -5377,11 +5377,11 @@ class App {
             skillLevel: this.getCurrentSkillLevel()
         };
 
-        // プランモーダルを開く
+        // プランモーダルを開ぁE
         this.openCoachingPlanModal(goalData);
     }
 
-    // 現在のゲームジャンルを取得
+    // 現在のゲームジャンルを取征E
     getCurrentGameGenre() {
         const gameData = localStorage.getItem('selectedGameData');
         if (gameData) {
@@ -5390,19 +5390,19 @@ class App {
                 'FPS': 'fps',
                 'MOBA': 'moba',
                 '格闘ゲーム': 'fighting',
-                'ストラテジー': 'strategy'
+                'ストラチE��ー': 'strategy'
             };
             return categoryToGenre[game.category] || 'universal';
         }
         return 'universal';
     }
 
-    // 現在のスキルレベルを取得
+    // 現在のスキルレベルを取征E
     getCurrentSkillLevel() {
         return localStorage.getItem('playerSkillLevel') || 'intermediate';
     }
 
-    // コーチングプランモーダルの初期化
+    // コーチングプランモーダルの初期匁E
     initCoachingPlanModal() {
         // モーダルクローズ
         const closeModal = document.getElementById('close-plan-modal');
@@ -5412,7 +5412,7 @@ class App {
             });
         }
 
-        // 知識ベース再読み込みボタン
+        // 知識�Eース再読み込みボタン
         const reloadKbBtn = document.getElementById('reload-kb-btn');
         if (reloadKbBtn) {
             reloadKbBtn.addEventListener('click', () => {
@@ -5420,7 +5420,7 @@ class App {
             });
         }
 
-        // AI生成ボタン
+        // AI生�Eボタン
         const generateBtn = document.getElementById('generate-plan-btn');
         if (generateBtn) {
             generateBtn.addEventListener('click', () => {
@@ -5428,7 +5428,7 @@ class App {
             });
         }
 
-        // 手動作成ボタン
+        // 手動作�Eボタン
         const manualBtn = document.getElementById('manual-plan-btn');
         if (manualBtn) {
             manualBtn.addEventListener('click', () => {
@@ -5436,7 +5436,7 @@ class App {
             });
         }
 
-        // プラン編集ボタン
+        // プラン編雁E�Eタン
         const editBtn = document.getElementById('edit-plan-btn');
         if (editBtn) {
             editBtn.addEventListener('click', () => {
@@ -5444,7 +5444,7 @@ class App {
             });
         }
 
-        // プラン承認ボタン
+        // プラン承認�Eタン
         const approveBtn = document.getElementById('approve-plan-btn');
         if (approveBtn) {
             approveBtn.addEventListener('click', () => {
@@ -5452,7 +5452,7 @@ class App {
             });
         }
 
-        // 再生成ボタン
+        // 再生成�Eタン
         const regenerateBtn = document.getElementById('regenerate-plan-btn');
         if (regenerateBtn) {
             regenerateBtn.addEventListener('click', () => {
@@ -5460,7 +5460,7 @@ class App {
             });
         }
 
-        // プラン保存ボタン
+        // プラン保存�Eタン
         const saveBtn = document.getElementById('save-plan-btn');
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
@@ -5468,7 +5468,7 @@ class App {
             });
         }
 
-        // 編集キャンセルボタン
+        // 編雁E��ャンセルボタン
         const cancelEditBtn = document.getElementById('cancel-edit-btn');
         if (cancelEditBtn) {
             cancelEditBtn.addEventListener('click', () => {
@@ -5477,14 +5477,14 @@ class App {
         }
     }
 
-    // コーチングプランモーダルを開く
+    // コーチングプランモーダルを開ぁE
     openCoachingPlanModal(goalData) {
         this.currentGoalData = goalData;
 
         // 目標情報を表示
         this.displayGoalSummary(goalData);
 
-        // SF6知識ベースの状態を更新
+        // SF6知識�Eースの状態を更新
         this.updateSF6KnowledgeStatus();
 
         // モーダルを表示
@@ -5495,10 +5495,10 @@ class App {
         }
     }
 
-    // SF6知識ベースの状態を更新
+    // SF6知識�Eースの状態を更新
     updateSF6KnowledgeStatus() {
         try {
-            // LocalStorageからデータソースファイルを取得
+            // LocalStorageからチE�Eタソースファイルを取征E
             const datasourceKeys = Object.keys(localStorage).filter(key => key.startsWith('datasource-'));
             
             const statusText = document.getElementById('kb-status-text');
@@ -5507,7 +5507,7 @@ class App {
             const kbDetails = document.getElementById('kb-details');
             
             if (datasourceKeys.length > 0) {
-                // データがある場合
+                // チE�Eタがある場吁E
                 let totalSize = 0;
                 datasourceKeys.forEach(key => {
                     const content = localStorage.getItem(key);
@@ -5522,23 +5522,23 @@ class App {
                 if (dataSize) dataSize.textContent = totalSize.toLocaleString();
                 if (kbDetails) kbDetails.classList.remove('hidden');
                 
-                console.log(`📚 SF6知識ベース: ${datasourceKeys.length}ファイル、${totalSize}文字`);
+                console.log(`📚 SF6知識�Eース: ${datasourceKeys.length}ファイル、E{totalSize}斁E��`);
             } else {
-                // データがない場合
-                if (statusText) statusText.textContent = '未設定';
+                // チE�EタがなぁE��吁E
+                if (statusText) statusText.textContent = '未設宁E;
                 if (statusText) statusText.className = 'indicator-value inactive';
                 if (fileCount) fileCount.textContent = '0';
                 if (dataSize) dataSize.textContent = '0';
                 if (kbDetails) kbDetails.classList.remove('hidden');
                 
-                console.log('📚 SF6知識ベース: データなし');
+                console.log('📚 SF6知識�Eース: チE�EタなぁE);
             }
         } catch (error) {
-            console.error('知識ベース状態更新エラー:', error);
+            console.error('知識�Eース状態更新エラー:', error);
         }
     }
 
-    // SF6知識ベースを再読み込み
+    // SF6知識�Eースを�E読み込み
     async reloadSF6KnowledgeBase() {
         try {
             const reloadBtn = document.getElementById('reload-kb-btn');
@@ -5548,7 +5548,7 @@ class App {
                 reloadBtn.classList.add('spinning');
             }
             
-            // コーチングプランサービスの知識ベースを再読み込み
+            // コーチングプランサービスの知識�Eースを�E読み込み
             if (this.coachingPlanService) {
                 await this.coachingPlanService.loadSF6KnowledgeBase();
             }
@@ -5556,7 +5556,7 @@ class App {
             // 状態表示を更新
             this.updateSF6KnowledgeStatus();
             
-            this.showToast('📚 SF6知識ベースを更新しました', 'success');
+            this.showToast('📚 SF6知識�Eースを更新しました', 'success');
             
             setTimeout(() => {
                 if (reloadBtn) {
@@ -5565,8 +5565,8 @@ class App {
                 }
             }, 1000);
         } catch (error) {
-            console.error('知識ベース再読み込みエラー:', error);
-            this.showToast('知識ベースの更新に失敗しました', 'error');
+            console.error('知識�Eース再読み込みエラー:', error);
+            this.showToast('知識�Eースの更新に失敗しました', 'error');
             
             const reloadBtn = document.getElementById('reload-kb-btn');
             if (reloadBtn) {
@@ -5586,7 +5586,7 @@ class App {
         this.currentPlan = null;
     }
 
-    // 目標概要を表示（フォーム入力フィールドに初期値を設定）
+    // 目標概要を表示�E�フォーム入力フィールドに初期値を設定！E
     displayGoalSummary(goalData) {
         const titleInput = document.getElementById('modal-goal-title-input');
         const deadlineInput = document.getElementById('modal-goal-deadline-input');
@@ -5602,42 +5602,42 @@ class App {
             descriptionInput.value = goalData.description;
         }
 
-        // 期限の最小値を今日の日付に設定
+        // 期限の最小値を今日の日付に設宁E
         if (deadlineInput) {
             const today = new Date().toISOString().split('T')[0];
             deadlineInput.min = today;
         }
     }
 
-    // プランステップを表示
+    // プランスチE��プを表示
     showPlanStep(stepId) {
         console.log('🔄 Switching to plan step:', stepId);
 
-        // 全ステップを非表示
+        // 全スチE��プを非表示
         document.querySelectorAll('.plan-step').forEach(step => {
             step.classList.remove('active');
             console.log('🔄 Removed active from step:', step.id);
         });
 
-        // 指定ステップを表示
+        // 持E��スチE��プを表示
         const targetStep = document.getElementById(stepId);
         if (targetStep) {
             targetStep.classList.add('active');
             targetStep.classList.remove('hidden'); // hiddenクラスも削除
-            console.log('✅ Activated step:', stepId);
+            console.log('✁EActivated step:', stepId);
         } else {
-            console.error('❌ Target step not found:', stepId);
+            console.error('❁ETarget step not found:', stepId);
         }
     }
 
-    // AIでプラン生成
+    // AIでプラン生�E
     async generatePlanWithAI() {
         if (!this.coachingPlanService) {
             this.showToast('コーチングプランサービスが利用できません', 'error');
             return;
         }
 
-        // モーダル内のフォームから目標データを取得
+        // モーダル冁E�Eフォームから目標データを取征E
         const titleInput = document.getElementById('modal-goal-title-input');
         const deadlineInput = document.getElementById('modal-goal-deadline-input');
         const descriptionInput = document.getElementById('modal-goal-description-input');
@@ -5653,16 +5653,16 @@ class App {
 
         // 入力検証
         if (!title || !deadline) {
-            this.showToast('目標タイトルと期限を入力してください', 'warning');
+            this.showToast('目標タイトルと期限を�E力してください', 'warning');
             return;
         }
 
-        // 期限が過去の日付でないかチェック
+        // 期限が過去の日付でなぁE��チェチE��
         const deadlineDate = new Date(deadline);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (deadlineDate < today) {
-            this.showToast('期限は本日以降の日付を設定してください', 'warning');
+            this.showToast('期限は本日以降�E日付を設定してください', 'warning');
             return;
         }
 
@@ -5681,17 +5681,17 @@ class App {
             const plan = await this.coachingPlanService.generateCoachingPlan(this.currentGoalData);
             this.currentPlan = plan;
 
-            this.showToast('AIによるカスタムプランを生成しました！', 'success');
+            this.showToast('AIによるカスタムプランを生成しました�E�E, 'success');
             this.displayGeneratedPlan(plan);
             this.showPlanStep('plan-review-step');
         } catch (error) {
             console.error('Failed to generate coaching plan:', error);
 
-            let errorMessage = 'プラン生成に失敗しました: ';
+            let errorMessage = 'プラン生�Eに失敗しました: ';
             if (error.message.includes('APIキー')) {
-                errorMessage += 'Gemini APIキーを設定してください。';
+                errorMessage += 'Gemini APIキーを設定してください、E;
             } else if (error.message.includes('API')) {
-                errorMessage += 'API接続に問題があります。';
+                errorMessage += 'API接続に問題があります、E;
             } else {
                 errorMessage += error.message;
             }
@@ -5702,7 +5702,7 @@ class App {
         }
     }
 
-    // プラン生成ローディング表示
+    // プラン生�EローチE��ング表示
     showPlanGenerationLoading(show) {
         const status = document.getElementById('generation-status');
         const buttons = document.getElementById('generation-buttons');
@@ -5715,7 +5715,7 @@ class App {
         }
     }
 
-    // 生成されたプランを表示
+    // 生�Eされた�Eランを表示
     displayGeneratedPlan(plan) {
         console.log('🎯 Displaying generated plan:', plan);
 
@@ -5727,21 +5727,21 @@ class App {
             weeksEl.textContent = plan.weeks.length;
             console.log('📊 Set weeks count:', plan.weeks.length);
         } else {
-            console.error('❌ plan-total-weeks element not found');
+            console.error('❁Eplan-total-weeks element not found');
         }
 
         if (daysEl) {
             daysEl.textContent = plan.metadata.totalWeeks * 7;
             console.log('📊 Set days count:', plan.metadata.totalWeeks * 7);
         } else {
-            console.error('❌ plan-total-days element not found');
+            console.error('❁Eplan-total-days element not found');
         }
 
         // 週別プランを表示
         console.log('📅 Rendering week cards...');
         this.renderWeekCards(plan.weeks);
         
-        // グラウンディング情報を表示
+        // グラウンチE��ング惁E��を表示
         if (plan.metadata?.groundingSources) {
             this.renderGroundingSources(plan.metadata.groundingSources);
         }
@@ -5751,7 +5751,7 @@ class App {
     renderWeekCards(weeks) {
         const container = document.getElementById('weeks-container');
         if (!container) {
-            console.error('❌ weeks-container not found');
+            console.error('❁Eweeks-container not found');
             return;
         }
 
@@ -5768,7 +5768,7 @@ class App {
         console.log('📅 Week cards rendered successfully');
     }
 
-    // グラウンディング情報を表示
+    // グラウンチE��ング惁E��を表示
     renderGroundingSources(groundingSources) {
         const container = document.getElementById('weeks-container');
         if (!container || !groundingSources || groundingSources.totalSources === 0) {
@@ -5780,7 +5780,7 @@ class App {
         sourcesCard.innerHTML = `
             <div class="sources-header">
                 <span class="sources-icon">🌐</span>
-                <h4>参考にした最新情報（${groundingSources.totalSources}件）</h4>
+                <h4>参老E��した最新惁E���E�E{groundingSources.totalSources}件�E�E/h4>
             </div>
             <div class="sources-list">
                 ${groundingSources.sources.slice(0, 5).map(source => `
@@ -5793,14 +5793,14 @@ class App {
                 `).join('')}
             </div>
             <p class="sources-note">
-                💡 このコーチングプランは、上記の最新情報を参考に生成されました
+                💡 こ�Eコーチングプランは、上記�E最新惁E��を参老E��生�Eされました
             </p>
         `;
 
         container.appendChild(sourcesCard);
     }
 
-    // 週カードを作成
+    // 週カードを作�E
     createWeekCard(week) {
         const card = document.createElement('div');
         card.className = 'week-card';
@@ -5812,13 +5812,13 @@ class App {
             </div>
             <div class="week-focus">${week.focus}</div>
             <div class="week-objectives">
-                <h5>目標</h5>
+                <h5>目樁E/h5>
                 <ul class="objectives-list">
                     ${week.objectives.map(obj => `<li>${obj}</li>`).join('')}
                 </ul>
             </div>
             <div class="week-milestones">
-                <h5>マイルストーン</h5>
+                <h5>マイルスト�Eン</h5>
                 <ul class="milestones-list">
                     ${week.milestones.map(milestone => `<li>${milestone}</li>`).join('')}
                 </ul>
@@ -5828,12 +5828,12 @@ class App {
         return card;
     }
 
-    // プランを承認して目標を作成
+    // プランを承認して目標を作�E
     async approvePlan() {
         if (!this.currentPlan || !this.currentGoalData) return;
 
         try {
-            // 目標を作成（プラン情報付き）
+            // 目標を作�E�E��Eラン惁E��付き�E�E
             const goalData = {
                 ...this.currentGoalData,
                 id: Date.now(),
@@ -5842,65 +5842,65 @@ class App {
                 planId: this.currentPlan.id
             };
 
-            // プランのステータスをアクティブに更新
+            // プランのスチE�EタスをアクチE��ブに更新
             this.currentPlan.status = 'active';
             this.currentPlan.goalId = goalData.id;
 
-            // 保存
+            // 保孁E
             this.coachingPlanService.savePlan(this.currentPlan);
             this.addGoal(goalData);
 
-            // フォームをリセット
+            // フォームをリセチE��
             document.getElementById('goal-form').reset();
 
             // モーダルを閉じる
             this.closeCoachingPlanModal();
 
-            this.showToast('コーチングプラン付きの目標を作成しました！', 'success');
+            this.showToast('コーチングプラン付きの目標を作�Eしました�E�E, 'success');
         } catch (error) {
             console.error('Failed to approve plan:', error);
             this.showToast('プランの承認に失敗しました', 'error');
         }
     }
 
-    // 手動プラン作成（簡易版）
+    // 手動プラン作�E�E�簡易版�E�E
     createManualPlan() {
-        this.showToast('手動プラン作成機能は今後実装予定です', 'info');
+        this.showToast('手動プラン作�E機�Eは今後実裁E��定でぁE, 'info');
     }
 
-    // プラン編集
+    // プラン編雁E
     editPlan() {
-        this.showToast('プラン編集機能は今後実装予定です', 'info');
+        this.showToast('プラン編雁E���Eは今後実裁E��定でぁE, 'info');
     }
 
-    // プラン再生成
+    // プラン再生戁E
     regeneratePlan() {
         this.generatePlanWithAI();
     }
 
-    // プラン編集保存
+    // プラン編雁E��孁E
     savePlanEdits() {
-        this.showToast('プラン編集保存機能は今後実装予定です', 'info');
+        this.showToast('プラン編雁E��存機�Eは今後実裁E��定でぁE, 'info');
     }
 
-    // プラン編集キャンセル
+    // プラン編雁E��ャンセル
     cancelPlanEdit() {
         this.showPlanStep('plan-review-step');
     }
 
-    // コーチングプランページの初期化
+    // コーチングプランペ�Eジの初期匁E
     initCoachingPlansPage() {
-        // 更新ボタンのイベントリスナー
+        // 更新ボタンのイベントリスナ�E
         document.getElementById('refresh-plans-btn')?.addEventListener('click', () => {
             this.loadCoachingPlans();
         });
 
-        // ステータスフィルターのイベントリスナー
+        // スチE�Eタスフィルターのイベントリスナ�E
         document.getElementById('plan-status-filter')?.addEventListener('change', (e) => {
             this.filterPlans(e.target.value);
         });
 
-        // ページ表示時にプランを読み込み
+        // ペ�Eジ表示時にプランを読み込み
         this.loadCoachingPlans();
     }
 
@@ -5912,13 +5912,13 @@ class App {
         this.displayActivePlans(activePlans);
         this.displayAllPlans(allPlans);
 
-        // アクティブなプランがある場合は今週の詳細を表示
+        // アクチE��ブなプランがある場合�E今週の詳細を表示
         if (activePlans.length > 0) {
             this.displayCurrentWeek(activePlans[0]);
         }
     }
 
-    // アクティブなプランを表示
+    // アクチE��ブなプランを表示
     displayActivePlans(plans) {
         const container = document.getElementById('active-plans-container');
         if (!container) return;
@@ -5927,8 +5927,8 @@ class App {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">📋</div>
-                    <h3>アクティブなプランがありません</h3>
-                    <p>目標ページでプラン付きの目標を作成してください</p>
+                    <h3>アクチE��ブなプランがありません</h3>
+                    <p>目標�Eージでプラン付きの目標を作�Eしてください</p>
                 </div>
             `;
             return;
@@ -5947,7 +5947,7 @@ class App {
                 <div class="empty-state">
                     <div class="empty-state-icon">📋</div>
                     <h3>プランがありません</h3>
-                    <p>目標ページでプランを作成してください</p>
+                    <p>目標�Eージでプランを作�Eしてください</p>
                 </div>
             `;
             return;
@@ -5956,7 +5956,7 @@ class App {
         container.innerHTML = plans.map(plan => this.createPlanCard(plan)).join('');
     }
 
-    // プランカードを作成
+    // プランカードを作�E
     createPlanCard(plan) {
         const progress = this.calculatePlanProgress(plan);
         const currentWeek = this.coachingPlanService.getCurrentWeekPlan(plan.id);
@@ -5979,7 +5979,7 @@ class App {
                     </div>
                     <div class="plan-stat">
                         <span class="plan-stat-value">${progress}%</span>
-                        <span class="plan-stat-label">進捗</span>
+                        <span class="plan-stat-label">進捁E/span>
                     </div>
                 </div>
 
@@ -5998,7 +5998,7 @@ class App {
                         ''
                     }
                     ${plan.status !== 'completed' ?
-                        `<button class="btn-secondary btn-sm" onclick="app.editPlan('${plan.id}')">編集</button>` : ''
+                        `<button class="btn-secondary btn-sm" onclick="app.editPlan('${plan.id}')">編雁E/button>` : ''
                     }
                 </div>
             </div>
@@ -6018,7 +6018,7 @@ class App {
 
         card.style.display = 'block';
 
-        const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
+        const dayNames = ['朁E, '火', '水', '木', '釁E, '圁E, '日'];
 
         content.innerHTML = `
             <div class="week-focus">
@@ -6026,7 +6026,7 @@ class App {
             </div>
 
             <div class="week-objectives">
-                <h4>今週の目標</h4>
+                <h4>今週の目樁E/h4>
                 <ul class="objectives-list">
                     ${(currentWeek.objectives || []).map(obj => `<li>${obj}</li>`).join('')}
                 </ul>
@@ -6034,7 +6034,7 @@ class App {
 
 
             <div class="week-objectives">
-                <h4>達成指標</h4>
+                <h4>達�E持E��E/h4>
                 <ul class="objectives-list">
                     ${(currentWeek.milestones || []).map(milestone => `<li>${milestone}</li>`).join('')}
                 </ul>
@@ -6042,7 +6042,7 @@ class App {
         `;
     }
 
-    // プランの進捗を計算
+    // プランの進捗を計箁E
     calculatePlanProgress(plan) {
         const currentWeek = this.coachingPlanService.getCurrentWeekPlan(plan.id);
         if (!currentWeek) return 0;
@@ -6053,13 +6053,13 @@ class App {
         return Math.round((currentWeekNumber / totalWeeks) * 100);
     }
 
-    // ステータスラベルを取得
+    // スチE�Eタスラベルを取征E
     getStatusLabel(status) {
         const labels = {
-            'active': 'アクティブ',
-            'completed': '完了',
+            'active': 'アクチE��チE,
+            'completed': '完亁E,
             'paused': '一時停止',
-            'draft': '下書き'
+            'draft': '下書ぁE
         };
         return labels[status] || status;
     }
@@ -6101,9 +6101,9 @@ class App {
         this.currentDetailPlanId = null;
     }
 
-    // プラン詳細データを表示
+    // プラン詳細チE�Eタを表示
     displayPlanDetailModal(plan) {
-        // プラン基本情報
+        // プラン基本惁E��
         document.getElementById('detail-goal-title').textContent = plan.goalTitle;
         document.getElementById('detail-plan-status').textContent = this.getStatusLabel(plan.status);
         document.getElementById('detail-total-weeks').textContent = `${plan.weeks.length}週`;
@@ -6131,7 +6131,7 @@ class App {
         if (!currentWeek) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <p>現在アクティブな週がありません</p>
+                    <p>現在アクチE��ブな週がありません</p>
                 </div>
             `;
             return;
@@ -6140,18 +6140,18 @@ class App {
         container.innerHTML = `
             <div class="week-header">
                 <div class="week-title">第${currentWeek.weekNumber}週</div>
-                <div class="week-period">${currentWeek.startDate} ～ ${currentWeek.endDate}</div>
+                <div class="week-period">${currentWeek.startDate} �E�E${currentWeek.endDate}</div>
                 <div class="week-focus">${currentWeek.focus}</div>
             </div>
             <div class="week-content">
                 <div class="objectives-section">
-                    <h4>📋 今週の目標</h4>
+                    <h4>📋 今週の目樁E/h4>
                     <ul class="objectives-list">
                         ${currentWeek.objectives.map(obj => `<li>${obj}</li>`).join('')}
                     </ul>
                 </div>
                 <div class="milestones-section">
-                    <h4>🎯 達成指標</h4>
+                    <h4>🎯 達�E持E��E/h4>
                     <ul class="milestones-list">
                         ${currentWeek.milestones.map(milestone => `<li>${milestone}</li>`).join('')}
                     </ul>
@@ -6177,7 +6177,7 @@ class App {
                     <div class="week-info">
                         <div class="week-info-title">第${week.weekNumber}週: ${week.focus}</div>
                         <div class="week-info-focus">${week.objectives.join(', ')}</div>
-                        <div class="week-info-period">${week.startDate} ～ ${week.endDate}</div>
+                        <div class="week-info-period">${week.startDate} �E�E${week.endDate}</div>
                     </div>
                 </div>
             `;
@@ -6198,7 +6198,7 @@ class App {
         if (completeBtn) completeBtn.style.display = plan.status === 'completed' ? 'none' : 'inline-block';
     }
 
-    // 詳細モーダルからプラン編集
+    // 詳細モーダルからプラン編雁E
     editPlanFromDetail() {
         if (this.currentDetailPlanId) {
             this.closePlanDetailModal();
@@ -6230,11 +6230,11 @@ class App {
         }
     }
 
-    // 詳細モーダルからプラン完了
+    // 詳細モーダルからプラン完亁E
     completePlanFromDetail() {
         if (this.currentDetailPlanId) {
             if (this.coachingPlanService.updatePlanStatus(this.currentDetailPlanId, 'completed')) {
-                this.showToast('プランを完了しました🎉', 'success');
+                this.showToast('プランを完亁E��ました🎉', 'success');
                 this.loadCoachingPlans();
                 // モーダルを更新
                 const plan = this.coachingPlanService.getPlan(this.currentDetailPlanId);
@@ -6253,18 +6253,18 @@ class App {
         }
     }
 
-    // プランを再開
+    // プランを�E閁E
     resumePlan(planId) {
         if (this.coachingPlanService.updatePlanStatus(planId, 'active')) {
-            this.showToast('プランを再開しました', 'success');
+            this.showToast('プランを�E開しました', 'success');
             this.loadCoachingPlans();
         }
     }
 
-    // プランを編集
+    // プランを編雁E
     editPlan(planId) {
-        // プラン編集機能（今後実装）
-        this.showToast('プラン編集機能は今後実装予定です', 'info');
+        // プラン編雁E���E�E�今後実裁E��E
+        this.showToast('プラン編雁E���Eは今後実裁E��定でぁE, 'info');
     }
 
     // ==========================================
@@ -6272,11 +6272,11 @@ class App {
     // ==========================================
 
     loadGalleryMatches(filters = {}) {
-        // sf6_galleryとrecentMatchesの両方からデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        // valorant_galleryとrecentMatchesの両方からチE�Eタを取得してマ�Eジ
+        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
-        // 両方のデータをマージ（重複を避ける）
+        // 両方のチE�Eタを�Eージ�E�重褁E��避ける�E�E
         const matchesMap = new Map();
         [...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
@@ -6318,7 +6318,7 @@ class App {
             galleryGrid.innerHTML = `
                 <div class="no-matches-gallery">
                     <h3>試合データがありません</h3>
-                    <p>分析ページから試合を記録してみましょう</p>
+                    <p>刁E��ペ�Eジから試合を記録してみましょぁE/p>
                 </div>
             `;
             return;
@@ -6326,20 +6326,20 @@ class App {
 
         galleryGrid.innerHTML = filteredMatches.map(match => this.createMatchCard(match)).join('');
 
-        // カードクリックイベントを設定
+        // カードクリチE��イベントを設宁E
         document.querySelectorAll('.match-card').forEach(card => {
             card.addEventListener('click', (e) => {
-                // 選択モード中はモーダルを開かない
+                // 選択モード中はモーダルを開かなぁE
                 if (this.selectionMode) {
                     return;
                 }
                 
-                // チェックボックスのクリックは無視
+                // チェチE��ボックスのクリチE��は無要E
                 if (e.target.type === 'checkbox' || e.target.closest('.match-checkbox')) {
                     return;
                 }
                 
-                // IDは文字列として扱う（バッチ入力のIDも対応）
+                // IDは斁E���Eとして扱ぁE��バチE��入力�EIDも対応！E
                 const matchId = card.dataset.matchId;
                 this.showMatchDetail(matchId);
             });
@@ -6352,20 +6352,20 @@ class App {
         const tags = match.insightTags || [];
         const feelings = match.feelings || '';
 
-        // キャラクターアイコンを取得（簡易実装）
+        // キャラクターアイコンを取得（簡易実裁E��E
         const getCharIcon = (charName) => {
             const icons = {
-                'Luke': '👊', 'Ryu': '🥋', 'Ken': '🔥', 'Chun-Li': '💨',
-                'Cammy': '⚡', 'Zangief': '💪', 'JP': '🎭', 'Juri': '👁️'
+                'Luke': '👊', 'Ryu': '🥁E, 'Ken': '🔥', 'Chun-Li': '💨',
+                'Cammy': '⚡', 'Zangief': '💪', 'JP': '🎭', 'Juri': '👁�E�E
             };
-            return icons[charName] || '🥊';
+            return icons[charName] || '🥁E;
         };
 
         return `
             <div class="match-card ${resultClass}-card" data-match-id="${match.id}">
                 <div class="match-card-header">
                     <span class="match-result-badge ${resultClass}">${isWin ? 'WIN' : 'LOSS'}</span>
-                    <span class="match-date">${match.date || '日付不明'}</span>
+                    <span class="match-date">${match.date || '日付不�E'}</span>
                 </div>
 
                 <div class="character-matchup">
@@ -6382,12 +6382,12 @@ class App {
 
                 <div class="match-info">
                     <div class="info-row">
-                        <span class="info-label">ラウンド</span>
+                        <span class="info-label">ラウンチE/span>
                         <span class="info-value">${match.roundsWon || 0}-${match.roundsLost || 0}</span>
                     </div>
                     ${match.decision ? `
                     <div class="info-row">
-                        <span class="info-label">決着方法</span>
+                        <span class="info-label">決着方況E/span>
                         <span class="info-value">${this.getDecisionLabel(match.decision)}</span>
                     </div>
                     ` : ''}
@@ -6406,26 +6406,26 @@ class App {
     getDecisionLabel(decision) {
         const labels = {
             'ko': 'KO',
-            'timeout': 'タイムアップ',
-            'perfect': 'パーフェクト',
-            'super': 'スーパーアーツ',
-            'critical': 'クリティカルアーツ',
-            'drive-impact': 'ドライブインパクト'
+            'timeout': 'タイムアチE�E',
+            'perfect': 'パ�EフェクチE,
+            'super': 'スーパ�EアーチE,
+            'critical': 'クリチE��カルアーチE,
+            'drive-impact': 'ドライブインパクチE
         };
         return labels[decision] || decision;
     }
 
     showMatchDetail(matchId) {
-        // sf6_galleryとrecentMatchesの両方から検索
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        // valorant_galleryとrecentMatchesの両方から検索
+        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         const allMatches = [...sf6Gallery, ...recentMatches];
         
-        // IDは文字列として比較（バッチ入力のIDも対応）
+        // IDは斁E���Eとして比輁E��バチE��入力�EIDも対応！E
         const match = allMatches.find(m => String(m.id) === String(matchId));
 
         if (!match) {
-            console.error('試合が見つかりません。ID:', matchId, 'タイプ:', typeof matchId);
+            console.error('試合が見つかりません、ED:', matchId, 'タイチE', typeof matchId);
             this.showToast('試合データが見つかりません', 'error');
             return;
         }
@@ -6451,29 +6451,29 @@ class App {
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">試合日</div>
-                        <div class="detail-value">${match.date || '日付不明'}</div>
+                        <div class="detail-value">${match.date || '日付不�E'}</div>
                     </div>
                 </div>
             </div>
 
             <div class="detail-section">
-                <h3>対戦情報</h3>
+                <h3>対戦惁E��</h3>
                 <div class="detail-grid">
                     <div class="detail-item">
-                        <div class="detail-label">自分</div>
+                        <div class="detail-label">自刁E/div>
                         <div class="detail-value">${match.playerCharacter || 'Unknown'}</div>
                     </div>
                     <div class="detail-item">
-                        <div class="detail-label">相手</div>
+                        <div class="detail-label">相扁E/div>
                         <div class="detail-value">${match.opponentCharacter || 'Unknown'}</div>
                     </div>
                     <div class="detail-item">
-                        <div class="detail-label">ラウンド</div>
+                        <div class="detail-label">ラウンチE/div>
                         <div class="detail-value">${match.roundsWon || 0}-${match.roundsLost || 0}</div>
                     </div>
                     ${match.decision ? `
                     <div class="detail-item">
-                        <div class="detail-label">決着方法</div>
+                        <div class="detail-label">決着方況E/div>
                         <div class="detail-value">${this.getDecisionLabel(match.decision)}</div>
                     </div>
                     ` : ''}
@@ -6491,13 +6491,13 @@ class App {
 
             ${feelings ? `
             <div class="detail-section">
-                <h3>試合の気づき</h3>
+                <h3>試合�E気づぁE/h3>
                 <div class="memo-box">${feelings}</div>
             </div>
             ` : ''}
         `;
 
-        // 編集・削除ボタンにイベントを設定
+        // 編雁E�E削除ボタンにイベントを設宁E
         const editBtn = document.getElementById('edit-match-btn');
         const deleteBtn = document.getElementById('delete-match-btn');
 
@@ -6520,24 +6520,24 @@ class App {
     }
 
     editMatch(matchId) {
-        this.showToast('編集機能は今後実装予定です', 'info');
-        // TODO: 編集モーダルを表示して、試合データを編集できるようにする
+        this.showToast('編雁E���Eは今後実裁E��定でぁE, 'info');
+        // TODO: 編雁E��ーダルを表示して、試合データを編雁E��きるようにする
     }
 
     deleteMatch(matchId) {
-        if (!confirm('この試合データを削除してもよろしいですか？')) {
+        if (!confirm('こ�E試合データを削除してもよろしぁE��すか�E�E)) {
             return;
         }
 
-        // sf6_galleryとrecentMatchesの両方から削除
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        // valorant_galleryとrecentMatchesの両方から削除
+        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
-        // IDを文字列として比較
+        // IDを文字�Eとして比輁E
         const filteredSf6 = sf6Gallery.filter(m => String(m.id) !== String(matchId));
         const filteredRecent = recentMatches.filter(m => String(m.id) !== String(matchId));
 
-        localStorage.setItem('sf6_gallery', JSON.stringify(filteredSf6));
+        localStorage.setItem('valorant_gallery', JSON.stringify(filteredSf6));
         localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
 
         this.showToast('試合データを削除しました', 'success');
@@ -6557,7 +6557,7 @@ class App {
         const select = document.getElementById('filter-opponent');
         if (!select) return;
 
-        // 既存のオプションをクリアして再生成
+        // 既存�Eオプションをクリアして再生戁E
         select.innerHTML = '<option value="">すべて</option>';
         opponents.forEach(opponent => {
             const option = document.createElement('option');
@@ -6593,7 +6593,7 @@ class App {
         }
     }
 
-    // ギャラリー選択モードの設定
+    // ギャラリー選択モード�E設宁E
     setupGallerySelectionMode() {
         this.selectionMode = false;
         this.selectedMatches = new Set();
@@ -6626,7 +6626,7 @@ class App {
         }
     }
 
-    // 選択モードの切り替え
+    // 選択モード�E刁E��替ぁE
     toggleSelectionMode() {
         this.selectionMode = !this.selectionMode;
         
@@ -6635,18 +6635,18 @@ class App {
         const toggleBtn = document.getElementById('toggle-selection-mode');
 
         if (this.selectionMode) {
-            // 選択モード有効化
+            // 選択モード有効匁E
             selectionActions?.classList.remove('hidden');
             galleryGrid?.classList.add('selection-mode');
             if (toggleBtn) {
                 toggleBtn.classList.add('active');
-                toggleBtn.innerHTML = '<span class="icon">✕</span> キャンセル';
+                toggleBtn.innerHTML = '<span class="icon">✁E/span> キャンセル';
             }
 
-            // 各カードにチェックボックスを追加
+            // 吁E��ードにチェチE��ボックスを追加
             this.addCheckboxesToCards();
         } else {
-            // 選択モード無効化
+            // 選択モード無効匁E
             this.cancelSelectionMode();
         }
     }
@@ -6666,25 +6666,25 @@ class App {
         
         if (toggleBtn) {
             toggleBtn.classList.remove('active');
-            toggleBtn.innerHTML = '<span class="icon">✓</span> 削除';
+            toggleBtn.innerHTML = '<span class="icon">✁E/span> 削除';
         }
 
-        // チェックボックスを削除
+        // チェチE��ボックスを削除
         document.querySelectorAll('.match-checkbox').forEach(cb => cb.remove());
         this.updateSelectionCount();
     }
 
-    // カードにチェックボックスを追加
+    // カードにチェチE��ボックスを追加
     addCheckboxesToCards() {
         const cards = document.querySelectorAll('.match-card');
         cards.forEach((card, index) => {
-            // 既存のチェックボックスがあれば削除
+            // 既存�EチェチE��ボックスがあれ�E削除
             const existingCheckbox = card.querySelector('.match-checkbox');
             if (existingCheckbox) {
                 existingCheckbox.remove();
             }
 
-            // 新しいチェックボックスを追加
+            // 新しいチェチE��ボックスを追加
             const checkbox = document.createElement('div');
             checkbox.className = 'match-checkbox';
             const input = document.createElement('input');
@@ -6694,10 +6694,10 @@ class App {
             
             const matchId = card.dataset.matchId;
 
-            // チェックボックス全体のクリックイベントでSHIFTキーを検知
+            // チェチE��ボックス全体�EクリチE��イベントでSHIFTキーを検知
             checkbox.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // クリック後、少し待ってから状態を確認（チェックボックスの状態更新を待つ）
+                // クリチE��後、少し征E��てから状態を確認（チェチE��ボックスの状態更新を征E���E�E
                 setTimeout(() => {
                     this.handleCheckboxChange(matchId, index, e.shiftKey);
                 }, 0);
@@ -6708,16 +6708,16 @@ class App {
         });
     }
 
-    // チェックボックス変更ハンドラー
+    // チェチE��ボックス変更ハンドラー
     handleCheckboxChange(matchId, currentIndex, shiftKey) {
         const checkbox = document.querySelector(`.match-card[data-match-id="${matchId}"] input`);
         
         if (!checkbox) {
-            console.error('チェックボックスが見つかりません:', matchId);
+            console.error('チェチE��ボックスが見つかりません:', matchId);
             return;
         }
         
-        // IDを文字列として正規化
+        // IDを文字�Eとして正規化
         const normalizedId = String(matchId);
         const isChecked = checkbox.checked;
         
@@ -6730,33 +6730,33 @@ class App {
         });
         
         if (shiftKey && this.lastSelectedIndex !== -1 && this.lastSelectedIndex !== currentIndex) {
-            // SHIFT+クリックで範囲選択
-            console.log('🎯 SHIFT範囲選択を実行');
+            // SHIFT+クリチE��で篁E��選抁E
+            console.log('🎯 SHIFT篁E��選択を実衁E);
             this.selectRange(this.lastSelectedIndex, currentIndex, isChecked);
-            // 範囲選択の場合、updateSelectionCountはselectRange内で呼ばれる
+            // 篁E��選択�E場合、updateSelectionCountはselectRange冁E��呼ばれる
         } else {
-            // 通常の選択
+            // 通常の選抁E
             if (isChecked) {
                 this.selectedMatches.add(normalizedId);
-                console.log('✓ Selected:', normalizedId, 'Total:', this.selectedMatches.size);
+                console.log('✁ESelected:', normalizedId, 'Total:', this.selectedMatches.size);
             } else {
                 this.selectedMatches.delete(normalizedId);
-                console.log('✗ Deselected:', normalizedId, 'Total:', this.selectedMatches.size);
+                console.log('✁EDeselected:', normalizedId, 'Total:', this.selectedMatches.size);
             }
             this.updateSelectionCount();
         }
 
-        // 最後に選択したインデックスを更新
+        // 最後に選択したインチE��クスを更新
         this.lastSelectedIndex = currentIndex;
     }
 
-    // 範囲選択
+    // 篁E��選抁E
     selectRange(startIndex, endIndex, checked) {
         const [start, end] = startIndex < endIndex 
             ? [startIndex, endIndex] 
             : [endIndex, startIndex];
 
-        console.log('範囲選択:', {
+        console.log('篁E��選抁E', {
             start: start,
             end: end,
             checked: checked,
@@ -6769,7 +6769,7 @@ class App {
         for (let i = start; i <= end; i++) {
             if (cards[i]) {
                 const input = cards[i].querySelector('input');
-                const matchId = String(cards[i].dataset.matchId); // 文字列として正規化
+                const matchId = String(cards[i].dataset.matchId); // 斁E���Eとして正規化
                 
                 if (input) {
                     input.checked = checked;
@@ -6783,16 +6783,16 @@ class App {
             }
         }
         
-        console.log(`範囲選択完了: ${selectedCount}件を${checked ? '選択' : '解除'}`);
+        console.log(`篁E��選択完亁E ${selectedCount}件めE{checked ? '選抁E : '解除'}`);
         this.updateSelectionCount();
     }
 
-    // すべて選択
+    // すべて選抁E
     selectAllMatches() {
         const cards = document.querySelectorAll('.match-card');
         cards.forEach(card => {
             const input = card.querySelector('input');
-            const matchId = String(card.dataset.matchId); // 文字列として正規化
+            const matchId = String(card.dataset.matchId); // 斁E���Eとして正規化
             
             if (input) {
                 input.checked = true;
@@ -6840,29 +6840,29 @@ class App {
         }
 
         const count = this.selectedMatches.size;
-        const message = `選択した${count}試合を削除してもよろしいですか？\n\nこの操作は取り消せません。`;
+        const message = `選択しぁE{count}試合を削除してもよろしぁE��すか�E�\n\nこ�E操作�E取り消せません。`;
 
         if (!confirm(message)) {
             return;
         }
 
-        // sf6_galleryとrecentMatchesの両方から削除
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        // valorant_galleryとrecentMatchesの両方から削除
+        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
 
-        console.log('削除前のデータ数:', {
+        console.log('削除前�EチE�Eタ数:', {
             sf6Gallery: sf6Gallery.length,
             recentMatches: recentMatches.length,
             selected: Array.from(this.selectedMatches)
         });
 
-        // IDの型に関係なく削除できるように、両方の形式で比較
+        // IDの型に関係なく削除できるように、両方の形式で比輁E
         const selectedIds = Array.from(this.selectedMatches);
         const filteredSf6 = sf6Gallery.filter(m => {
             const matchId = String(m.id);
             const shouldKeep = !selectedIds.some(id => String(id) === matchId);
             if (!shouldKeep) {
-                console.log('sf6_galleryから削除:', matchId);
+                console.log('valorant_galleryから削除:', matchId);
             }
             return shouldKeep;
         });
@@ -6875,49 +6875,49 @@ class App {
             return shouldKeep;
         });
 
-        console.log('削除後のデータ数:', {
+        console.log('削除後�EチE�Eタ数:', {
             sf6Gallery: filteredSf6.length,
             recentMatches: filteredRecent.length,
             deleted: sf6Gallery.length - filteredSf6.length + recentMatches.length - filteredRecent.length
         });
 
-        localStorage.setItem('sf6_gallery', JSON.stringify(filteredSf6));
+        localStorage.setItem('valorant_gallery', JSON.stringify(filteredSf6));
         localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
 
-        this.showToast(`${count}試合のデータを削除しました`, 'success');
+        this.showToast(`${count}試合�EチE�Eタを削除しました`, 'success');
 
         // 選択をクリア
         this.selectedMatches.clear();
         this.cancelSelectionMode();
 
-        // ギャラリーを再読み込み
+        // ギャラリーを�E読み込み
         this.loadGalleryMatches();
 
-        // ダッシュボードの統計も更新
+        // ダチE��ュボ�Eド�E統計も更新
         this.loadDashboard();
     }
 
-    // ========== 連勝記録機能 ==========
+    // ========== 連勝記録機�E ==========
 
-    // 連勝記録の初期化
+    // 連勝記録の初期匁E
     initWinStreak() {
         const currentStreak = this.getWinStreak();
         this.updateWinStreakDisplay(currentStreak);
-        console.log('連勝記録を初期化しました:', currentStreak);
+        console.log('連勝記録を�E期化しました:', currentStreak);
     }
 
-    // 連勝記録を取得
+    // 連勝記録を取征E
     getWinStreak() {
         const streak = localStorage.getItem('winStreak');
         return streak ? parseInt(streak) : 0;
     }
 
-    // 連勝記録を保存
+    // 連勝記録を保孁E
     saveWinStreak(streak) {
         localStorage.setItem('winStreak', streak.toString());
     }
 
-    // 連勝記録を更新（試合結果に応じて）
+    // 連勝記録を更新�E�試合結果に応じて�E�E
     updateWinStreak(result) {
         const currentStreak = this.getWinStreak();
         let newStreak = currentStreak;
@@ -6925,24 +6925,24 @@ class App {
         switch (result.toUpperCase()) {
             case 'WIN':
                 newStreak = currentStreak + 1;
-                console.log(`🔥 勝利！連勝記録を更新: ${currentStreak} → ${newStreak}`);
+                console.log(`🔥 勝利�E�E��勝記録を更新: ${currentStreak} ↁE${newStreak}`);
                 if (newStreak > 1) {
-                    this.showToast(`🔥 ${newStreak}連勝中！`, 'success');
+                    this.showToast(`🔥 ${newStreak}連勝中�E�`, 'success');
                 }
                 break;
             case 'LOSS':
                 if (currentStreak > 0) {
-                    console.log(`😢 敗北... 連勝記録がリセットされました (${currentStreak}連勝)`);
-                    this.showToast(`😢 連勝記録がリセットされました (${currentStreak}連勝)`, 'info');
+                    console.log(`😢 敗北... 連勝記録がリセチE��されました (${currentStreak}連勁E`);
+                    this.showToast(`😢 連勝記録がリセチE��されました (${currentStreak}連勁E`, 'info');
                 }
                 newStreak = 0;
                 break;
             case 'DRAW':
-                console.log(`🤝 引き分け。連勝記録は維持: ${currentStreak}`);
-                // 引き分けの場合は変動なし
+                console.log(`🤁E引き刁E��。連勝記録は維持E ${currentStreak}`);
+                // 引き刁E��の場合�E変動なぁE
                 break;
             default:
-                console.warn('不明な試合結果:', result);
+                console.warn('不�Eな試合結果:', result);
                 break;
         }
 
@@ -6950,11 +6950,11 @@ class App {
         this.updateWinStreakDisplay(newStreak);
     }
 
-    // 連勝記録をリセット
+    // 連勝記録をリセチE��
     resetWinStreak() {
         const currentStreak = this.getWinStreak();
         if (currentStreak > 0) {
-            console.log(`連勝記録をリセット: ${currentStreak} → 0`);
+            console.log(`連勝記録をリセチE��: ${currentStreak} ↁE0`);
         }
         this.saveWinStreak(0);
         this.updateWinStreakDisplay(0);
@@ -6966,14 +6966,14 @@ class App {
         const streakValue = document.getElementById('current-win-streak');
 
         if (!banner || !streakValue) {
-            console.warn('連勝バナーの要素が見つかりません');
+            console.warn('連勝バナ�Eの要素が見つかりません');
             return;
         }
 
         streakValue.textContent = streak.toString();
         banner.setAttribute('data-streak', streak.toString());
 
-        // 連勝数が0の場合は非表示
+        // 連勝数ぁEの場合�E非表示
         if (streak === 0) {
             banner.style.display = 'none';
         } else {
@@ -6983,7 +6983,7 @@ class App {
 
 }
 
-// アプリの起動
+// アプリの起勁E
 const app = new App();
 
 // Export for global access
