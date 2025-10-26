@@ -2197,13 +2197,14 @@ class App {
             this.winRateTrendChart.destroy();
         }
 
-        // 両方のストレージからデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        // 新旧両方のキーからデータを取得してマージ（sf6_gallery と valorant_gallery の互換性）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
         // 重複を排除してマージ
         const matchesMap = new Map();
-        [...sf6Gallery, ...recentMatches].forEach(match => {
+        [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
                 matchesMap.set(match.id, match);
             }
@@ -2418,7 +2419,7 @@ class App {
 
     // キャラクター使用率グラフの描画
     renderCharacterUsageChart() {
-        const canvas = document.getElementById('sf6-metrics-chart');
+        const canvas = document.getElementById('valorant-metrics-chart');
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
@@ -2428,13 +2429,14 @@ class App {
             this.characterUsageChart.destroy();
         }
 
-        // 両方のストレージからデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        // 新旧両方のキーからデータを取得してマージ（sf6_gallery と valorant_gallery の互換性）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
         // 重複を排除してマージ
         const matchesMap = new Map();
-        [...sf6Gallery, ...recentMatches].forEach(match => {
+        [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
                 matchesMap.set(match.id, match);
             }
@@ -2593,13 +2595,14 @@ class App {
 
     // 勝率詳細データを読み込む
     loadWinRateDetailData() {
-        // 両方のストレージからデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        // 新旧両方のキーからデータを取得してマージ（sf6_gallery と valorant_gallery の互換性）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
         // 重複を排除してマージ
         const matchesMap = new Map();
-        [...sf6Gallery, ...recentMatches].forEach(match => {
+        [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
                 matchesMap.set(match.id, match);
             }
@@ -6272,13 +6275,14 @@ class App {
     // ==========================================
 
     loadGalleryMatches(filters = {}) {
-        // valorant_galleryとrecentMatchesの両方からデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        // 新旧両方のキーからデータを取得してマージ（sf6_gallery と valorant_gallery の互換性）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
-        // 両方のデータをマージ（重複を避ける）
+        // 全データソースをマージ（重複を避ける）
         const matchesMap = new Map();
-        [...sf6Gallery, ...recentMatches].forEach(match => {
+        [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
             if (match.id) {
                 matchesMap.set(match.id, match);
             }
@@ -6416,10 +6420,11 @@ class App {
     }
 
     showMatchDetail(matchId) {
-        // valorant_galleryとrecentMatchesの両方から検索
-        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        // 新旧両方のキーからデータを取得（sf6_gallery と valorant_gallery の互換性）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const allMatches = [...sf6Gallery, ...recentMatches];
+        const allMatches = [...valorantGallery, ...sf6Gallery, ...recentMatches];
         
         // IDは文字列として比較（バッチ入力のIDも対応）
         const match = allMatches.find(m => String(m.id) === String(matchId));
@@ -6529,15 +6534,18 @@ class App {
             return;
         }
 
-        // valorant_galleryとrecentMatchesの両方から削除
-        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        // 新旧両方のキーからデータを取得して削除（sf6_gallery と valorant_gallery の互換性）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
         // IDを文字列として比較
+        const filteredValorant = valorantGallery.filter(m => String(m.id) !== String(matchId));
         const filteredSf6 = sf6Gallery.filter(m => String(m.id) !== String(matchId));
         const filteredRecent = recentMatches.filter(m => String(m.id) !== String(matchId));
 
-        localStorage.setItem('valorant_gallery', JSON.stringify(filteredSf6));
+        localStorage.setItem('valorant_gallery', JSON.stringify(filteredValorant));
+        localStorage.setItem('sf6_gallery', JSON.stringify(filteredSf6));
         localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
 
         this.showToast('試合データを削除しました', 'success');
@@ -6846,11 +6854,13 @@ class App {
             return;
         }
 
-        // valorant_galleryとrecentMatchesの両方から削除
-        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        // 新旧両方のキーからデータを取得して削除（sf6_gallery と valorant_gallery の互換性）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
 
         console.log('削除前のデータ数:', {
+            valorantGallery: valorantGallery.length,
             sf6Gallery: sf6Gallery.length,
             recentMatches: recentMatches.length,
             selected: Array.from(this.selectedMatches)
@@ -6858,11 +6868,19 @@ class App {
 
         // IDの型に関係なく削除できるように、両方の形式で比較
         const selectedIds = Array.from(this.selectedMatches);
-        const filteredSf6 = sf6Gallery.filter(m => {
+        const filteredValorant = valorantGallery.filter(m => {
             const matchId = String(m.id);
             const shouldKeep = !selectedIds.some(id => String(id) === matchId);
             if (!shouldKeep) {
                 console.log('valorant_galleryから削除:', matchId);
+            }
+            return shouldKeep;
+        });
+        const filteredSf6 = sf6Gallery.filter(m => {
+            const matchId = String(m.id);
+            const shouldKeep = !selectedIds.some(id => String(id) === matchId);
+            if (!shouldKeep) {
+                console.log('sf6_galleryから削除:', matchId);
             }
             return shouldKeep;
         });
@@ -6876,12 +6894,16 @@ class App {
         });
 
         console.log('削除後のデータ数:', {
+            valorantGallery: filteredValorant.length,
             sf6Gallery: filteredSf6.length,
             recentMatches: filteredRecent.length,
-            deleted: sf6Gallery.length - filteredSf6.length + recentMatches.length - filteredRecent.length
+            deleted: (valorantGallery.length - filteredValorant.length) + 
+                     (sf6Gallery.length - filteredSf6.length) + 
+                     (recentMatches.length - filteredRecent.length)
         });
 
-        localStorage.setItem('valorant_gallery', JSON.stringify(filteredSf6));
+        localStorage.setItem('valorant_gallery', JSON.stringify(filteredValorant));
+        localStorage.setItem('sf6_gallery', JSON.stringify(filteredSf6));
         localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
 
         this.showToast(`${count}試合のデータを削除しました`, 'success');
