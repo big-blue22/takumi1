@@ -6313,16 +6313,20 @@ class App {
         // フィルターを適用
         let filteredMatches = matches;
 
+        console.log('[DEBUG] Filters applied:', filters);
+
         if (filters.opponent) {
             filteredMatches = filteredMatches.filter(m => 
                 m.opponentCharacter === filters.opponent
             );
+            console.log('[DEBUG] After opponent filter:', filteredMatches.length);
         }
 
         if (filters.result) {
             filteredMatches = filteredMatches.filter(m => 
                 m.result === filters.result
             );
+            console.log('[DEBUG] After result filter:', filteredMatches.length);
         }
 
         if (filters.tag) {
@@ -6332,10 +6336,15 @@ class App {
                     tag.toLowerCase().includes(filters.tag.toLowerCase())
                 );
             });
+            console.log('[DEBUG] After tag filter:', filteredMatches.length);
         }
+
+        console.log('[DEBUG] Final filtered matches:', filteredMatches.length);
+        console.log('[DEBUG] Gallery grid element:', galleryGrid);
 
         // 表示
         if (filteredMatches.length === 0) {
+            console.log('[DEBUG] No matches to display - showing empty message');
             galleryGrid.innerHTML = `
                 <div class="no-matches-gallery">
                     <h3>試合データがありません</h3>
@@ -6345,7 +6354,11 @@ class App {
             return;
         }
 
-        galleryGrid.innerHTML = filteredMatches.map(match => this.createMatchCard(match)).join('');
+        console.log('[DEBUG] Creating match cards...');
+        const cardsHtml = filteredMatches.map(match => this.createMatchCard(match)).join('');
+        console.log('[DEBUG] Cards HTML length:', cardsHtml.length);
+        galleryGrid.innerHTML = cardsHtml;
+        console.log('[DEBUG] Cards inserted into DOM');
 
         // カードクリックイベントを設定
         document.querySelectorAll('.match-card').forEach(card => {
@@ -6368,6 +6381,12 @@ class App {
     }
 
     createMatchCard(match) {
+        if (!match) {
+            console.error('[DEBUG] createMatchCard called with null/undefined match');
+            return '';
+        }
+        console.log('[DEBUG] Creating card for match:', match.id, match.playerCharacter, 'vs', match.opponentCharacter);
+        
         const isWin = match.result === 'WIN';
         const resultClass = isWin ? 'win' : 'loss';
         const tags = match.insightTags || [];
