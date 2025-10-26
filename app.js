@@ -6280,6 +6280,21 @@ class App {
         const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
         
+        // デバッグ情報を表示
+        this.updateDebugInfo({
+            valorantGalleryCount: valorantGallery.length,
+            sf6GalleryCount: sf6Gallery.length,
+            recentMatchesCount: recentMatches.length,
+            valorantGalleryData: valorantGallery,
+            sf6GalleryData: sf6Gallery,
+            recentMatchesData: recentMatches
+        });
+        
+        console.log('[DEBUG] loadGalleryMatches called');
+        console.log('[DEBUG] valorant_gallery:', valorantGallery.length, 'matches');
+        console.log('[DEBUG] sf6_gallery:', sf6Gallery.length, 'matches');
+        console.log('[DEBUG] recentMatches:', recentMatches.length, 'matches');
+        
         // 全データソースをマージ（重複を避ける）
         const matchesMap = new Map();
         [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
@@ -6289,6 +6304,8 @@ class App {
         });
         
         const matches = Array.from(matchesMap.values());
+        console.log('[DEBUG] Total unique matches after merge:', matches.length);
+        
         const galleryGrid = document.getElementById('gallery-grid');
         
         if (!galleryGrid) return;
@@ -6578,6 +6595,7 @@ class App {
     setupGalleryFilters() {
         const applyBtn = document.getElementById('apply-filters');
         const clearBtn = document.getElementById('clear-filters');
+        const refreshDebugBtn = document.getElementById('refresh-debug');
 
         if (applyBtn) {
             applyBtn.addEventListener('click', () => {
@@ -6596,6 +6614,13 @@ class App {
                 document.getElementById('filter-opponent').value = '';
                 document.getElementById('filter-result').value = '';
                 document.getElementById('filter-tag').value = '';
+                this.loadGalleryMatches();
+            });
+        }
+
+        if (refreshDebugBtn) {
+            refreshDebugBtn.addEventListener('click', () => {
+                console.log('[DEBUG] Manual refresh triggered');
                 this.loadGalleryMatches();
             });
         }
@@ -6838,6 +6863,37 @@ class App {
         if (deleteBtn) {
             deleteBtn.disabled = this.selectedMatches.size === 0;
         }
+    }
+
+    // デバッグ情報を表示
+    updateDebugInfo(data) {
+        const debugElement = document.getElementById('debug-info');
+        if (!debugElement) return;
+
+        const timestamp = new Date().toLocaleString('ja-JP');
+        const debugText = `
+[更新時刻: ${timestamp}]
+
+=== localStorage キー情報 ===
+valorant_gallery: ${data.valorantGalleryCount} 件
+sf6_gallery: ${data.sf6GalleryCount} 件  
+recentMatches: ${data.recentMatchesCount} 件
+合計: ${data.valorantGalleryCount + data.sf6GalleryCount + data.recentMatchesCount} 件
+
+=== valorant_gallery データ ===
+${data.valorantGalleryData.length > 0 ? JSON.stringify(data.valorantGalleryData.slice(0, 2), null, 2) : '(データなし)'}
+${data.valorantGalleryData.length > 2 ? '... 他 ' + (data.valorantGalleryData.length - 2) + ' 件' : ''}
+
+=== sf6_gallery データ ===
+${data.sf6GalleryData.length > 0 ? JSON.stringify(data.sf6GalleryData.slice(0, 2), null, 2) : '(データなし)'}
+${data.sf6GalleryData.length > 2 ? '... 他 ' + (data.sf6GalleryData.length - 2) + ' 件' : ''}
+
+=== recentMatches データ ===
+${data.recentMatchesData.length > 0 ? JSON.stringify(data.recentMatchesData.slice(0, 2), null, 2) : '(データなし)'}
+${data.recentMatchesData.length > 2 ? '... 他 ' + (data.recentMatchesData.length - 2) + ' 件' : ''}
+`.trim();
+
+        debugElement.textContent = debugText;
     }
 
     // 選択された試合を削除
