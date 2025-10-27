@@ -4094,9 +4094,6 @@ class App {
 
             // 初期設定リスナーを設定
             this.setupInitialSetupListeners();
-
-            // ボタンの初期状態を確認
-            this.debugButtonStates();
         }
     }
 
@@ -4381,14 +4378,15 @@ class App {
         });
     }
 
-    debugButtonStates() {
-        console.log('=== Button States Debug ===');
-        const skillBackBtn = document.getElementById('setup-skill-back');
-        const skillCompleteBtn = document.getElementById('setup-skill-complete');
-        console.log('Skill back button found:', !!skillBackBtn);
-        console.log('Skill complete button found:', !!skillCompleteBtn);
-        console.log('=== End Button Debug ===');
-    }
+    // 不要になったデバッグメソッド（UIの簡略化により削除）
+    // debugButtonStates() {
+    //     console.log('=== Button States Debug ===');
+    //     const skillBackBtn = document.getElementById('setup-skill-back');
+    //     const skillCompleteBtn = document.getElementById('setup-skill-complete');
+    //     console.log('Skill back button found:', !!skillBackBtn);
+    //     console.log('Skill complete button found:', !!skillCompleteBtn);
+    //     console.log('=== End Button Debug ===');
+    // }
 
     // 初回設定が必要かチェック（Street Fighter 6専用）
     needsInitialSetup() {
