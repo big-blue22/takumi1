@@ -3127,6 +3127,17 @@ body {
   z-index: 10001; /* APIモーダルより高い優先度 */
 }
 
+.initial-setup-priority .modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  pointer-events: none; /* オーバーレイをクリック不可にして、下のコンテンツをクリック可能にする */
+}
+
 .initial-setup-content {
   max-width: 800px;
   width: 95vw;
@@ -3137,6 +3148,9 @@ body {
   box-shadow:
     var(--shadow-large),
     0 0 30px rgba(233, 69, 96, 0.4);
+  position: relative;
+  z-index: 10002; /* オーバーレイより上に配置 */
+  pointer-events: auto; /* コンテンツはクリック可能にする */
 }
 
 .setup-header {
