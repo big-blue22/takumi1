@@ -4383,16 +4383,6 @@ class App {
 
     debugButtonStates() {
         console.log('=== Button States Debug ===');
-        const gameNextBtn = document.getElementById('setup-game-next');
-        if (gameNextBtn) {
-            console.log('Game next button found');
-            console.log('- disabled:', gameNextBtn.disabled);
-            console.log('- textContent:', gameNextBtn.textContent);
-            console.log('- classList:', gameNextBtn.classList.toString());
-        } else {
-            console.error('Game next button not found');
-        }
-
         const skillBackBtn = document.getElementById('setup-skill-back');
         const skillCompleteBtn = document.getElementById('setup-skill-complete');
         console.log('Skill back button found:', !!skillBackBtn);
