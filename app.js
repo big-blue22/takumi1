@@ -4237,12 +4237,12 @@ class App {
     completeInitialSetup() {
         if (!this.selectedSkillLevel) return;
 
-        // Street Fighter 6固定なので、ゲームデータを自動設定
+        // VALORANT固定なので、ゲームデータを自動設定
         this.selectedGameData = {
-            id: 'sf6',
-            name: 'Street Fighter 6',
-            icon: '👊',
-            category: '格闘ゲーム'
+            id: 'valorant',
+            name: 'VALORANT',
+            icon: '🎯',
+            category: 'FPS'
         };
 
         // 設定を保存
@@ -4321,7 +4321,7 @@ class App {
         // 既存のリスナーをクリア（重複防止）
         this.clearInitialSetupListeners();
 
-        // Street Fighter 6専用なので、ゲーム選択ステップは不要
+        // VALORANT専用なので、ゲーム選択ステップは不要
 
         // スキル完了ボタン
         const skillCompleteBtn = document.getElementById('setup-skill-complete');
@@ -4354,7 +4354,7 @@ class App {
     }
 
     clearInitialSetupListeners() {
-        // Street Fighter 6専用なので、ゲーム選択関連のリスナーは不要
+        // VALORANT専用なので、ゲーム選択関連のリスナーは不要
 
         // スキル完了ボタンのリスナーを削除
         const skillCompleteBtn = document.getElementById('setup-skill-complete');
@@ -4388,7 +4388,7 @@ class App {
     //     console.log('=== End Button Debug ===');
     // }
 
-    // 初回設定が必要かチェック（Street Fighter 6専用）
+    // 初回設定が必要かチェック（VALORANT専用）
     needsInitialSetup() {
         const setupCompleted = localStorage.getItem('initialSetupCompleted');
         console.log('Setup check - setupCompleted:', setupCompleted);
@@ -4398,7 +4398,7 @@ class App {
             return false;
         }
 
-        // Street Fighter 6専用なので、スキルレベルのみをチェック
+        // VALORANT専用なので、スキルレベルのみをチェック
         const hasSkill = localStorage.getItem('skillLevel') || localStorage.getItem('playerSkillLevel');
 
         console.log('Setup check - hasSkill:', hasSkill);
