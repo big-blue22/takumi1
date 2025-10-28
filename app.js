@@ -4826,33 +4826,63 @@ class App {
     }
 
     // アプリ全体の初期化（データ消去）
-    resetAppData() {
-        // 確認ダイアログ
-        const ok = confirm('アプリを初期化します。保存された試合・目標・APIキーなどのデータが削除されます。よろしいですか？');
-        if (!ok) return;
+    async resetAppData() {
+        // SweetAlert2を使用したリッチな確認ダイアログ
+        const result = await Swal.fire({
+            title: '⚠️ データ初期化の確認',
+            html: `
+                <div style="text-align: left; margin: 20px 0;">
+                    <p style="font-size: 16px; margin-bottom: 15px;">
+                        アプリを初期化します。以下のデータが<strong>完全に削除</strong>されます:
+                    </p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 8px 0;">🎮 保存された試合データ</li>
+                        <li style="padding: 8px 0;">🎯 設定した目標</li>
+                        <li style="padding: 8px 0;">🔑 APIキー設定</li>
+                        <li style="padding: 8px 0;">📊 すべての統計情報</li>
+                        <li style="padding: 8px 0;">⚙️ アプリケーション設定</li>
+                    </ul>
+                    <p style="font-size: 14px; color: #e74c3c; margin-top: 15px; font-weight: bold;">
+                        ⚠️ この操作は取り消せません
+                    </p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '初期化する',
+            cancelButtonText: 'キャンセル',
+            confirmButtonColor: '#e74c3c',
+            cancelButtonColor: '#95a5a6',
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                confirmButton: 'swal2-confirm-danger',
+                popup: 'swal2-popup-custom'
+            }
+        });
+
+        // キャンセルされた場合は処理を中止
+        if (!result.isConfirmed) {
+            return;
+        }
 
         try {
-            // localStorage の主なキーを削除
-            const localKeys = [
-                'playerStats',
-                'recentMatches',
-                'goals',
-                'selectedGame',
-                'selectedGameData',
-                'theme',
-                'theme-manual',
-                'ai_provider',
-                'ai_api_key',
-                'ai_model',
-                'gemini_unified_api_key',
-                'api_key_timestamp',
-                'gemini-api-key',
-            ];
-            localKeys.forEach(k => localStorage.removeItem(k));
+            // ローディング表示
+            Swal.fire({
+                title: 'データを初期化中...',
+                html: 'しばらくお待ちください',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
-            // sessionStorage の主なキーを削除
-            const sessionKeys = ['currentUser', 'isGuest'];
-            sessionKeys.forEach(k => sessionStorage.removeItem(k));
+            // localStorage を完全にクリア
+            localStorage.clear();
+
+            // sessionStorage もクリア
+            sessionStorage.clear();
 
             // 内部サービスのクリーンアップ
             if (this.geminiService && typeof this.geminiService.clearApiKey === 'function') {
@@ -4862,48 +4892,32 @@ class App {
                 try { window.unifiedApiManager.clearAPIKey(); } catch (e) { console.debug(e); }
             }
 
-            // UI リセット
-            this.clearGameData();
-            const statsIds = ['win-rate', 'avg-drive-rush-attempts', 'drive-impact-success-rate', 'burnout-frequency', 'anti-air-success-rate', 'throw-tech-rate', 'games-played'];
-            statsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '-'; });
-            const matchesContainer = document.getElementById('recent-matches');
-            if (matchesContainer) matchesContainer.innerHTML = '<p class="no-data">試合記録がまだありません</p>';
-            const goalsList = document.getElementById('goals-list');
-            if (goalsList) goalsList.innerHTML = '<p class="no-data">目標がまだ設定されていません</p>';
-            // コーチング関連のキャッシュを削除
-            localStorage.removeItem('cached-coaching-advice');
-            localStorage.removeItem('coaching-advice-update-time');
-
-            // スキルレベル関連のデータを削除
-            localStorage.removeItem('playerSkillLevel');
-            localStorage.removeItem('playerSkillLevelData');
-
-            // コーチング関連のデータを削除
-            localStorage.removeItem('coaching_user_progress');
-            localStorage.removeItem('coaching_feedback_history');
-
-            // 初期設定フラグを削除
-            localStorage.removeItem('initialSetupCompleted');
-
-            // コーチングキャッシュを削除
-            const coachingKeys = Object.keys(localStorage).filter(key => key.startsWith('coaching_advice_'));
-            coachingKeys.forEach(key => localStorage.removeItem(key));
-
-            // コーチングAPI制限データを削除
-            localStorage.removeItem('coaching_cache_metadata');
-            localStorage.removeItem('coaching_last_api_call');
-            localStorage.removeItem('coaching_api_call_count');
-            localStorage.removeItem('coaching_api_call_times');
-
             // テーマをデフォルトに戻す
             this.currentTheme = 'dark';
             this.applyTheme(this.currentTheme);
 
-            this.showToast('アプリを初期化しました。ページを再読み込みします…', 'success');
-            setTimeout(() => window.location.reload(), 600);
+            // 成功メッセージを表示してリロード
+            await Swal.fire({
+                title: '✅ 初期化完了',
+                text: 'アプリケーションを初期化しました。ページを再読み込みします。',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+            // ページをリロード
+            setTimeout(() => window.location.reload(), 500);
+            
         } catch (e) {
-            console.warn('Failed to reset app:', e);
-            this.showToast('初期化に失敗しました', 'error');
+            console.error('Failed to reset app:', e);
+            
+            // エラーメッセージを表示
+            await Swal.fire({
+                title: '❌ エラー',
+                text: '初期化に失敗しました。ページを手動で再読み込みしてください。',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         }
     }
 

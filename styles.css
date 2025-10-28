@@ -9075,3 +9075,104 @@ input[type="date"]:focus {
   display: none;
 }
 
+/* ================================
+   SweetAlert2 カスタムスタイル
+   ================================ */
+
+/* SweetAlert2のポップアップをアプリのテーマに合わせる */
+.swal2-popup {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-large);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.swal2-title {
+  color: var(--text-primary) !important;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.swal2-html-container {
+  color: var(--text-secondary) !important;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 確認ボタン（危険な操作用） */
+.swal2-confirm.swal2-styled {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  border: none;
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+  transition: all 0.3s ease;
+}
+
+.swal2-confirm.swal2-styled:hover {
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%) !important;
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.6);
+  transform: translateY(-2px);
+}
+
+.swal2-confirm.swal2-styled:active {
+  transform: translateY(0);
+}
+
+/* キャンセルボタン */
+.swal2-cancel.swal2-styled {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important;
+  border: none;
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(149, 165, 166, 0.4);
+  transition: all 0.3s ease;
+}
+
+.swal2-cancel.swal2-styled:hover {
+  background: linear-gradient(135deg, #7f8c8d 0%, #6c7a7b 100%) !important;
+  box-shadow: 0 6px 16px rgba(149, 165, 166, 0.6);
+  transform: translateY(-2px);
+}
+
+.swal2-cancel.swal2-styled:active {
+  transform: translateY(0);
+}
+
+/* アイコンのカスタマイズ */
+.swal2-icon.swal2-warning {
+  border-color: #f39c12 !important;
+  color: #f39c12 !important;
+}
+
+.swal2-icon.swal2-success {
+  border-color: #00c896 !important;
+  color: #00c896 !important;
+}
+
+.swal2-icon.swal2-error {
+  border-color: #e74c3c !important;
+  color: #e74c3c !important;
+}
+
+/* ライトモード対応 */
+[data-theme="light"] .swal2-popup {
+  background: #ffffff !important;
+  border: 1px solid rgba(13, 126, 168, 0.15);
+  box-shadow: 0 8px 32px rgba(13, 126, 168, 0.2);
+}
+
+[data-theme="light"] .swal2-title {
+  color: #0a1f2e !important;
+}
+
+[data-theme="light"] .swal2-html-container {
+  color: #2a4a5e !important;
+}
+
+
