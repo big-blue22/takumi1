@@ -906,7 +906,7 @@ class App {
             });
         }
         
-        // Street Fighter 6専用アプリのため、ゲーム選択機能は無効化
+        // VALORANT専用アプリのため、ゲーム選択機能は無効化
 
         // スキルレベル変更ボタン
         const changeSkillBtn = document.getElementById('change-skill-btn');
@@ -3621,17 +3621,17 @@ class App {
             // ゲームが選択済み
             this.updateUIWithGameData(JSON.parse(selectedGameData));
         } else {
-            // Street Fighter 6専用なので、ゲームデータを自動設定
-            const sf6GameData = {
-                id: 'sf6',
-                name: 'Street Fighter 6',
-                icon: '👊',
-                category: '格闘ゲーム'
+            // VALORANT専用なので、ゲームデータを自動設定
+            const valorantGameData = {
+                id: 'valorant',
+                name: 'VALORANT',
+                icon: '🎯',
+                category: 'FPS'
             };
 
-            localStorage.setItem('selectedGame', sf6GameData.id);
-            localStorage.setItem('selectedGameData', JSON.stringify(sf6GameData));
-            this.updateUIWithGameData(sf6GameData);
+            localStorage.setItem('selectedGame', valorantGameData.id);
+            localStorage.setItem('selectedGameData', JSON.stringify(valorantGameData));
+            this.updateUIWithGameData(valorantGameData);
         }
     }
     
@@ -4083,12 +4083,12 @@ class App {
             modal.style.display = 'flex';
             this.currentSetupStep = 1;
 
-            // Street Fighter 6固定なので、ゲーム選択をスキップ
+            // VALORANT固定なので、ゲーム選択をスキップ
             this.selectedGameData = {
-                id: 'sf6',
-                name: 'Street Fighter 6',
-                icon: '👊',
-                category: '格闘ゲーム'
+                id: 'valorant',
+                name: 'VALORANT',
+                icon: '🎯',
+                category: 'FPS'
             };
             this.selectedSkillLevel = null;
 
