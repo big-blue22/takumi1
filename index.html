@@ -52,6 +52,7 @@
     <link rel="apple-touch-icon" href="favicon.svg">
     
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="valorant-styles.css">
     <!-- SweetAlert2 for rich confirmation dialogs -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -279,21 +280,67 @@
 
                 <!-- Quick Match Input -->
                 <div class="card quick-match-card">
-                    <h3>🥊 かんたん試合入力</h3>
-                    <p class="subtitle">数タップで試合結果を素早く記録</p>
+                    <h3>⚡ かんたん試合入力</h3>
+                    <p class="subtitle">VALORANTの試合結果を素早く記録</p>
                     <form id="quick-match-form" class="quick-match-form">
-                        <!-- Character Selection Row -->
-                        <div class="match-section character-section">
-                            <h4>使用キャラクター</h4>
-                            <div class="character-filter">
-                                <input type="text" id="player-character-search" placeholder="キャラクター名で検索..." class="character-search-input">
+                        
+                        <!-- Map Selection -->
+                        <div class="match-section map-selection">
+                            <h4>マップ</h4>
+                            <div class="map-grid" id="map-grid">
+                                <div class="map-option" data-map="Haven">🏛️ ヘイヴン</div>
+                                <div class="map-option" data-map="Ascent">🏔️ アセント</div>
+                                <div class="map-option" data-map="Bind">🚪 バインド</div>
+                                <div class="map-option" data-map="Lotus">🪷 ロータス</div>
+                                <div class="map-option" data-map="Sunset">🌅 サンセット</div>
+                                <div class="map-option" data-map="Abyss">🕳️ アビス</div>
+                                <div class="map-option" data-map="Kaload">🏙️ カロード</div>
+                            </div>
+                        </div>
+
+                        <!-- Agent Selection -->
+                        <div class="match-section agent-section">
+                            <h4>使用エージェント</h4>
+                            <div class="agent-filter">
+                                <input type="text" id="agent-search" placeholder="エージェント名で検索..." class="character-search-input">
                                 <span class="search-icon">🔍</span>
                             </div>
-                            <div class="character-grid" id="player-character-grid">
-                                <div class="char-option" data-char="Luke">
-                                    <div class="char-icon">👊</div>
-                                    <span class="char-name">Luke</span>
-                                </div>
+                            <div class="agent-grid" id="agent-grid">
+                                <!-- Duelists -->
+                                <div class="agent-option" data-agent="Jett" data-role="Duelist">⚡ ジェット</div>
+                                <div class="agent-option" data-agent="Raze" data-role="Duelist">💣 レイズ</div>
+                                <div class="agent-option" data-agent="Phoenix" data-role="Duelist">🔥 フェニックス</div>
+                                <div class="agent-option" data-agent="Reyna" data-role="Duelist">👁️ レイナ</div>
+                                <div class="agent-option" data-agent="Yoru" data-role="Duelist">🌀 ヨル</div>
+                                <div class="agent-option" data-agent="Neon" data-role="Duelist">⚡ ネオン</div>
+                                <div class="agent-option" data-agent="Iso" data-role="Duelist">🟣 アイソ</div>
+                                <div class="agent-option" data-agent="Wyatt" data-role="Duelist">💥 ウェイレイ</div>
+                                
+                                <!-- Initiators -->
+                                <div class="agent-option" data-agent="Sova" data-role="Initiator">🏹 ソーヴァ</div>
+                                <div class="agent-option" data-agent="Breach" data-role="Initiator">💪 ブリーチ</div>
+                                <div class="agent-option" data-agent="Skye" data-role="Initiator">🦊 スカイ</div>
+                                <div class="agent-option" data-agent="KAY/O" data-role="Initiator">🤖 KAY/O</div>
+                                <div class="agent-option" data-agent="Fade" data-role="Initiator">� フェイド</div>
+                                <div class="agent-option" data-agent="Gekko" data-role="Initiator">🦎 ゲッコー</div>
+                                <div class="agent-option" data-agent="Teho" data-role="Initiator">🎯 テホ</div>
+                                
+                                <!-- Sentinels -->
+                                <div class="agent-option" data-agent="Sage" data-role="Sentinel">❄️ セージ</div>
+                                <div class="agent-option" data-agent="Cypher" data-role="Sentinel">🎩 サイファー</div>
+                                <div class="agent-option" data-agent="Killjoy" data-role="Sentinel">🤖 キルジョイ</div>
+                                <div class="agent-option" data-agent="Chamber" data-role="Sentinel">🎭 チェンバー</div>
+                                <div class="agent-option" data-agent="Deadlock" data-role="Sentinel">🕸️ デッドロック</div>
+                                <div class="agent-option" data-agent="Vyse" data-role="Sentinel">⚙️ ヴァイス</div>
+                                <div class="agent-option" data-agent="Vitor" data-role="Sentinel">🛡️ ヴィトー</div>
+                                
+                                <!-- Controllers -->
+                                <div class="agent-option" data-agent="Brimstone" data-role="Controller">🚬 ブリムストーン</div>
+                                <div class="agent-option" data-agent="Viper" data-role="Controller">🐍 ヴァイパー</div>
+                                <div class="agent-option" data-agent="Omen" data-role="Controller">👻 オーメン</div>
+                                <div class="agent-option" data-agent="Astra" data-role="Controller">⭐ アストラ</div>
+                                <div class="agent-option" data-agent="Harbor" data-role="Controller">🌊 ハーバー</div>
+                                <div class="agent-option" data-agent="Clove" data-role="Controller">🍀 クローヴ</div>
                                 <div class="char-option" data-char="Ryu">
                                     <div class="char-icon">🥋</div>
                                     <span class="char-name">Ryu</span>
@@ -413,19 +460,61 @@
                             </div>
                         </div>
 
-                        <!-- VS Section -->
-                        <div class="vs-section">
-                            <div class="vs-label">VS</div>
+                        <!-- Match Score Section -->
+                        <div class="match-section score-section">
+                            <h4>試合結果スコア</h4>
+                            <div class="score-inputs">
+                                <div class="score-input-group">
+                                    <label for="team-score">自チームのラウンド数</label>
+                                    <input type="number" id="team-score" min="0" max="25" value="13" required>
+                                </div>
+                                <span class="score-separator">-</span>
+                                <div class="score-input-group">
+                                    <label for="enemy-score">相手チームのラウンド数</label>
+                                    <input type="number" id="enemy-score" min="0" max="25" value="10" required>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Opponent Character Selection -->
-                        <div class="match-section opponent-section">
-                            <h4>相手キャラクター</h4>
-                            <div class="character-filter">
-                                <input type="text" id="opponent-character-search" placeholder="相手キャラクター名で検索..." class="character-search-input">
-                                <span class="search-icon">🔍</span>
+                        <!-- KDA Section -->
+                        <div class="match-section kda-section">
+                            <h4>KDA (キル/デス/アシスト)</h4>
+                            <div class="kda-inputs">
+                                <div class="kda-input-group">
+                                    <label for="kills">キル</label>
+                                    <input type="number" id="kills" min="0" value="0" required>
+                                </div>
+                                <span class="kda-separator">/</span>
+                                <div class="kda-input-group">
+                                    <label for="deaths">デス</label>
+                                    <input type="number" id="deaths" min="0" value="0" required>
+                                </div>
+                                <span class="kda-separator">/</span>
+                                <div class="kda-input-group">
+                                    <label for="assists">アシスト</label>
+                                    <input type="number" id="assists" min="0" value="0" required>
+                                </div>
                             </div>
-                            <div class="character-grid" id="opponent-character-grid">
+                        </div>
+
+                        <!-- Stats Section -->
+                        <div class="match-section stats-section">
+                            <h4>各種スタッツ</h4>
+                            <div class="stats-grid">
+                                <div class="stat-input-group">
+                                    <label for="acs">ACS (平均コンバットスコア)</label>
+                                    <input type="number" id="acs" min="0" value="0">
+                                </div>
+                                <div class="stat-input-group">
+                                    <label for="adr">ADR (ラウンド毎平均ダメージ)</label>
+                                    <input type="number" id="adr" min="0" value="0">
+                                </div>
+                                <div class="stat-input-group">
+                                    <label for="hs-percent">HS% (ヘッドショット率)</label>
+                                    <input type="number" id="hs-percent" min="0" max="100" step="0.1" value="0">
+                                </div>
+                            </div>
+                        </div>
                                 <div class="char-option opponent-char" data-char="Luke">
                                     <div class="char-icon">👊</div>
                                     <span class="char-name">Luke</span>
@@ -549,64 +638,6 @@
                             </div>
                         </div>
 
-                        <!-- Match Score Section -->
-                        <div class="match-section score-section">
-                            <h4>試合結果</h4>
-                            <div class="score-grid">
-                                <div class="score-option" data-score="2-0" data-result="win">
-                                    <div class="score-display">2-0</div>
-                                    <div class="score-label">完勝</div>
-                                </div>
-                                <div class="score-option" data-score="2-1" data-result="win">
-                                    <div class="score-display">2-1</div>
-                                    <div class="score-label">勝利</div>
-                                </div>
-                                <div class="score-option" data-score="1-1" data-result="draw">
-                                    <div class="score-display">1-1</div>
-                                    <div class="score-label">引き分け</div>
-                                </div>
-                                <div class="score-option" data-score="1-2" data-result="loss">
-                                    <div class="score-display">1-2</div>
-                                    <div class="score-label">敗北</div>
-                                </div>
-                                <div class="score-option" data-score="0-2" data-result="loss">
-                                    <div class="score-display">0-2</div>
-                                    <div class="score-label">完敗</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Final Round Decision -->
-                        <div class="match-section decision-section">
-                            <h4>最終ラウンドの決着方法</h4>
-                            <div class="decision-grid">
-                                <div class="decision-option" data-decision="ko">
-                                    <div class="decision-icon">💥</div>
-                                    <span>KO</span>
-                                </div>
-                                <div class="decision-option" data-decision="timeout">
-                                    <div class="decision-icon">⏰</div>
-                                    <span>タイムアップ</span>
-                                </div>
-                                <div class="decision-option" data-decision="perfect">
-                                    <div class="decision-icon">✨</div>
-                                    <span>パーフェクト</span>
-                                </div>
-                                <div class="decision-option" data-decision="super">
-                                    <div class="decision-icon">🌟</div>
-                                    <span>スーパーアーツ</span>
-                                </div>
-                                <div class="decision-option" data-decision="critical">
-                                    <div class="decision-icon">💎</div>
-                                    <span>クリティカルアーツ</span>
-                                </div>
-                                <div class="decision-option" data-decision="drive-impact">
-                                    <div class="decision-icon">🚀</div>
-                                    <span>ドライブインパクト</span>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Insight Tags Section -->
                         <div class="match-section insight-section">
                             <h4>💭 試合の気づき（任意）</h4>
@@ -634,7 +665,7 @@
                                 <textarea
                                     id="match-feelings"
                                     name="feelings"
-                                    placeholder="例：相手の飛び込みに対空が間に合わなかった、コンボをドロップしてしまった、読み合いで勝てた瞬間があった..."
+                                    placeholder="例：スモークの使い方がうまくいった、エントリーのタイミングが悪かった、クラッチで勝てた、エイムが悪く負けた..."
                                     rows="3"
                                     maxlength="300"></textarea>
                                 <div class="insight-actions">
@@ -693,11 +724,8 @@
                         </div>
 
                         <!-- Hidden inputs for form data -->
-                        <input type="hidden" id="selected-character" name="character">
-                        <input type="hidden" id="selected-opponent" name="opponent">
-                        <input type="hidden" id="selected-score" name="score">
-                        <input type="hidden" id="selected-result" name="result">
-                        <input type="hidden" id="selected-decision" name="decision">
+                        <input type="hidden" id="selected-map" name="map">
+                        <input type="hidden" id="selected-agent" name="agent">
                         <input type="hidden" id="selected-tags" name="insightTags">
                         <input type="hidden" id="match-feelings-hidden" name="feelings">
                     </form>

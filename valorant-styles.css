@@ -1,0 +1,421 @@
+/* VALORANT 専用スタイル */
+
+/* Map Options */
+.map-selection {
+    margin-bottom: 2rem;
+}
+
+.map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.map-option {
+    padding: 1rem;
+    background: var(--glass-bg);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.map-option:hover {
+    border-color: var(--color-accent);
+    background: rgba(233, 69, 96, 0.1);
+    transform: scale(1.05);
+}
+
+.map-option.selected {
+    border-color: var(--color-accent);
+    background: rgba(233, 69, 96, 0.2);
+    box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+}
+
+/* Agent Selection */
+.agent-section {
+    margin-bottom: 2rem;
+}
+
+.agent-filter {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.agent-option {
+    padding: 0.75rem 1rem;
+    background: var(--glass-bg);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.agent-option:hover {
+    border-color: var(--color-accent);
+    background: rgba(233, 69, 96, 0.1);
+    transform: scale(1.05);
+}
+
+.agent-option.selected {
+    border-color: var(--color-accent);
+    background: rgba(233, 69, 96, 0.2);
+    box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+}
+
+/* Score and KDA Inputs */
+.score-section,
+.kda-section {
+    margin-bottom: 2rem;
+}
+
+.score-inputs,
+.kda-inputs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.score-input-group,
+.kda-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.score-input-group label,
+.kda-input-group label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: center;
+}
+
+.score-input-group input,
+.kda-input-group input {
+    width: 80px;
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border: 2px solid var(--glass-border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.score-input-group input:focus,
+.kda-input-group input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+}
+
+.score-separator,
+.kda-separator {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 0 0.5rem;
+}
+
+/* Stats Section */
+.stats-section {
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-input-group label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.stat-input-group input {
+    padding: 0.75rem;
+    border: 2px solid var(--glass-border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stat-input-group input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+}
+
+/* VALORANT Match Cards */
+.valorant-match-card {
+    background: linear-gradient(145deg, 
+        rgba(22, 33, 62, 0.95), 
+        rgba(26, 26, 46, 0.9)
+    );
+    border: 2px solid rgba(233, 69, 96, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.valorant-match-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(233, 69, 96, 0.3);
+    border-color: rgba(233, 69, 96, 0.6);
+}
+
+.valorant-match-card.win {
+    border-left: 4px solid #00c896;
+}
+
+.valorant-match-card.loss {
+    border-left: 4px solid #ff4655;
+}
+
+.valorant-match-card.draw {
+    border-left: 4px solid #ffb800;
+}
+
+.match-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.match-map {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.map-icon {
+    font-size: 1.2rem;
+}
+
+.map-name {
+    color: var(--text-primary);
+}
+
+.match-score {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.match-score.win {
+    background: rgba(0, 200, 150, 0.2);
+    color: #00c896;
+}
+
+.match-score.loss {
+    background: rgba(255, 70, 85, 0.2);
+    color: #ff4655;
+}
+
+.match-score.draw {
+    background: rgba(255, 184, 0, 0.2);
+    color: #ffb800;
+}
+
+.match-card-body {
+    margin-bottom: 1rem;
+}
+
+.agent-info {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.agent-label {
+    color: var(--text-secondary);
+}
+
+.agent-name {
+    font-weight: 600;
+    color: var(--color-accent);
+    font-size: 1.1rem;
+}
+
+.match-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 0.25rem 0;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.match-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.match-tag {
+    padding: 0.25rem 0.75rem;
+    background: rgba(233, 69, 96, 0.15);
+    border: 1px solid rgba(233, 69, 96, 0.3);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.match-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.match-date {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.delete-match-btn {
+    padding: 0.25rem 0.75rem;
+    background: transparent;
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.delete-match-btn:hover {
+    background: var(--color-danger);
+    color: white;
+}
+
+/* No matches message */
+.no-matches-message {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.message-text {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.message-sub {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+/* Light theme adjustments for VALORANT cards */
+[data-theme="light"] .valorant-match-card {
+    background: linear-gradient(145deg, 
+        rgba(255, 255, 255, 0.95), 
+        rgba(248, 250, 252, 0.9)
+    );
+    border: 2px solid rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .valorant-match-card:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .valorant-match-card.win {
+    border-left: 4px solid #059669;
+}
+
+[data-theme="light"] .valorant-match-card.loss {
+    border-left: 4px solid #dc2626;
+}
+
+[data-theme="light"] .agent-name {
+    color: #3b82f6;
+}
+
+[data-theme="light"] .match-score.win {
+    background: rgba(5, 150, 105, 0.15);
+    color: #059669;
+}
+
+[data-theme="light"] .match-score.loss {
+    background: rgba(220, 38, 38, 0.15);
+    color: #dc2626;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .map-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .agent-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .score-inputs,
+    .kda-inputs {
+        flex-direction: column;
+    }
+}

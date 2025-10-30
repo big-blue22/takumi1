@@ -1084,39 +1084,32 @@ class App {
 
     // クイック試合入力のイベントリスナーを設定
     setupQuickMatchListeners() {
-        // 自分のキャラクター選択
-        const characterOptions = document.querySelectorAll('#player-character-grid .char-option');
-        characterOptions.forEach(option => {
+        // マップ選択
+        const mapOptions = document.querySelectorAll('.map-option');
+        mapOptions.forEach(option => {
             option.addEventListener('click', () => {
-                this.selectCharacter(option);
+                this.selectMap(option);
             });
         });
 
-        // 相手キャラクター選択
-        const opponentOptions = document.querySelectorAll('#opponent-character-grid .char-option');
-        opponentOptions.forEach(option => {
+        // エージェント選択
+        const agentOptions = document.querySelectorAll('.agent-option');
+        agentOptions.forEach(option => {
             option.addEventListener('click', () => {
-                this.selectOpponent(option);
+                this.selectAgent(option);
             });
         });
 
-        // キャラクター検索機能
-        this.setupCharacterFiltering();
+        // エージェント検索機能
+        this.setupAgentFiltering();
 
-        // スコア選択
-        const scoreOptions = document.querySelectorAll('.score-option');
-        scoreOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                this.selectScore(option);
-            });
-        });
-
-        // 決着方法選択
-        const decisionOptions = document.querySelectorAll('.decision-option');
-        decisionOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                this.selectDecision(option);
-            });
+        // スコア・KDA入力フィールドの監視
+        const scoreInputs = ['team-score', 'enemy-score', 'kills', 'deaths', 'assists'];
+        scoreInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('input', () => this.updateSubmitButton());
+            }
         });
 
         // リセットボタン
@@ -1129,122 +1122,42 @@ class App {
 
         // 気づきタグ機能
         this.setupInsightTagsListeners();
-
-        // 詳細入力の折りたたみ
-        window.toggleDetailedInput = () => {
-            const detailedCard = document.getElementById('detailed-match-card');
-            detailedCard.classList.toggle('collapsed');
-        };
     }
 
-    // キャラクター検索フィルタリング機能の設定
-    setupCharacterFiltering() {
-        // プレイヤーキャラクター検索
-        const playerSearchInput = document.getElementById('player-character-search');
-        if (playerSearchInput) {
-            playerSearchInput.addEventListener('input', (e) => {
-                this.filterCharacters(e.target.value.toLowerCase(), '#player-character-grid');
-            });
-        }
-
-        // 相手キャラクター検索
-        const opponentSearchInput = document.getElementById('opponent-character-search');
-        if (opponentSearchInput) {
-            opponentSearchInput.addEventListener('input', (e) => {
-                this.filterCharacters(e.target.value.toLowerCase(), '#opponent-character-grid');
+    // エージェント検索フィルタリング機能の設定
+    setupAgentFiltering() {
+        const agentSearchInput = document.getElementById('agent-search');
+        if (agentSearchInput) {
+            agentSearchInput.addEventListener('input', (e) => {
+                this.filterAgents(e.target.value.toLowerCase());
             });
         }
     }
 
-    // キャラクターフィルタリング処理
-    filterCharacters(searchTerm, gridSelector) {
-        const grid = document.querySelector(gridSelector);
-        if (!grid) return;
-
-        const characters = grid.querySelectorAll('.char-option');
+    // エージェントフィルタリング処理
+    filterAgents(searchTerm) {
+        const agentOptions = document.querySelectorAll('.agent-option');
         let visibleCount = 0;
 
-        characters.forEach(character => {
-            const characterName = character.dataset.char.toLowerCase();
-            const characterDisplayName = character.querySelector('.char-name').textContent.toLowerCase();
+        agentOptions.forEach(option => {
+            const agentName = option.dataset.agent ? option.dataset.agent.toLowerCase() : '';
+            const displayText = option.textContent.toLowerCase();
 
-            // キャラクター名（英語）または表示名（日本語）で検索
-            const matches = characterName.includes(searchTerm) ||
-                           characterDisplayName.includes(searchTerm);
+            const matches = agentName.includes(searchTerm) || displayText.includes(searchTerm);
 
             if (matches || searchTerm === '') {
-                character.style.display = 'flex';
+                option.style.display = 'flex';
                 visibleCount++;
             } else {
-                character.style.display = 'none';
+                option.style.display = 'none';
             }
         });
-
-        // 結果が見つからない場合のメッセージ表示（オプション）
-        this.updateFilterMessage(gridSelector, visibleCount, searchTerm);
     }
 
-    // フィルタリング結果メッセージの更新
-    updateFilterMessage(gridSelector, visibleCount, searchTerm) {
-        const grid = document.querySelector(gridSelector);
-        if (!grid) return;
-
-        // 既存のメッセージを削除
-        const existingMessage = grid.querySelector('.filter-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-
-        // 検索結果が0件で検索語がある場合にメッセージを表示
-        if (visibleCount === 0 && searchTerm !== '') {
-            const message = document.createElement('div');
-            message.className = 'filter-message';
-            message.innerHTML = `
-                <div class="no-results-message">
-                    <span class="no-results-icon">🔍</span>
-                    <p>"${searchTerm}" に一致するキャラクターが見つかりません</p>
-                </div>
-            `;
-            grid.appendChild(message);
-        }
-    }
-
-    // 自分のキャラクター選択処理
-    selectCharacter(option) {
-        // 他の選択を解除（自分のキャラクターグリッドのみ）
-        document.querySelectorAll('#player-character-grid .char-option').forEach(opt => {
-            opt.classList.remove('selected');
-        });
-
-        // 新しい選択をアクティブにする
-        option.classList.add('selected');
-
-        // hidden inputに値を設定
-        document.getElementById('selected-character').value = option.dataset.char;
-
-        this.updateSubmitButton();
-    }
-
-    // 相手キャラクター選択処理
-    selectOpponent(option) {
-        // 他の選択を解除（相手キャラクターグリッドのみ）
-        document.querySelectorAll('#opponent-character-grid .char-option').forEach(opt => {
-            opt.classList.remove('selected');
-        });
-
-        // 新しい選択をアクティブにする
-        option.classList.add('selected');
-
-        // hidden inputに値を設定
-        document.getElementById('selected-opponent').value = option.dataset.char;
-
-        this.updateSubmitButton();
-    }
-
-    // スコア選択処理
-    selectScore(option) {
+    // マップ選択処理
+    selectMap(option) {
         // 他の選択を解除
-        document.querySelectorAll('.score-option').forEach(opt => {
+        document.querySelectorAll('.map-option').forEach(opt => {
             opt.classList.remove('selected');
         });
 
@@ -1252,18 +1165,15 @@ class App {
         option.classList.add('selected');
 
         // hidden inputに値を設定
-        const score = option.dataset.score;
-        const result = option.dataset.result || 'loss'; // data-result属性から取得
-        document.getElementById('selected-score').value = score;
-        document.getElementById('selected-result').value = result; // 結果も保存
+        document.getElementById('selected-map').value = option.dataset.map;
 
         this.updateSubmitButton();
     }
 
-    // 決着方法選択処理
-    selectDecision(option) {
+    // エージェント選択処理
+    selectAgent(option) {
         // 他の選択を解除
-        document.querySelectorAll('.decision-option').forEach(opt => {
+        document.querySelectorAll('.agent-option').forEach(opt => {
             opt.classList.remove('selected');
         });
 
@@ -1271,7 +1181,7 @@ class App {
         option.classList.add('selected');
 
         // hidden inputに値を設定
-        document.getElementById('selected-decision').value = option.dataset.decision;
+        document.getElementById('selected-agent').value = option.dataset.agent;
 
         this.updateSubmitButton();
     }
@@ -1279,12 +1189,18 @@ class App {
     // 送信ボタンの状態を更新
     updateSubmitButton() {
         const submitBtn = document.querySelector('.quick-submit-btn');
-        const character = document.getElementById('selected-character').value;
-        const opponent = document.getElementById('selected-opponent').value;
-        const score = document.getElementById('selected-score').value;
-        const decision = document.getElementById('selected-decision').value;
+        if (!submitBtn) return;
+        
+        const map = document.getElementById('selected-map')?.value || '';
+        const agent = document.getElementById('selected-agent')?.value || '';
+        const teamScore = document.getElementById('team-score')?.value || '';
+        const enemyScore = document.getElementById('enemy-score')?.value || '';
+        const kills = document.getElementById('kills')?.value || '';
+        const deaths = document.getElementById('deaths')?.value || '';
+        const assists = document.getElementById('assists')?.value || '';
 
-        const isComplete = character && opponent && score && decision;
+        // 必須項目がすべて入力されているかチェック
+        const isComplete = map && agent && teamScore && enemyScore && kills && deaths && assists;
         submitBtn.disabled = !isComplete;
     }
 
@@ -1638,28 +1554,50 @@ class App {
 
     resetQuickForm() {
         // 選択状態をリセット
-        document.querySelectorAll('.char-option, .score-option, .decision-option').forEach(opt => {
+        document.querySelectorAll('.map-option, .agent-option').forEach(opt => {
             opt.classList.remove('selected');
         });
 
         // hidden inputをリセット
-        document.getElementById('selected-character').value = '';
-        document.getElementById('selected-opponent').value = '';
-        document.getElementById('selected-score').value = '';
-        document.getElementById('selected-decision').value = '';
-        document.getElementById('selected-tags').value = '';
-        document.getElementById('match-feelings-hidden').value = '';
+        const hiddenInputs = ['selected-map', 'selected-agent', 'selected-tags', 'match-feelings-hidden'];
+        hiddenInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.value = '';
+        });
+
+        // 数値入力をリセット
+        const resetValues = {
+            'team-score': 13,
+            'enemy-score': 10,
+            'kills': 0,
+            'deaths': 0,
+            'assists': 0,
+            'acs': 0,
+            'adr': 0,
+            'hs-percent': 0
+        };
+        
+        Object.entries(resetValues).forEach(([id, value]) => {
+            const input = document.getElementById(id);
+            if (input) input.value = value;
+        });
 
         // 気づきタグ関連もリセット
         const feelingsInput = document.getElementById('match-feelings');
         if (feelingsInput) {
             feelingsInput.value = '';
-            document.getElementById('feelings-char-count').textContent = '0';
+            const charCount = document.getElementById('feelings-char-count');
+            if (charCount) charCount.textContent = '0';
         }
 
-        document.getElementById('generated-tags-container').style.display = 'none';
-        document.getElementById('final-tags-container').style.display = 'none';
-        document.getElementById('generate-tags-btn').disabled = true;
+        const containers = ['generated-tags-container', 'final-tags-container'];
+        containers.forEach(id => {
+            const container = document.getElementById(id);
+            if (container) container.style.display = 'none';
+        });
+        
+        const generateBtn = document.getElementById('generate-tags-btn');
+        if (generateBtn) generateBtn.disabled = true;
 
         this.updateSubmitButton();
     }
@@ -2007,39 +1945,48 @@ class App {
 
     // クイック試合入力の送信処理
     handleQuickMatchSubmit() {
-        const character = document.getElementById('selected-character').value;
-        const opponent = document.getElementById('selected-opponent').value;
-        const score = document.getElementById('selected-score').value;
-        const decision = document.getElementById('selected-decision').value;
+        const map = document.getElementById('selected-map').value;
+        const agent = document.getElementById('selected-agent').value;
+        const teamScore = parseInt(document.getElementById('team-score').value);
+        const enemyScore = parseInt(document.getElementById('enemy-score').value);
+        const kills = parseInt(document.getElementById('kills').value);
+        const deaths = parseInt(document.getElementById('deaths').value);
+        const assists = parseInt(document.getElementById('assists').value);
+        const acs = parseInt(document.getElementById('acs').value || 0);
+        const adr = parseInt(document.getElementById('adr').value || 0);
+        const hsPercent = parseFloat(document.getElementById('hs-percent').value || 0);
+        const feelings = document.getElementById('match-feelings').value || '';
+        const tagsInput = document.getElementById('selected-tags').value;
+        const insightTags = tagsInput ? tagsInput.split(',').filter(tag => tag.trim()) : [];
 
-        // 気づきタグデータを取得
-        const insightTags = document.getElementById('selected-tags').value;
-        const feelings = document.getElementById('match-feelings-hidden').value;
+        // 試合結果を判定
+        const result = teamScore > enemyScore ? 'WIN' : teamScore < enemyScore ? 'LOSS' : 'DRAW';
 
-        // スコアと結果を取得（data-result属性から）
-        const selectedScoreOption = document.querySelector(`.score-option[data-score="${score}"]`);
-        const result = selectedScoreOption ? selectedScoreOption.dataset.result : 'loss';
-        const [roundsWon, roundsLost] = score.split('-').map(num => parseInt(num));
-
+        // VALORANT用試合データオブジェクト
         const matchData = {
-            result: result.toUpperCase(),
-            character: character,
-            playerCharacter: character,
-            opponentCharacter: opponent,
-            roundsWon: roundsWon,
-            roundsLost: roundsLost,
-            duration: 3, // デフォルト3分
-            decision: decision, // 決着方法を追加
-            insightTags: insightTags ? insightTags.split(',').filter(tag => tag.trim()) : [], // 気づきタグ配列
-            feelings: feelings || '', // プレイヤーの感想
-            timestamp: Date.now()
+            id: `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            timestamp: new Date().toISOString(),
+            date: new Date().toLocaleDateString('ja-JP'),
+            map: map,
+            agent: agent,
+            score: `${teamScore}-${enemyScore}`,
+            teamScore: teamScore,
+            enemyScore: enemyScore,
+            result: result,
+            kills: kills,
+            deaths: deaths,
+            assists: assists,
+            kda: deaths > 0 ? ((kills + assists) / deaths).toFixed(2) : kills + assists,
+            acs: acs,
+            adr: adr,
+            hsPercent: hsPercent,
+            feelings: feelings,
+            insightTags: insightTags,
+            source: 'quick_input'
         };
 
-        // 分析結果の表示
-        this.analyzeMatch(matchData);
-
-        // 試合を保存し、ダッシュボード統計を更新
-        this.storeMatchAndRefresh(matchData);
+        // データを保存
+        this.storeValorantMatch(matchData);
 
         // 連勝記録を更新
         this.updateWinStreak(matchData.result);
@@ -2047,7 +1994,36 @@ class App {
         // フォームをリセット
         this.resetQuickForm();
 
-        this.showToast('🥊 試合が記録されました！', 'success');
+        this.showToast('✅ VALORANT試合データを記録しました！', 'success');
+
+        // ダッシュボードを更新
+        if (this.currentPage === 'dashboard') {
+            this.loadDashboard();
+        }
+
+        // ギャラリーを更新
+        if (this.currentPage === 'gallery') {
+            this.loadGallery();
+        }
+    }
+
+    // VALORANT試合データを保存
+    storeValorantMatch(matchData) {
+        try {
+            // 既存のデータを取得
+            const existingMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+            
+            // 新しい試合データを追加
+            existingMatches.unshift(matchData);
+            
+            // ローカルストレージに保存
+            localStorage.setItem('valorant_matches', JSON.stringify(existingMatches));
+            
+            console.log('VALORANT試合データを保存しました:', matchData);
+        } catch (error) {
+            console.error('試合データの保存に失敗しました:', error);
+            this.showToast('❌ データの保存に失敗しました', 'error');
+        }
     }
 
     // 分析ページの入力をローカルに保存し、ダッシュボードを更新
@@ -6277,20 +6253,8 @@ class App {
     // ==========================================
 
     loadGalleryMatches(filters = {}) {
-        // 新旧両方のキーからデータを取得してマージ（sf6_gallery と valorant_gallery の互換性）
-        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
-        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        
-        // 全データソースをマージ（重複を避ける）
-        const matchesMap = new Map();
-        [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
-            if (match.id) {
-                matchesMap.set(match.id, match);
-            }
-        });
-        
-        const matches = Array.from(matchesMap.values());
+        // VALORANTマッチデータを取得
+        const matches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
         const galleryGrid = document.getElementById('gallery-grid');
         
         if (!galleryGrid) return;
@@ -6298,9 +6262,9 @@ class App {
         // フィルターを適用
         let filteredMatches = matches;
 
-        if (filters.opponent) {
+        if (filters.agent) {
             filteredMatches = filteredMatches.filter(m => 
-                m.opponentCharacter === filters.opponent
+                m.agent === filters.agent
             );
         }
 
@@ -6319,12 +6283,15 @@ class App {
             });
         }
 
+        // 日付順でソート（新しい順）
+        filteredMatches.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
         // 表示
         if (filteredMatches.length === 0) {
             galleryGrid.innerHTML = `
                 <div class="no-matches-gallery">
                     <h3>試合データがありません</h3>
-                    <p>分析ページから試合を記録してみましょう</p>
+                    <p>かんたん試合入力から試合を記録してみましょう</p>
                 </div>
             `;
             return;
@@ -6333,19 +6300,20 @@ class App {
         galleryGrid.innerHTML = filteredMatches.map(match => this.createMatchCard(match)).join('');
 
         // カードクリックイベントを設定
-        document.querySelectorAll('.match-card').forEach(card => {
+        document.querySelectorAll('.valorant-match-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 // 選択モード中はモーダルを開かない
                 if (this.selectionMode) {
                     return;
                 }
                 
-                // チェックボックスのクリックは無視
-                if (e.target.type === 'checkbox' || e.target.closest('.match-checkbox')) {
+                // チェックボックスや削除ボタンのクリックは無視
+                if (e.target.type === 'checkbox' || 
+                    e.target.closest('.match-checkbox') ||
+                    e.target.closest('.delete-match-btn')) {
                     return;
                 }
                 
-                // IDは文字列として扱う（バッチ入力のIDも対応）
                 const matchId = card.dataset.matchId;
                 this.showMatchDetail(matchId);
             });
@@ -6357,83 +6325,79 @@ class App {
             return '';
         }
         
-        const isWin = match.result === 'WIN';
-        const resultClass = isWin ? 'win' : 'loss';
-        const tags = match.insightTags || [];
-        const feelings = match.feelings || '';
+        // 勝敗判定
+        let resultClass = 'draw';
+        let resultText = 'DRAW';
+        if (match.result === 'WIN') {
+            resultClass = 'win';
+            resultText = 'WIN';
+        } else if (match.result === 'LOSS') {
+            resultClass = 'loss';
+            resultText = 'LOSS';
+        }
 
-        // キャラクターアイコンを取得（簡易実装）
-        const getCharIcon = (charName) => {
-            const icons = {
-                'Luke': '👊', 'Ryu': '🥋', 'Ken': '🔥', 'Chun-Li': '💨',
-                'Cammy': '⚡', 'Zangief': '💪', 'JP': '🎭', 'Juri': '👁️'
-            };
-            return icons[charName] || '🥊';
-        };
+        const tags = match.insightTags || [];
+        const mapName = match.map || 'Unknown';
+        const agentName = match.agent || 'Unknown';
+        const score = match.score || '0-0';
 
         return `
-            <div class="match-card ${resultClass}-card" data-match-id="${match.id}">
+            <div class="valorant-match-card ${resultClass}" data-match-id="${match.id}">
                 <div class="match-card-header">
-                    <span class="match-result-badge ${resultClass}">${isWin ? 'WIN' : 'LOSS'}</span>
-                    <span class="match-date">${match.date || '日付不明'}</span>
+                    <div class="map-name">${mapName}</div>
+                    <div class="match-score ${resultClass}">${score}</div>
                 </div>
 
-                <div class="character-matchup">
-                    <div class="character-box">
-                        <div class="character-icon">${getCharIcon(match.playerCharacter)}</div>
-                        <div class="character-name">${match.playerCharacter || 'Unknown'}</div>
+                <div class="match-card-body">
+                    <div class="agent-info">
+                        <div class="agent-name">${agentName}</div>
                     </div>
-                    <div class="vs-divider">VS</div>
-                    <div class="character-box">
-                        <div class="character-icon">${getCharIcon(match.opponentCharacter)}</div>
-                        <div class="character-name">${match.opponentCharacter || 'Unknown'}</div>
-                    </div>
-                </div>
 
-                <div class="match-info">
-                    <div class="info-row">
-                        <span class="info-label">ラウンド</span>
-                        <span class="info-value">${match.roundsWon || 0}-${match.roundsLost || 0}</span>
+                    <div class="match-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">KDA:</span>
+                            <span class="stat-value">${match.kills || 0}/${match.deaths || 0}/${match.assists || 0} (${match.kda || '0.00'})</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">ACS:</span>
+                            <span class="stat-value">${match.acs || 0}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">ADR:</span>
+                            <span class="stat-value">${match.adr || 0}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">HS%:</span>
+                            <span class="stat-value">${match.hsPercent || 0}%</span>
+                        </div>
                     </div>
-                    ${match.decision ? `
-                    <div class="info-row">
-                        <span class="info-label">決着方法</span>
-                        <span class="info-value">${this.getDecisionLabel(match.decision)}</span>
+
+                    ${tags.length > 0 ? `
+                    <div class="match-tags">
+                        ${tags.slice(0, 3).map(tag => `<span class="match-tag">${tag}</span>`).join('')}
+                        ${tags.length > 3 ? `<span class="match-tag">+${tags.length - 3}</span>` : ''}
                     </div>
                     ` : ''}
                 </div>
 
-                ${tags.length > 0 ? `
-                <div class="match-tags">
-                    ${tags.slice(0, 3).map(tag => `<span class="match-tag">${tag}</span>`).join('')}
-                    ${tags.length > 3 ? `<span class="match-tag">+${tags.length - 3}</span>` : ''}
+                <div class="match-card-footer">
+                    <span class="match-date">${match.date || '日付不明'}</span>
+                    <button class="delete-match-btn" onclick="app.deleteMatch(${match.id}); event.stopPropagation();">
+                        削除
+                    </button>
                 </div>
-                ` : ''}
             </div>
         `;
     }
 
-    getDecisionLabel(decision) {
-        const labels = {
-            'ko': 'KO',
-            'timeout': 'タイムアップ',
-            'perfect': 'パーフェクト',
-            'super': 'スーパーアーツ',
-            'critical': 'クリティカルアーツ',
-            'drive-impact': 'ドライブインパクト'
-        };
-        return labels[decision] || decision;
-    }
+
 
     showMatchDetail(matchId) {
-        // 新旧両方のキーからデータを取得（sf6_gallery と valorant_gallery の互換性）
-        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
-        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const allMatches = [...valorantGallery, ...sf6Gallery, ...recentMatches];
+        // VALORANTマッチデータを取得
+        const matches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
         
-        // IDは文字列として比較（バッチ入力のIDも対応）
-        const match = allMatches.find(m => String(m.id) === String(matchId));
+        // IDは文字列として比較
+        const match = matches.find(m => String(m.id) === String(matchId));
 
         if (!match) {
             console.error('試合が見つかりません。ID:', matchId, 'タイプ:', typeof matchId);
@@ -6446,9 +6410,19 @@ class App {
 
         if (!modal || !body) return;
 
-        const isWin = match.result === 'WIN';
         const tags = match.insightTags || [];
         const feelings = match.feelings || '';
+
+        // 勝敗判定
+        let resultText = 'DRAW';
+        let resultClass = 'draw';
+        if (match.result === 'WIN') {
+            resultText = 'WIN';
+            resultClass = 'win';
+        } else if (match.result === 'LOSS') {
+            resultText = 'LOSS';
+            resultClass = 'loss';
+        }
 
         body.innerHTML = `
             <div class="detail-section">
@@ -6457,7 +6431,7 @@ class App {
                     <div class="detail-item">
                         <div class="detail-label">結果</div>
                         <div class="detail-value">
-                            <span class="match-result-badge ${isWin ? 'win' : 'loss'}">${isWin ? 'WIN' : 'LOSS'}</span>
+                            <span class="match-result-badge ${resultClass}">${resultText}</span>
                         </div>
                     </div>
                     <div class="detail-item">
@@ -6468,26 +6442,42 @@ class App {
             </div>
 
             <div class="detail-section">
-                <h3>対戦情報</h3>
+                <h3>マップ・エージェント</h3>
                 <div class="detail-grid">
                     <div class="detail-item">
-                        <div class="detail-label">自分</div>
-                        <div class="detail-value">${match.playerCharacter || 'Unknown'}</div>
+                        <div class="detail-label">マップ</div>
+                        <div class="detail-value">${match.map || 'Unknown'}</div>
                     </div>
                     <div class="detail-item">
-                        <div class="detail-label">相手</div>
-                        <div class="detail-value">${match.opponentCharacter || 'Unknown'}</div>
+                        <div class="detail-label">エージェント</div>
+                        <div class="detail-value">${match.agent || 'Unknown'}</div>
                     </div>
                     <div class="detail-item">
-                        <div class="detail-label">ラウンド</div>
-                        <div class="detail-value">${match.roundsWon || 0}-${match.roundsLost || 0}</div>
+                        <div class="detail-label">スコア</div>
+                        <div class="detail-value">${match.score || '0-0'}</div>
                     </div>
-                    ${match.decision ? `
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>スタッツ</h3>
+                <div class="detail-grid">
                     <div class="detail-item">
-                        <div class="detail-label">決着方法</div>
-                        <div class="detail-value">${this.getDecisionLabel(match.decision)}</div>
+                        <div class="detail-label">KDA</div>
+                        <div class="detail-value">${match.kills || 0}/${match.deaths || 0}/${match.assists || 0} (${match.kda || '0.00'})</div>
                     </div>
-                    ` : ''}
+                    <div class="detail-item">
+                        <div class="detail-label">ACS</div>
+                        <div class="detail-value">${match.acs || 0}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">ADR</div>
+                        <div class="detail-value">${match.adr || 0}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">HS%</div>
+                        <div class="detail-value">${match.hsPercent || 0}%</div>
+                    </div>
                 </div>
             </div>
 
@@ -6540,19 +6530,13 @@ class App {
             return;
         }
 
-        // 新旧両方のキーからデータを取得して削除（sf6_gallery と valorant_gallery の互換性）
-        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
-        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        // VALORANTマッチデータを取得して削除
+        const matches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
         
         // IDを文字列として比較
-        const filteredValorant = valorantGallery.filter(m => String(m.id) !== String(matchId));
-        const filteredSf6 = sf6Gallery.filter(m => String(m.id) !== String(matchId));
-        const filteredRecent = recentMatches.filter(m => String(m.id) !== String(matchId));
+        const filteredMatches = matches.filter(m => String(m.id) !== String(matchId));
 
-        localStorage.setItem('valorant_gallery', JSON.stringify(filteredValorant));
-        localStorage.setItem('sf6_gallery', JSON.stringify(filteredSf6));
-        localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
+        localStorage.setItem('valorant_matches', JSON.stringify(filteredMatches));
 
         this.showToast('試合データを削除しました', 'success');
         this.closeMatchDetailModal();
@@ -6565,18 +6549,19 @@ class App {
     }
 
     loadOpponentFilter() {
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const opponents = [...new Set(matches.map(m => m.opponentCharacter).filter(Boolean))];
+        // VALORANTではエージェントでフィルタリング
+        const matches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        const agents = [...new Set(matches.map(m => m.agent).filter(Boolean))];
 
         const select = document.getElementById('filter-opponent');
         if (!select) return;
 
         // 既存のオプションをクリアして再生成
         select.innerHTML = '<option value="">すべて</option>';
-        opponents.forEach(opponent => {
+        agents.forEach(agent => {
             const option = document.createElement('option');
-            option.value = opponent;
-            option.textContent = opponent;
+            option.value = agent;
+            option.textContent = agent;
             select.appendChild(option);
         });
     }
@@ -6588,7 +6573,7 @@ class App {
         if (applyBtn) {
             applyBtn.addEventListener('click', () => {
                 const filters = {
-                    opponent: document.getElementById('filter-opponent')?.value || '',
+                    agent: document.getElementById('filter-opponent')?.value || '', // VALORANTではエージェントでフィルタ
                     result: document.getElementById('filter-result')?.value || '',
                     tag: document.getElementById('filter-tag')?.value || ''
                 };
