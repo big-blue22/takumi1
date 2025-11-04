@@ -8840,4 +8840,324 @@ input[type="date"]:focus {
   color: #2a4a5e !important;
 }
 
+/* ========================================
+   マップ管理機能のスタイル
+   ======================================== */
+
+/* マップセクションヘッダー */
+.map-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.map-section-header h4 {
+  margin: 0;
+}
+
+.map-settings-btn {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+}
+
+.map-settings-btn:hover {
+  background: rgba(233, 69, 96, 0.1);
+  border-color: var(--color-accent);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-small);
+}
+
+[data-theme="light"] .map-settings-btn {
+  background: rgba(248, 250, 252, 0.9);
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="light"] .map-settings-btn:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.settings-icon {
+  font-size: 1.2rem;
+  animation: rotate 2s infinite linear;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.map-settings-btn:hover .settings-icon {
+  animation-play-state: running;
+}
+
+.map-settings-btn:not(:hover) .settings-icon {
+  animation-play-state: paused;
+}
+
+/* マップ管理モーダル */
+.map-management-content {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.map-management-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xl);
+  margin: var(--spacing-xl) 0;
+}
+
+.map-management-section {
+  padding: var(--spacing-xl);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--glass-border);
+}
+
+[data-theme="light"] .map-management-section {
+  background: rgba(248, 250, 252, 0.5);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.map-management-section h3 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+}
+
+.map-management-section .subtitle {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* 既存マップリスト */
+.map-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.map-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border: 2px solid var(--glass-border);
+  transition: var(--transition-base);
+  cursor: pointer;
+  user-select: none;
+}
+
+.map-list-item:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-small);
+}
+
+[data-theme="light"] .map-list-item {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="light"] .map-list-item:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.map-list-item.disabled {
+  opacity: 0.5;
+}
+
+.map-list-item.disabled:hover {
+  border-color: var(--glass-border);
+  transform: none;
+}
+
+.map-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+[data-theme="light"] .map-checkbox {
+  accent-color: var(--color-primary);
+}
+
+.map-icon-display {
+  font-size: var(--font-size-xl);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  border-radius: var(--border-radius-small);
+  overflow: hidden;
+}
+
+.map-icon-display img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.map-name-display {
+  flex: 1;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.map-custom-badge {
+  background: var(--color-accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-small);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+[data-theme="light"] .map-custom-badge {
+  background: var(--color-primary);
+}
+
+.map-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-small);
+  transition: var(--transition-base);
+  font-size: var(--font-size-base);
+}
+
+.map-delete-btn:hover {
+  background: rgba(255, 70, 85, 0.1);
+  transform: scale(1.1);
+}
+
+/* 新規マップ追加フォーム */
+.add-map-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.required {
+  color: var(--color-danger);
+}
+
+.input-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.icon-upload-wrapper {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.icon-preview {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--glass-border);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .icon-preview {
+  background: rgba(248, 250, 252, 0.8);
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+.preview-placeholder {
+  font-size: 2.5rem;
+  opacity: 0.5;
+}
+
+.icon-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* マップ管理アクション */
+.map-management-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .map-management-content {
+    max-width: 95vw;
+    padding: var(--spacing-lg);
+  }
+  
+  .map-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .map-management-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .map-management-actions button {
+    width: 100%;
+  }
+}
+
 

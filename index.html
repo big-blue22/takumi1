@@ -286,15 +286,14 @@
                         
                         <!-- Map Selection -->
                         <div class="match-section map-selection">
-                            <h4>マップ</h4>
+                            <div class="map-section-header">
+                                <h4>マップ</h4>
+                                <button type="button" class="map-settings-btn" id="map-settings-btn" title="マップ管理">
+                                    <span class="settings-icon">⚙️</span>
+                                </button>
+                            </div>
                             <div class="map-grid" id="map-grid">
-                                <div class="map-option" data-map="Haven">🏛️ ヘイヴン</div>
-                                <div class="map-option" data-map="Ascent">🏔️ アセント</div>
-                                <div class="map-option" data-map="Bind">🚪 バインド</div>
-                                <div class="map-option" data-map="Lotus">🪷 ロータス</div>
-                                <div class="map-option" data-map="Sunset">🌅 サンセット</div>
-                                <div class="map-option" data-map="Abyss">🕳️ アビス</div>
-                                <div class="map-option" data-map="Kaload">🏙️ カロード</div>
+                                <!-- マップは動的に生成されます -->
                             </div>
                         </div>
 
@@ -1371,6 +1370,58 @@
             </div>
             <div id="history-list-container" class="history-list-container">
                 <!-- 履歴がここに表示されます -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Management Modal -->
+    <div id="map-management-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="app.closeMapManagementModal()"></div>
+        <div class="modal-content map-management-content">
+            <div class="modal-header">
+                <h2>🗺️ マップ管理</h2>
+                <button class="modal-close" onclick="app.closeMapManagementModal()">✕</button>
+            </div>
+
+            <div class="map-management-body">
+                <!-- 既存マップリスト -->
+                <div class="map-management-section">
+                    <h3>既存マップの表示設定</h3>
+                    <p class="subtitle">チェックを入れたマップが試合記録時に表示されます</p>
+                    <div class="map-list" id="existing-maps-list">
+                        <!-- 動的に生成されます -->
+                    </div>
+                </div>
+
+                <!-- 新規マップ追加フォーム -->
+                <div class="map-management-section">
+                    <h3>新しいマップを追加</h3>
+                    <form id="add-map-form" class="add-map-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="new-map-name">マップ名 <span class="required">*</span></label>
+                                <input type="text" id="new-map-name" placeholder="例: 新マップ" required maxlength="30">
+                                <span class="input-hint">最大30文字</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-map-icon">アイコン画像</label>
+                                <div class="icon-upload-wrapper">
+                                    <input type="file" id="new-map-icon" accept="image/*">
+                                    <div class="icon-preview" id="icon-preview">
+                                        <span class="preview-placeholder">🗺️</span>
+                                    </div>
+                                </div>
+                                <span class="input-hint">推奨: 正方形の画像 (最大2MB)</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">➕ マップを追加</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="map-management-actions">
+                <button class="btn-secondary" onclick="app.closeMapManagementModal()">キャンセル</button>
+                <button class="btn-primary" id="save-map-settings">💾 保存</button>
             </div>
         </div>
     </div>

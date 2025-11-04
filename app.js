@@ -765,6 +765,11 @@ class App {
                 break;
             case 'analysis':
                 this.loadAnalysis();
+                // マップ選択肢を初期化
+                if (!this._mapOptionsRendered) {
+                    this.renderMapOptions();
+                    this._mapOptionsRendered = true;
+                }
                 break;
             case 'goals':
                 this.loadGoals();
@@ -1081,13 +1086,11 @@ class App {
 
     // クイック試合入力のイベントリスナーを設定
     setupQuickMatchListeners() {
-        // マップ選択
-        const mapOptions = document.querySelectorAll('.map-option');
-        mapOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                this.selectMap(option);
-            });
-        });
+        // マップ管理機能の初期化
+        this.initializeMapManagement();
+
+        // マップ選択（動的に再生成）
+        this.renderMapOptions();
 
         // エージェント選択
         const agentOptions = document.querySelectorAll('.agent-option');
@@ -6648,6 +6651,398 @@ class App {
         } else {
             banner.style.display = 'block';
         }
+    }
+
+    // ========================================
+    // マップ管理機能
+    // ========================================
+
+    // 初期マップデータ
+    getDefaultMaps() {
+        return [
+            { id: 'abyss', name: 'アビス', nameEn: 'Abyss', icon: '🕳️', enabled: true, isCustom: false },
+            { id: 'ascent', name: 'アセント', nameEn: 'Ascent', icon: '🏔️', enabled: true, isCustom: false },
+            { id: 'bind', name: 'バインド', nameEn: 'Bind', icon: '🚪', enabled: true, isCustom: false },
+            { id: 'breeze', name: 'ブリーズ', nameEn: 'Breeze', icon: '🌴', enabled: true, isCustom: false },
+            { id: 'corrode', name: 'カロード', nameEn: 'Corrode', icon: '🏙️', enabled: true, isCustom: false },
+            { id: 'fracture', name: 'フラクチャー', nameEn: 'Fracture', icon: '⚡', enabled: true, isCustom: false },
+            { id: 'haven', name: 'ヘイヴン', nameEn: 'Haven', icon: '🏛️', enabled: true, isCustom: false },
+            { id: 'icebox', name: 'アイスボックス', nameEn: 'Icebox', icon: '❄️', enabled: true, isCustom: false },
+            { id: 'lotus', name: 'ロータス', nameEn: 'Lotus', icon: '🪷', enabled: true, isCustom: false },
+            { id: 'pearl', name: 'パール', nameEn: 'Pearl', icon: '🦪', enabled: true, isCustom: false },
+            { id: 'split', name: 'スプリット', nameEn: 'Split', icon: '🏙️', enabled: true, isCustom: false },
+            { id: 'sunset', name: 'サンセット', nameEn: 'Sunset', icon: '🌅', enabled: true, isCustom: false }
+        ];
+    }
+
+    // マップ管理機能の初期化
+    initializeMapManagement() {
+        // 設定ボタンのイベントリスナー
+        const mapSettingsBtn = document.getElementById('map-settings-btn');
+        if (mapSettingsBtn) {
+            mapSettingsBtn.addEventListener('click', () => {
+                this.openMapManagementModal();
+            });
+        }
+
+        // 保存されたマップ設定を読み込み、なければデフォルトを設定
+        let maps = this.getMapSettings();
+        if (!maps || maps.length === 0) {
+            maps = this.getDefaultMaps();
+            this.saveMapSettings(maps);
+        }
+
+        // マップ追加フォームのイベントリスナー
+        const addMapForm = document.getElementById('add-map-form');
+        if (addMapForm) {
+            addMapForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleAddMap();
+            });
+        }
+
+        // アイコンプレビュー機能
+        const iconInput = document.getElementById('new-map-icon');
+        if (iconInput) {
+            iconInput.addEventListener('change', (e) => {
+                this.previewMapIcon(e.target.files[0]);
+            });
+        }
+
+        // 保存ボタン
+        const saveBtn = document.getElementById('save-map-settings');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveMapSettingsFromModal();
+            });
+        }
+    }
+
+    // マップ設定を取得
+    getMapSettings() {
+        try {
+            const settings = localStorage.getItem('valorant_map_settings');
+            return settings ? JSON.parse(settings) : null;
+        } catch (error) {
+            console.error('マップ設定の読み込みに失敗:', error);
+            return null;
+        }
+    }
+
+    // マップ設定を保存
+    saveMapSettings(maps) {
+        try {
+            localStorage.setItem('valorant_map_settings', JSON.stringify(maps));
+            console.log('マップ設定を保存しました:', maps);
+        } catch (error) {
+            console.error('マップ設定の保存に失敗:', error);
+            this.showToast('❌ マップ設定の保存に失敗しました', 'error');
+        }
+    }
+
+    // 有効なマップのみを取得
+    getEnabledMaps() {
+        const maps = this.getMapSettings();
+        return maps ? maps.filter(map => map.enabled) : [];
+    }
+
+    // マップ管理モーダルを開く
+    openMapManagementModal() {
+        const modal = document.getElementById('map-management-modal');
+        if (!modal) return;
+
+        // 既存マップリストを描画
+        this.renderExistingMapsList();
+
+        // モーダルを表示
+        modal.classList.remove('hidden');
+    }
+
+    // マップ管理モーダルを閉じる
+    closeMapManagementModal() {
+        const modal = document.getElementById('map-management-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+
+        // フォームをリセット
+        const form = document.getElementById('add-map-form');
+        if (form) {
+            form.reset();
+        }
+
+        // アイコンプレビューをリセット
+        const preview = document.getElementById('icon-preview');
+        if (preview) {
+            preview.innerHTML = '<span class="preview-placeholder">🗺️</span>';
+        }
+    }
+
+    // 既存マップリストを描画
+    renderExistingMapsList() {
+        const container = document.getElementById('existing-maps-list');
+        if (!container) return;
+
+        const maps = this.getMapSettings();
+        if (!maps || maps.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">マップが登録されていません</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+
+        maps.forEach(map => {
+            const item = document.createElement('div');
+            item.className = `map-list-item ${!map.enabled ? 'disabled' : ''}`;
+            item.dataset.mapId = map.id;
+
+            // チェックボックス
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'map-checkbox';
+            checkbox.checked = map.enabled;
+            checkbox.addEventListener('change', (e) => {
+                this.toggleMapEnabled(map.id, e.target.checked);
+            });
+
+            // アイコン
+            const iconDisplay = document.createElement('div');
+            iconDisplay.className = 'map-icon-display';
+            if (map.iconData) {
+                const img = document.createElement('img');
+                img.src = map.iconData;
+                img.alt = map.name;
+                iconDisplay.appendChild(img);
+            } else {
+                iconDisplay.textContent = map.icon || '🗺️';
+            }
+
+            // マップ名
+            const nameDisplay = document.createElement('span');
+            nameDisplay.className = 'map-name-display';
+            nameDisplay.textContent = map.name;
+
+            // カスタムバッジ
+            let customBadge = null;
+            if (map.isCustom) {
+                customBadge = document.createElement('span');
+                customBadge.className = 'map-custom-badge';
+                customBadge.textContent = 'カスタム';
+            }
+
+            // 削除ボタン（カスタムマップのみ）
+            let deleteBtn = null;
+            if (map.isCustom) {
+                deleteBtn = document.createElement('button');
+                deleteBtn.className = 'map-delete-btn';
+                deleteBtn.innerHTML = '🗑️';
+                deleteBtn.title = '削除';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.deleteCustomMap(map.id);
+                });
+            }
+
+            // 要素を組み立て
+            item.appendChild(checkbox);
+            item.appendChild(iconDisplay);
+            item.appendChild(nameDisplay);
+            if (customBadge) item.appendChild(customBadge);
+            if (deleteBtn) item.appendChild(deleteBtn);
+
+            container.appendChild(item);
+        });
+    }
+
+    // マップの有効/無効を切り替え
+    toggleMapEnabled(mapId, enabled) {
+        const maps = this.getMapSettings();
+        const map = maps.find(m => m.id === mapId);
+        
+        if (map) {
+            map.enabled = enabled;
+            this.saveMapSettings(maps);
+            
+            // リストを再描画
+            this.renderExistingMapsList();
+        }
+    }
+
+    // カスタムマップを削除
+    deleteCustomMap(mapId) {
+        if (!confirm('このカスタムマップを削除してもよろしいですか?')) {
+            return;
+        }
+
+        const maps = this.getMapSettings();
+        const filteredMaps = maps.filter(m => m.id !== mapId);
+        
+        this.saveMapSettings(filteredMaps);
+        this.renderExistingMapsList();
+        this.showToast('✅ カスタムマップを削除しました', 'success');
+    }
+
+    // 新しいマップを追加
+    handleAddMap() {
+        const nameInput = document.getElementById('new-map-name');
+        const iconInput = document.getElementById('new-map-icon');
+
+        if (!nameInput || !nameInput.value.trim()) {
+            this.showToast('❌ マップ名を入力してください', 'error');
+            return;
+        }
+
+        const mapName = nameInput.value.trim();
+
+        // 名前の重複チェック
+        const maps = this.getMapSettings();
+        const duplicate = maps.find(m => m.name.toLowerCase() === mapName.toLowerCase());
+        
+        if (duplicate) {
+            this.showToast('❌ この名前は既に使用されています', 'error');
+            return;
+        }
+
+        // アイコン画像の処理
+        let iconData = null;
+        const file = iconInput.files[0];
+        
+        if (file) {
+            // ファイルサイズチェック (2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                this.showToast('❌ 画像ファイルは2MB以下にしてください', 'error');
+                return;
+            }
+
+            // 画像をBase64に変換
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                iconData = e.target.result;
+                this.addNewMap(mapName, iconData);
+            };
+            reader.onerror = () => {
+                this.showToast('❌ 画像の読み込みに失敗しました', 'error');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // アイコンなしで追加
+            this.addNewMap(mapName, null);
+        }
+    }
+
+    // マップを追加（内部処理）
+    addNewMap(mapName, iconData) {
+        const maps = this.getMapSettings();
+        
+        const newMap = {
+            id: `custom_${Date.now()}`,
+            name: mapName,
+            nameEn: mapName,
+            icon: '🗺️',
+            iconData: iconData,
+            enabled: true,
+            isCustom: true
+        };
+
+        maps.push(newMap);
+        this.saveMapSettings(maps);
+
+        // UIを更新
+        this.renderExistingMapsList();
+
+        // フォームをリセット
+        const form = document.getElementById('add-map-form');
+        if (form) form.reset();
+
+        const preview = document.getElementById('icon-preview');
+        if (preview) {
+            preview.innerHTML = '<span class="preview-placeholder">🗺️</span>';
+        }
+
+        this.showToast('✅ 新しいマップを追加しました', 'success');
+    }
+
+    // アイコンのプレビュー
+    previewMapIcon(file) {
+        const preview = document.getElementById('icon-preview');
+        if (!preview || !file) return;
+
+        // ファイルサイズチェック
+        if (file.size > 2 * 1024 * 1024) {
+            this.showToast('❌ 画像ファイルは2MB以下にしてください', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.alt = 'Preview';
+            preview.innerHTML = '';
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // モーダルから設定を保存
+    saveMapSettingsFromModal() {
+        // 既に個別に保存されているので、モーダルを閉じるだけ
+        this.closeMapManagementModal();
+        
+        // マップ選択UIを再描画
+        this.renderMapOptions();
+        
+        this.showToast('✅ マップ設定を保存しました', 'success');
+    }
+
+    // マップ選択肢を描画
+    renderMapOptions() {
+        const mapGrid = document.getElementById('map-grid');
+        if (!mapGrid) return;
+
+        const enabledMaps = this.getEnabledMaps();
+
+        if (enabledMaps.length === 0) {
+            mapGrid.innerHTML = '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">有効なマップがありません。マップ管理で設定してください。</p>';
+            return;
+        }
+
+        mapGrid.innerHTML = '';
+
+        enabledMaps.forEach(map => {
+            const option = document.createElement('div');
+            option.className = 'map-option';
+            option.dataset.map = map.nameEn;
+
+            // アイコンを表示
+            if (map.iconData) {
+                const img = document.createElement('img');
+                img.src = map.iconData;
+                img.alt = map.name;
+                img.style.width = '24px';
+                img.style.height = '24px';
+                img.style.marginRight = '8px';
+                img.style.borderRadius = '4px';
+                option.appendChild(img);
+            } else {
+                const icon = document.createElement('span');
+                icon.textContent = map.icon;
+                icon.style.marginRight = '4px';
+                option.appendChild(icon);
+            }
+
+            // マップ名を表示
+            const name = document.createElement('span');
+            name.textContent = map.name;
+            option.appendChild(name);
+
+            // クリックイベント
+            option.addEventListener('click', () => {
+                this.selectMap(option);
+            });
+
+            mapGrid.appendChild(option);
+        });
     }
 
 }
