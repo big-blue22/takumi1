@@ -1159,10 +1159,20 @@ class App {
         // 他の選択を解除
         document.querySelectorAll('.map-option').forEach(opt => {
             opt.classList.remove('selected');
+            // 選択解除時のスタイルをリセット
+            opt.style.borderColor = 'rgba(233, 69, 96, 0.3)';
+            opt.style.background = 'linear-gradient(145deg, rgba(22, 33, 62, 0.95), rgba(15, 52, 96, 0.9))';
+            opt.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+            opt.style.transform = 'scale(1)';
         });
 
         // 新しい選択をアクティブにする
         option.classList.add('selected');
+        // 選択時のスタイルを適用
+        option.style.borderColor = 'var(--color-accent)';
+        option.style.background = 'linear-gradient(145deg, rgba(233, 69, 96, 0.3), rgba(15, 52, 96, 0.95))';
+        option.style.boxShadow = '0 0 20px rgba(233, 69, 96, 0.5)';
+        option.style.transform = 'scale(1.05)';
 
         // hidden inputに値を設定
         document.getElementById('selected-map').value = option.dataset.map;
@@ -7013,6 +7023,26 @@ class App {
             const option = document.createElement('div');
             option.className = 'map-option';
             option.dataset.map = map.nameEn;
+            
+            // インラインスタイルを直接設定（確実に表示するため）
+            option.style.cssText = `
+                padding: 1rem;
+                background: linear-gradient(145deg, rgba(22, 33, 62, 0.95), rgba(15, 52, 96, 0.9));
+                border: 2px solid rgba(233, 69, 96, 0.3);
+                border-radius: 8px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-weight: 600;
+                font-size: 0.95rem;
+                color: #ffffff;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                min-height: 50px;
+            `;
 
             // アイコンを表示
             if (map.iconData) {
@@ -7021,13 +7051,11 @@ class App {
                 img.alt = map.name;
                 img.style.width = '24px';
                 img.style.height = '24px';
-                img.style.marginRight = '8px';
                 img.style.borderRadius = '4px';
                 option.appendChild(img);
             } else {
                 const icon = document.createElement('span');
                 icon.textContent = map.icon;
-                icon.style.marginRight = '4px';
                 option.appendChild(icon);
             }
 
@@ -7035,6 +7063,25 @@ class App {
             const name = document.createElement('span');
             name.textContent = map.name;
             option.appendChild(name);
+
+            // ホバーイベント
+            option.addEventListener('mouseenter', () => {
+                if (!option.classList.contains('selected')) {
+                    option.style.borderColor = 'var(--color-accent)';
+                    option.style.background = 'linear-gradient(145deg, rgba(233, 69, 96, 0.2), rgba(15, 52, 96, 0.9))';
+                    option.style.transform = 'scale(1.05)';
+                    option.style.boxShadow = '0 0 15px rgba(233, 69, 96, 0.4)';
+                }
+            });
+
+            option.addEventListener('mouseleave', () => {
+                if (!option.classList.contains('selected')) {
+                    option.style.borderColor = 'rgba(233, 69, 96, 0.3)';
+                    option.style.background = 'linear-gradient(145deg, rgba(22, 33, 62, 0.95), rgba(15, 52, 96, 0.9))';
+                    option.style.transform = 'scale(1)';
+                    option.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                }
+            });
 
             // クリックイベント
             option.addEventListener('click', () => {
