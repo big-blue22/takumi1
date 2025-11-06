@@ -2,3 +2,17 @@
 📍 URL: http://localhost:8000
 📁 静的ファイル提供中: /app
 🛑 停止するには Ctrl+C を押してください
+GET /
+GET /styles.css
+GET /valorant-styles.css
+GET /player-stats.js
+GET /mock-data.js
+GET /api-service.js
+GET /auth-service.js
+GET /game-categories.js
+GET /theme-manager.js
+GET /unified-api-manager.js
+GET /gemini-service.js
+GET /coaching-service.js
+GET /coaching-plan-service.js
+GET /app.js

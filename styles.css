@@ -1446,6 +1446,10 @@ body {
   visibility: hidden;
 }
 
+#map-management-modal .modal-content {
+  backdrop-filter: none;
+}
+
 .modal-content {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
