@@ -13,8 +13,8 @@
 
 .map-option {
     padding: 1rem !important;
-    background: linear-gradient(145deg, rgba(22, 33, 62, 0.95), rgba(15, 52, 96, 0.9)) !important;
-    border: 2px solid rgba(233, 69, 96, 0.3) !important;
+    background: linear-gradient(145deg, rgb(22, 33, 62), rgb(15, 52, 96)) !important;
+    border: 2px solid rgba(233, 69, 96, 0.5) !important;
     border-radius: 8px !important;
     text-align: center !important;
     cursor: pointer !important;
@@ -22,47 +22,46 @@
     font-weight: 600 !important;
     font-size: 0.95rem !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 0.5rem !important;
     min-height: 50px !important;
-    backdrop-filter: none !important;
 }
 
 .map-option:hover {
     border-color: var(--color-accent) !important;
-    background: linear-gradient(145deg, rgba(233, 69, 96, 0.2), rgba(15, 52, 96, 0.9)) !important;
+    background: linear-gradient(145deg, rgba(233, 69, 96, 0.3), rgb(15, 52, 96)) !important;
     transform: scale(1.05) !important;
-    box-shadow: 0 0 15px rgba(233, 69, 96, 0.4) !important;
+    box-shadow: 0 0 15px rgba(233, 69, 96, 0.6) !important;
 }
 
 .map-option.selected {
     border-color: var(--color-accent) !important;
-    background: linear-gradient(145deg, rgba(233, 69, 96, 0.3), rgba(15, 52, 96, 0.95)) !important;
-    box-shadow: 0 0 20px rgba(233, 69, 96, 0.5) !important;
+    background: linear-gradient(145deg, rgba(233, 69, 96, 0.4), rgb(15, 52, 96)) !important;
+    box-shadow: 0 0 20px rgba(233, 69, 96, 0.7) !important;
     transform: scale(1.05) !important;
 }
 
 /* Light theme map options */
 [data-theme="light"] .map-option {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9)) !important;
-    border-color: rgba(59, 130, 246, 0.3) !important;
+    background: linear-gradient(145deg, rgb(255, 255, 255), rgb(248, 250, 252)) !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
     color: #0a1f2e !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 [data-theme="light"] .map-option:hover {
     border-color: var(--color-primary) !important;
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(248, 250, 252, 0.95)) !important;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3) !important;
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.15), rgb(248, 250, 252)) !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4) !important;
 }
 
 [data-theme="light"] .map-option.selected {
     border-color: var(--color-primary) !important;
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.15), rgba(248, 250, 252, 0.95)) !important;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4) !important;
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.2), rgb(248, 250, 252)) !important;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5) !important;
 }
 
 /* Agent Selection */
