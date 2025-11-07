@@ -8991,6 +8991,12 @@ input[type="date"]:focus {
   border-color: var(--color-accent);
   transform: translateY(-2px);
   box-shadow: var(--shadow-small);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.map-list-item:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 [data-theme="light"] .map-list-item {
@@ -9001,6 +9007,12 @@ input[type="date"]:focus {
 [data-theme="light"] .map-list-item:hover {
   border-color: var(--color-primary);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+[data-theme="light"] .map-list-item:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
 }
 
 .map-list-item.disabled {
@@ -9010,6 +9022,7 @@ input[type="date"]:focus {
 .map-list-item.disabled:hover {
   border-color: var(--glass-border);
   transform: none;
+  background: var(--bg-secondary);
 }
 
 .map-checkbox {

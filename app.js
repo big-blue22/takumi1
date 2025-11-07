@@ -6814,11 +6814,30 @@ class App {
             item.className = `map-list-item ${!map.enabled ? 'disabled' : ''}`;
             item.dataset.mapId = map.id;
 
+            // カード全体にクリックイベントを追加
+            item.addEventListener('click', (e) => {
+                // 削除ボタンのクリックは除外
+                if (e.target.closest('.map-delete-btn')) {
+                    return;
+                }
+                
+                // チェックボックスの状態を切り替え
+                const checkbox = item.querySelector('.map-checkbox');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    this.toggleMapEnabled(map.id, checkbox.checked);
+                }
+            });
+
             // チェックボックス
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'map-checkbox';
             checkbox.checked = map.enabled;
+            // チェックボックス自体のクリックイベントは親のイベントに任せる
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation(); // 二重発火を防ぐ
+            });
             checkbox.addEventListener('change', (e) => {
                 this.toggleMapEnabled(map.id, e.target.checked);
             });
