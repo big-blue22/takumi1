@@ -3127,6 +3127,10 @@ body {
   z-index: 10001; /* APIモーダルより高い優先度 */
 }
 
+.initial-setup-priority.hidden {
+  display: none !important;
+}
+
 .initial-setup-priority .modal-overlay {
   position: absolute;
   top: 0;
@@ -3134,7 +3138,6 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(5px);
   pointer-events: none; /* オーバーレイをクリック不可にして、下のコンテンツをクリック可能にする */
 }
 
@@ -5707,7 +5710,6 @@ input[type="date"]:focus {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(5px);
 }
 
 .api-setup-content {
@@ -8323,9 +8325,13 @@ input[type="date"]:focus {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
   z-index: 9998;
   transition: opacity 0.3s ease;
+  display: none;
+}
+
+.modal-overlay:not([style*="display: none"]) {
+  display: block;
 }
 
 .history-modal {
