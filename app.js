@@ -6726,6 +6726,14 @@ class App {
                 this.saveMapSettingsFromModal();
             });
         }
+
+        // モーダルコンテンツのクリックイベントが伝播しないようにする
+        const modalContent = document.querySelector('#map-management-modal .map-management-content');
+        if (modalContent) {
+            modalContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
     }
 
     // マップ設定を取得
