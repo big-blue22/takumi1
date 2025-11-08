@@ -9194,4 +9194,222 @@ input[type="date"]:focus {
   }
 }
 
+/* ============================
+   バリデーション機能のスタイル
+   ============================ */
+
+/* ゲームモード選択 */
+.game-mode-section {
+    background: linear-gradient(145deg, rgba(22, 33, 62, 0.95), rgba(15, 52, 96, 0.9));
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(233, 69, 96, 0.3);
+    margin-bottom: 20px;
+}
+
+.game-mode-selector {
+    display: flex;
+    gap: 20px;
+    margin-top: 12px;
+}
+
+.game-mode-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: rgba(15, 25, 45, 0.6);
+    border: 2px solid rgba(233, 69, 96, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.game-mode-option:hover {
+    background: rgba(233, 69, 96, 0.15);
+    border-color: rgba(233, 69, 96, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
+}
+
+.game-mode-option input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--color-accent);
+}
+
+.game-mode-option input[type="radio"]:checked {
+    outline: 2px solid var(--color-accent);
+}
+
+.game-mode-option:has(input[type="radio"]:checked) {
+    background: rgba(233, 69, 96, 0.2);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 15px rgba(233, 69, 96, 0.4);
+}
+
+.mode-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.game-mode-option:has(input[type="radio"]:checked) .mode-label {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+/* 引き分けオプション */
+.draw-option-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    background: rgba(233, 69, 96, 0.1);
+    border: 1px solid rgba(233, 69, 96, 0.3);
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.draw-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.draw-checkbox-label:hover {
+    color: var(--color-accent);
+}
+
+.draw-checkbox-label input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: var(--color-accent);
+}
+
+.draw-checkbox-label span {
+    user-select: none;
+}
+
+/* エラーポップアップ */
+.error-popup {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: white;
+    padding: 18px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(255, 68, 68, 0.4);
+    z-index: 10000;
+    animation: slideDown 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    max-width: 600px;
+    min-width: 300px;
+    font-weight: 600;
+    font-size: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.error-popup.fade-out {
+    animation: slideUp 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+}
+
+/* ライトモード対応 */
+[data-theme="light"] .game-mode-section {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(240, 248, 255, 0.9));
+    border-color: rgba(13, 126, 168, 0.3);
+}
+
+[data-theme="light"] .game-mode-option {
+    background: rgba(240, 248, 255, 0.6);
+    border-color: rgba(13, 126, 168, 0.3);
+}
+
+[data-theme="light"] .game-mode-option:hover {
+    background: rgba(13, 126, 168, 0.15);
+    border-color: rgba(13, 126, 168, 0.5);
+}
+
+[data-theme="light"] .game-mode-option:has(input[type="radio"]:checked) {
+    background: rgba(13, 126, 168, 0.2);
+    border-color: #0d7ea8;
+    box-shadow: 0 0 15px rgba(13, 126, 168, 0.3);
+}
+
+[data-theme="light"] .game-mode-option:has(input[type="radio"]:checked) .mode-label {
+    color: #0d7ea8;
+}
+
+[data-theme="light"] .draw-option-container {
+    background: rgba(13, 126, 168, 0.1);
+    border-color: rgba(13, 126, 168, 0.3);
+}
+
+[data-theme="light"] .draw-checkbox-label:hover {
+    color: #0d7ea8;
+}
+
+[data-theme="light"] .mode-label {
+    color: var(--text-primary);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .game-mode-selector {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .error-popup {
+        min-width: 280px;
+        max-width: 90vw;
+        padding: 15px 20px;
+        font-size: 14px;
+    }
+}
+
 

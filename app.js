@@ -1102,6 +1102,9 @@ class App {
 
         // エージェント検索機能
         this.setupAgentFiltering();
+        
+        // ゲームモード切り替えと引き分けオプションの表示制御
+        this.initializeGameModeHandlers();
 
         // スコア・KDA入力フィールドの監視
         const scoreInputs = ['team-score', 'enemy-score', 'kills', 'deaths', 'assists'];
@@ -1122,6 +1125,34 @@ class App {
 
         // 気づきタグ機能
         this.setupInsightTagsListeners();
+    }
+    
+    // ゲームモード切り替えに応じた引き分けオプションの表示制御
+    initializeGameModeHandlers() {
+        const competitiveRadio = document.getElementById('mode-competitive');
+        const unratedRadio = document.getElementById('mode-unrated');
+        const drawOptionContainer = document.getElementById('draw-option-container');
+        const drawCheckbox = document.getElementById('is-draw');
+
+        const updateDrawVisibility = () => {
+            if (competitiveRadio && competitiveRadio.checked) {
+                if (drawOptionContainer) drawOptionContainer.style.display = 'block';
+            } else {
+                if (drawOptionContainer) drawOptionContainer.style.display = 'none';
+                if (drawCheckbox) drawCheckbox.checked = false;
+            }
+        };
+
+        // 初期表示設定
+        updateDrawVisibility();
+
+        // イベントリスナー設定
+        if (competitiveRadio) {
+            competitiveRadio.addEventListener('change', updateDrawVisibility);
+        }
+        if (unratedRadio) {
+            unratedRadio.addEventListener('change', updateDrawVisibility);
+        }
     }
 
     // エージェント検索フィルタリング機能の設定
@@ -1591,6 +1622,17 @@ class App {
             const input = document.getElementById(id);
             if (input) input.value = value;
         });
+        
+        // ゲームモードを初期状態に戻す
+        const competitiveRadio = document.getElementById('mode-competitive');
+        if (competitiveRadio) competitiveRadio.checked = true;
+        
+        // 引き分けチェックボックスを初期化
+        const drawCheckbox = document.getElementById('is-draw');
+        if (drawCheckbox) drawCheckbox.checked = false;
+        
+        // 引き分けオプションの表示状態を更新
+        this.initializeGameModeHandlers();
 
         // 気づきタグ関連もリセット
         const feelingsInput = document.getElementById('match-feelings');
@@ -1611,9 +1653,174 @@ class App {
 
         this.updateSubmitButton();
     }
+    
+    /**
+     * エラーメッセージをポップアップで表示する
+     * @param {string} message - 表示するエラーメッセージ
+     */
+    showErrorPopup(message) {
+        // 既存のポップアップがあれば削除
+        const existingPopup = document.querySelector('.error-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // 新しいポップアップを作成
+        const popup = document.createElement('div');
+        popup.className = 'error-popup';
+        popup.textContent = message;
+        document.body.appendChild(popup);
+
+        // 3秒後に自動で消える
+        setTimeout(() => {
+            popup.classList.add('fade-out');
+            setTimeout(() => {
+                if (document.body.contains(popup)) {
+                    popup.remove();
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    /**
+     * 入力値のバリデーションを実行
+     * @returns {object} { isValid: boolean, error: string }
+     */
+    validateMatchInputs() {
+        // フォーム要素の取得
+        const killsInput = document.getElementById('kills');
+        const deathsInput = document.getElementById('deaths');
+        const assistsInput = document.getElementById('assists');
+        const myScoreInput = document.getElementById('team-score');
+        const opponentScoreInput = document.getElementById('enemy-score');
+        const gameModeElement = document.querySelector('input[name="game-mode"]:checked');
+        const drawCheckbox = document.getElementById('is-draw');
+        
+        if (!gameModeElement) {
+            return { isValid: false, error: 'ゲームモードが選択されていません。' };
+        }
+        
+        const gameMode = gameModeElement.value;
+        const isDraw = drawCheckbox ? drawCheckbox.checked : false;
+
+        // 1. KDAのバリデーション
+        const kills = parseInt(killsInput?.value);
+        const deaths = parseInt(deathsInput?.value);
+        const assists = parseInt(assistsInput?.value);
+
+        if (isNaN(kills) || kills < 0 || !Number.isInteger(kills)) {
+            return { isValid: false, error: 'キル数は0以上の整数を入力してください。' };
+        }
+        if (isNaN(deaths) || deaths < 0 || !Number.isInteger(deaths)) {
+            return { isValid: false, error: 'デス数は0以上の整数を入力してください。' };
+        }
+        if (isNaN(assists) || assists < 0 || !Number.isInteger(assists)) {
+            return { isValid: false, error: 'アシスト数は0以上の整数を入力してください。' };
+        }
+
+        // 2. スコアのバリデーション
+        const myScore = parseInt(myScoreInput?.value);
+        const opponentScore = parseInt(opponentScoreInput?.value);
+
+        if (isNaN(myScore) || myScore < 0 || !Number.isInteger(myScore)) {
+            return { isValid: false, error: '自チームのスコアは0以上の整数を入力してください。' };
+        }
+        if (isNaN(opponentScore) || opponentScore < 0 || !Number.isInteger(opponentScore)) {
+            return { isValid: false, error: '相手チームのスコアは0以上の整数を入力してください。' };
+        }
+
+        // 3. ゲームモード別のスコアルール
+        if (gameMode === 'competitive') {
+            return this.validateCompetitiveScore(myScore, opponentScore, isDraw);
+        } else if (gameMode === 'unrated') {
+            return this.validateUnratedScore(myScore, opponentScore);
+        }
+
+        return { isValid: true, error: '' };
+    }
+
+    /**
+     * コンペティティブモードのスコアバリデーション
+     */
+    validateCompetitiveScore(myScore, opponentScore, isDraw) {
+        // 引き分けの場合
+        if (isDraw) {
+            if (myScore !== opponentScore) {
+                return { isValid: false, error: '引き分けの場合、両チームのスコアは同じである必要があります。' };
+            }
+            if (myScore < 12) {
+                return { isValid: false, error: '引き分けの場合、スコアは12点以上である必要があります。' };
+            }
+            return { isValid: true, error: '' };
+        }
+
+        // 勝ち/負けの場合
+        const winScore = Math.max(myScore, opponentScore);
+        const loseScore = Math.min(myScore, opponentScore);
+
+        // 13点での勝利の場合
+        if (winScore === 13) {
+            if (loseScore > 11) {
+                return { isValid: false, error: 'コンペティティブで13点勝利の場合、相手スコアは11点以下である必要があります。' };
+            }
+        }
+        // 14点以上での勝利の場合
+        else if (winScore >= 14) {
+            const scoreDiff = winScore - loseScore;
+            if (scoreDiff !== 2) {
+                return { isValid: false, error: 'コンペティティブで14点以上の勝利の場合、2点差である必要があります。' };
+            }
+        }
+        // 13点未満の場合は無効
+        else {
+            return { isValid: false, error: 'コンペティティブでは最低13点必要です。' };
+        }
+
+        return { isValid: true, error: '' };
+    }
+
+    /**
+     * アンレートモードのスコアバリデーション
+     */
+    validateUnratedScore(myScore, opponentScore) {
+        const winScore = Math.max(myScore, opponentScore);
+        const loseScore = Math.min(myScore, opponentScore);
+
+        // 引き分けは無効
+        if (myScore === opponentScore) {
+            return { isValid: false, error: 'アンレートでは引き分けはありません。' };
+        }
+
+        // 13点での勝利
+        if (winScore === 13) {
+            // 13-11以下、または13-12は有効
+            if (loseScore <= 12) {
+                return { isValid: true, error: '' };
+            }
+        }
+        // 14点以上は延長戦なので無効
+        else if (winScore >= 14) {
+            return { isValid: false, error: 'アンレートでは延長戦(14点以上)はありません。' };
+        }
+        // 13点未満は無効
+        else {
+            return { isValid: false, error: 'アンレートでは最低13点必要です。' };
+        }
+
+        return { isValid: false, error: '無効なスコアです。アンレートでは13点で終了します。' };
+    }
 
     // クイック試合入力の送信処理
     handleQuickMatchSubmit() {
+        // バリデーション実行
+        const validation = this.validateMatchInputs();
+        
+        if (!validation.isValid) {
+            // エラーがある場合、ポップアップを表示して処理を中断
+            this.showErrorPopup(validation.error);
+            return;
+        }
+        
         const map = document.getElementById('selected-map').value;
         const agent = document.getElementById('selected-agent').value;
         const teamScore = parseInt(document.getElementById('team-score').value);

@@ -284,6 +284,21 @@
                     <p class="subtitle">VALORANTの試合結果を素早く記録</p>
                     <form id="quick-match-form" class="quick-match-form">
                         
+                        <!-- Game Mode Selection -->
+                        <div class="match-section game-mode-section">
+                            <h4>ゲームモード</h4>
+                            <div class="game-mode-selector">
+                                <label class="game-mode-option">
+                                    <input type="radio" name="game-mode" value="competitive" id="mode-competitive" checked>
+                                    <span class="mode-label">コンペティティブ</span>
+                                </label>
+                                <label class="game-mode-option">
+                                    <input type="radio" name="game-mode" value="unrated" id="mode-unrated">
+                                    <span class="mode-label">アンレート</span>
+                                </label>
+                            </div>
+                        </div>
+                        
                         <!-- Map Selection -->
                         <div class="match-section map-selection">
                             <div class="map-section-header">
@@ -356,6 +371,14 @@
                                     <label for="enemy-score">相手チームのラウンド数</label>
                                     <input type="number" id="enemy-score" min="0" max="25" value="10" required>
                                 </div>
+                            </div>
+                            
+                            <!-- Draw Option (only for Competitive) -->
+                            <div class="draw-option-container" id="draw-option-container" style="display: none; margin-top: 15px;">
+                                <label class="draw-checkbox-label">
+                                    <input type="checkbox" id="is-draw">
+                                    <span>引き分け</span>
+                                </label>
                             </div>
                         </div>
 
