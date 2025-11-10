@@ -2428,13 +2428,110 @@ class App {
         console.log('キャラクター使用率グラフ描画完了');
     }
 
-    // 勝率詳細モーダルを表示
+    // 勝率詳細モーダルを表示（RPGウィンドウシステムに変更）
     showWinRateDetailModal() {
-        const modal = document.getElementById('winrate-detail-modal');
-        if (!modal) return;
+        // 既存のモーダルを隠す
+        const oldModal = document.getElementById('winrate-detail-modal');
+        if (oldModal) {
+            oldModal.style.display = 'none';
+        }
 
-        modal.classList.remove('hidden');
-        this.loadWinRateDetailData();
+        // スタッツデータを取得
+        const statsContent = this.generateStatsContent();
+
+        // RPGウィンドウを瞬時に開く
+        window.rpgWindowSystem.openWindow('stats-window', statsContent, {
+            title: '試合成績スコア',
+            width: '700px',
+            height: '500px',
+            centered: true,
+            closable: true
+        });
+    }
+    
+    // スタッツコンテンツを生成
+    generateStatsContent() {
+        const matches = this.getMatchesData();
+        
+        if (matches.length === 0) {
+            return `
+                <div style="text-align: center; padding: 40px;">
+                    <p style="font-size: 20px; color: #ffff00;">📊 まだ試合データがありません</p>
+                    <p style="font-size: 16px; color: #fff; margin-top: 20px;">
+                        試合を記録して統計を確認しましょう！
+                    </p>
+                </div>
+            `;
+        }
+
+        // 最新試合のスコアを取得
+        const latestMatch = matches[0];
+        const teamScore = latestMatch.teamScore || 0;
+        const enemyScore = latestMatch.enemyScore || 0;
+        const kills = latestMatch.kills || 0;
+        const deaths = latestMatch.deaths || 0;
+        const assists = latestMatch.assists || 0;
+        
+        return `
+            <div class="rpg-stats-section">
+                <div class="rpg-stat-row" style="text-align: center; margin-bottom: 24px;">
+                    <div class="rpg-stat-label">試合結果スコア</div>
+                    <div style="font-size: 40px; font-weight: bold; color: #00ff00; margin: 16px 0;">
+                        ${teamScore} - ${enemyScore}
+                    </div>
+                    <div class="rpg-stat-label" style="font-size: 14px; color: #888; margin-top: 8px;">
+                        自チーム ${teamScore > enemyScore ? '🏆 勝利' : teamScore < enemyScore ? '❌ 敗北' : '⚖️ 引分'}
+                    </div>
+                </div>
+                
+                <div class="rpg-kda-section">
+                    <div class="rpg-kda-title">KDA (キル/デス/アシスト)</div>
+                    <div class="rpg-kda-values">
+                        <span style="color: #00ff00;">${kills}</span>
+                        <span class="rpg-kda-separator">/</span>
+                        <span style="color: #ff0000;">${deaths}</span>
+                        <span class="rpg-kda-separator">/</span>
+                        <span style="color: #ffff00;">${assists}</span>
+                    </div>
+                </div>
+                
+                <div class="rpg-stats-grid" style="margin-top: 24px;">
+                    <div class="rpg-stat-item">
+                        <span class="rpg-stat-label">ACS (平均戦闘)</span>
+                        <span class="rpg-stat-value">${latestMatch.acs || 0}</span>
+                    </div>
+                    <div class="rpg-stat-item">
+                        <span class="rpg-stat-label">ADR (ダメージ)</span>
+                        <span class="rpg-stat-value">${latestMatch.adr || 0}</span>
+                    </div>
+                    <div class="rpg-stat-item">
+                        <span class="rpg-stat-label">HS% (ヘッドショット)</span>
+                        <span class="rpg-stat-value">${latestMatch.hsPercent || 0}%</span>
+                    </div>
+                    <div class="rpg-stat-item">
+                        <span class="rpg-stat-label">マップ</span>
+                        <span class="rpg-stat-value" style="font-size: 18px;">${latestMatch.map || '不明'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 試合データを取得するヘルパーメソッド
+    getMatchesData() {
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        const galleryMatches = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        
+        const matchesMap = new Map();
+        [...valorantMatches, ...galleryMatches, ...recentMatches].forEach(match => {
+            if (match.id) {
+                matchesMap.set(match.id, match);
+            }
+        });
+        
+        return Array.from(matchesMap.values())
+            .sort((a, b) => (b.id || 0) - (a.id || 0));
     }
 
     // 勝率詳細モーダルを閉じる
