@@ -1115,6 +1115,9 @@ class App {
             }
         });
 
+        // 数値ボタンの初期化
+        this.initializeNumberButtons();
+
         // リセットボタン
         const resetBtn = document.getElementById('reset-quick-form');
         if (resetBtn) {
@@ -1125,6 +1128,86 @@ class App {
 
         // 気づきタグ機能
         this.setupInsightTagsListeners();
+    }
+
+    // 数値ボタンの初期化
+    initializeNumberButtons() {
+        // スコアボタン（0-25）
+        this.createNumberButtons('team-score', 0, 25, 1);
+        this.createNumberButtons('enemy-score', 0, 25, 1);
+        
+        // KDAボタン（0-50、1刻み）
+        this.createNumberButtons('kills', 0, 50, 1);
+        this.createNumberButtons('deaths', 0, 50, 1);
+        this.createNumberButtons('assists', 0, 50, 1);
+    }
+
+    // 数値ボタンを生成
+    createNumberButtons(inputId, min, max, step) {
+        const container = document.getElementById(`${inputId}-buttons`);
+        const input = document.getElementById(inputId);
+        
+        if (!container || !input) {
+            console.warn(`Container or input not found for ${inputId}`);
+            return;
+        }
+        
+        container.innerHTML = '';
+        
+        // ボタンの範囲を決定
+        let values = [];
+        
+        if (step === 1 && max <= 25) {
+            // スコアの場合: 0-13を全て表示
+            for (let i = min; i <= Math.min(13, max); i++) {
+                values.push(i);
+            }
+        } else if (step === 1) {
+            // KDAの場合: 0-50を全て表示
+            for (let i = min; i <= max; i++) {
+                values.push(i);
+            }
+        } else {
+            // その他の場合: stepごとに表示
+            for (let i = min; i <= max; i += step) {
+                values.push(i);
+            }
+        }
+        
+        // ボタンを作成
+        values.forEach(value => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'number-btn';
+            btn.textContent = value;
+            btn.dataset.value = value;
+            
+            btn.addEventListener('click', () => {
+                input.value = value;
+                this.updateNumberButtonState(inputId, value);
+                this.updateSubmitButton();
+            });
+            
+            container.appendChild(btn);
+        });
+        
+        // 初期状態を設定
+        this.updateNumberButtonState(inputId, input.value);
+    }
+
+    // 数値ボタンの選択状態を更新
+    updateNumberButtonState(inputId, value) {
+        const container = document.getElementById(`${inputId}-buttons`);
+        if (!container) return;
+        
+        const buttons = container.querySelectorAll('.number-btn');
+        buttons.forEach(btn => {
+            if (parseInt(btn.dataset.value) === parseInt(value)) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
     }
     
     // ゲームモード切り替えに応じた引き分けオプションの表示制御
