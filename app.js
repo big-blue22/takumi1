@@ -1132,18 +1132,18 @@ class App {
 
     // 数値ボタンの初期化
     initializeNumberButtons() {
-        // スコアボタン（0-25）
-        this.createNumberButtons('team-score', 0, 25, 1);
-        this.createNumberButtons('enemy-score', 0, 25, 1);
+        // スコアボタン（テンキー方式）
+        this.createTenkeyButtons('team-score');
+        this.createTenkeyButtons('enemy-score');
         
-        // KDAボタン（0-50、1刻み）
-        this.createNumberButtons('kills', 0, 50, 1);
-        this.createNumberButtons('deaths', 0, 50, 1);
-        this.createNumberButtons('assists', 0, 50, 1);
+        // KDAボタン（テンキー方式）
+        this.createTenkeyButtons('kills');
+        this.createTenkeyButtons('deaths');
+        this.createTenkeyButtons('assists');
     }
 
-    // 数値ボタンを生成
-    createNumberButtons(inputId, min, max, step) {
+    // テンキー式ボタンを生成
+    createTenkeyButtons(inputId) {
         const container = document.getElementById(`${inputId}-buttons`);
         const input = document.getElementById(inputId);
         
@@ -1153,60 +1153,66 @@ class App {
         }
         
         container.innerHTML = '';
+        container.classList.add('tenkey-container');
         
-        // ボタンの範囲を決定
-        let values = [];
+        // テンキーボタンの配置（電卓式: 7-8-9, 4-5-6, 1-2-3, 0）
+        const tenkeyLayout = [
+            [7, 8, 9],
+            [4, 5, 6],
+            [1, 2, 3],
+            ['C', 0, '←']
+        ];
         
-        if (step === 1 && max <= 25) {
-            // スコアの場合: 0-13を全て表示
-            for (let i = min; i <= Math.min(13, max); i++) {
-                values.push(i);
-            }
-        } else if (step === 1) {
-            // KDAの場合: 0-50を全て表示
-            for (let i = min; i <= max; i++) {
-                values.push(i);
-            }
-        } else {
-            // その他の場合: stepごとに表示
-            for (let i = min; i <= max; i += step) {
-                values.push(i);
-            }
-        }
-        
-        // ボタンを作成
-        values.forEach(value => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'number-btn';
-            btn.textContent = value;
-            btn.dataset.value = value;
+        tenkeyLayout.forEach(row => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'tenkey-row';
             
-            btn.addEventListener('click', () => {
-                input.value = value;
-                this.updateNumberButtonState(inputId, value);
-                this.updateSubmitButton();
+            row.forEach(value => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'tenkey-btn';
+                
+                if (value === 'C') {
+                    btn.textContent = 'C';
+                    btn.classList.add('tenkey-clear');
+                    btn.addEventListener('click', () => {
+                        input.value = '0';
+                        this.updateSubmitButton();
+                    });
+                } else if (value === '←') {
+                    btn.textContent = '←';
+                    btn.classList.add('tenkey-backspace');
+                    btn.addEventListener('click', () => {
+                        const currentValue = input.value || '0';
+                        if (currentValue.length > 1) {
+                            input.value = currentValue.slice(0, -1);
+                        } else {
+                            input.value = '0';
+                        }
+                        this.updateSubmitButton();
+                    });
+                } else {
+                    btn.textContent = value;
+                    btn.classList.add('tenkey-number');
+                    btn.addEventListener('click', () => {
+                        let currentValue = input.value || '0';
+                        if (currentValue === '0') {
+                            input.value = value.toString();
+                        } else {
+                            const newValue = parseInt(currentValue + value.toString());
+                            const maxValue = parseInt(input.getAttribute('max')) || 999;
+                            if (newValue <= maxValue) {
+                                input.value = newValue;
+                            }
+                        }
+                        this.updateSubmitButton();
+                    });
+                }
+                
+                rowDiv.appendChild(btn);
             });
             
-            container.appendChild(btn);
-        });
-        
-        // 初期状態を設定
-        this.updateNumberButtonState(inputId, input.value);
-    }
-
-    // 数値ボタンの選択状態を更新
-    updateNumberButtonState(inputId, value) {
-        const container = document.getElementById(`${inputId}-buttons`);
-        if (!container) return;
-        
-        const buttons = container.querySelectorAll('.number-btn');
-        buttons.forEach(btn => {
-            if (parseInt(btn.dataset.value) === parseInt(value)) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+            container.appendChild(rowDiv);
         });
     }
     
