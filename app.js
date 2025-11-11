@@ -1160,7 +1160,7 @@ class App {
             [7, 8, 9],
             [4, 5, 6],
             [1, 2, 3],
-            ['C', 0, '←']
+            ['C', 0]
         ];
         
         tenkeyLayout.forEach(row => {
@@ -1177,18 +1177,6 @@ class App {
                     btn.classList.add('tenkey-clear');
                     btn.addEventListener('click', () => {
                         input.value = '0';
-                        this.updateSubmitButton();
-                    });
-                } else if (value === '←') {
-                    btn.textContent = '←';
-                    btn.classList.add('tenkey-backspace');
-                    btn.addEventListener('click', () => {
-                        const currentValue = input.value || '0';
-                        if (currentValue.length > 1) {
-                            input.value = currentValue.slice(0, -1);
-                        } else {
-                            input.value = '0';
-                        }
                         this.updateSubmitButton();
                     });
                 } else {

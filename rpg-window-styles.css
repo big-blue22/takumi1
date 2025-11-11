@@ -757,27 +757,6 @@
     box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4) !important;
 }
 
-/* バックスペースボタン（←） */
-.tenkey-backspace {
-    background: linear-gradient(
-        135deg,
-        rgba(251, 191, 36, 0.15) 0%,
-        rgba(245, 158, 11, 0.1) 100%
-    ) !important;
-    border-color: rgba(251, 191, 36, 0.3) !important;
-    color: #fcd34d;
-}
-
-.tenkey-backspace:hover {
-    background: linear-gradient(
-        135deg,
-        rgba(251, 191, 36, 0.3) 0%,
-        rgba(245, 158, 11, 0.2) 100%
-    ) !important;
-    border-color: rgba(251, 191, 36, 0.6) !important;
-    box-shadow: 0 4px 16px rgba(251, 191, 36, 0.4) !important;
-}
-
 /* 数字ボタン */
 .tenkey-number:active {
     background: linear-gradient(
