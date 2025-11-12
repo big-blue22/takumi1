@@ -1140,6 +1140,11 @@ class App {
         this.createTenkeyButtons('kills');
         this.createTenkeyButtons('deaths');
         this.createTenkeyButtons('assists');
+        
+        // スタッツボタン（テンキー方式）
+        this.createTenkeyButtons('acs');
+        this.createTenkeyButtons('adr');
+        this.createTenkeyButtons('hs-percent');
     }
 
     // テンキー式ボタンを生成
