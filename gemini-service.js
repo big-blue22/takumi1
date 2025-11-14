@@ -10,8 +10,8 @@ class GeminiService {
     this.baseUrl = this.baseUrls[0]; // デフォルト
     this.chatModel = 'gemini-2.5-flash'; // 指定モデル：Gemini 2.5 Flash
         this.chatHistory = [];
-        this.retryDelay = 1000; // リトライ間隔を短縮
-        this.maxRetries = 2; // リトライ回数を減らして即座に問題を特定
+        this.retryDelay = 1000; // 初期リトライ間隔（指数バックオフの基準）
+        this.maxRetries = 3; // 503エラー用の最大リトライ回数
         
         // 統一APIマネージャとの連携
         this.initializeWithUnifiedAPI();
@@ -375,7 +375,7 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 headers: Object.fromEntries(response.headers.entries())
             });
 
-            // 503エラーの場合、詳細な診断と再試行方針（Retry-After尊重）
+            // 503エラーの場合、指数バックオフでリトライ
             if (response.status === 503) {
                 const errorData = await response.json().catch(() => null);
                 console.error(`🔍 503エラーの詳細:`, {
@@ -384,68 +384,19 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                     url: maskUrl(url),
                     requestBodySample: JSON.stringify(requestBody).substring(0, 200) + '...'
                 });
-                // サーバー状態へ記録
-                try {
-                    const retryAfterHeader = response.headers.get('retry-after');
-                    const parseRetryAfter = (h) => {
-                        if (!h) return null;
-                        const s = parseInt(h, 10);
-                        if (!Number.isNaN(s)) return Math.max(1, s);
-                        const dt = new Date(h);
-                        if (!Number.isNaN(dt.getTime())) {
-                            const secs = Math.ceil((dt.getTime() - Date.now()) / 1000);
-                            return Math.max(1, secs);
-                        }
-                        return null;
-                    };
-                    const retryAfterSec = parseRetryAfter(retryAfterHeader) ?? 20;
-                    this.serverStatus.isAvailable = false;
-                    this.serverStatus.lastError = '503-overloaded';
-                    this.serverStatus.overloadDetectedAt = Date.now();
-                    this.serverStatus.nextRetryAfter = Date.now() + retryAfterSec * 1000;
-
-                    // まずは同一URLでRetry-Afterに従いリトライ
-                    if (retryCount < (this.maxRetries ?? 0)) {
-                        const waitMs = Math.min(retryAfterSec, 30) * 1000; // 上限30秒
-                        console.log(`⏳ Retry-After ${retryAfterSec}s. Waiting ${waitMs}ms before retry...`);
-                        await this.delay(waitMs);
-                        return await this.makeAPIRequest(url, requestBody, retryCount + 1);
-                    }
-                } catch (_) { /* 記録/待機に失敗してもフォールバックへ */ }
                 
-                // 代替エンドポイントやAPIバージョンを試す（上記リトライ後も失敗した場合）
-                if (retryCount >= (this.maxRetries ?? 0)) {
-                    // 1. 異なるAPIバージョンを試す
-                    if (this.enableVersionFallback && url.includes('/v1beta/')) {
-                        console.log('🔄 Trying v1 API version...');
-                        const alternativeUrl = url.replace('/v1beta/', '/v1/');
-                        try {
-                            return await this.makeAPIRequest(alternativeUrl, requestBody, retryCount + 1);
-                        } catch (alternativeError) {
-                            console.log('❌ v1 API also failed:', alternativeError.message);
-                        }
-                    }
+                // 最大リトライ回数をチェック
+                if (retryCount < this.maxRetries) {
+                    // 指数バックオフ: 1秒 -> 2秒 -> 4秒
+                    const waitSeconds = this.retryDelay * Math.pow(2, retryCount) / 1000;
+                    const waitMs = waitSeconds * 1000;
                     
-                    // 2. 異なるモデルを試す
-                    if (this.enableModelFallback && url.includes('gemini-2.5-flash')) {
-                        // Gemini 2.5 Flash が失敗した場合、代替モデルを試す
-                        console.log('🔄 Trying gemini-1.5-flash model as fallback...');
-                        const alternativeUrl = url.replace('gemini-2.5-flash', 'gemini-1.5-flash');
-                        try {
-                            return await this.makeAPIRequest(alternativeUrl, requestBody, retryCount + 1);
-                        } catch (alternativeError) {
-                            console.log('❌ gemini-1.5-flash also failed, trying gemini-pro...');
-                            const fallbackUrl = url.replace('gemini-2.5-flash', 'gemini-pro');
-                            try {
-                                return await this.makeAPIRequest(fallbackUrl, requestBody, retryCount + 2);
-                            } catch (fallbackError) {
-                                console.log('❌ All models failed:', fallbackError.message);
-                            }
-                        }
-                    }
+                    console.log(`⏳ 503エラー: ${retryCount + 1}回目のリトライを${waitSeconds}秒後に実行します...`);
+                    await this.delay(waitMs);
+                    return await this.makeAPIRequest(url, requestBody, retryCount + 1);
                 }
                 
-                // すべての代替手段が失敗した場合
+                // 最大リトライ回数に達した場合、エラーをスロー
                 const detailMessage = errorData?.error?.message || 'Service Unavailable';
                 if (detailMessage.includes('quota') || detailMessage.includes('exceeded')) {
                     throw new Error(`APIクォータまたは制限に達しています。しばらく待ってから再試行してください。`);
