@@ -2135,10 +2135,11 @@ class App {
         const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
         
         // 重複を排除してマージ
         const matchesMap = new Map();
-        [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
+        [...valorantGallery, ...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
             if (match.id) {
                 matchesMap.set(match.id, match);
             }
@@ -2367,10 +2368,11 @@ class App {
         const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
         
         // 重複を排除してマージ
         const matchesMap = new Map();
-        [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
+        [...valorantGallery, ...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
             if (match.id) {
                 matchesMap.set(match.id, match);
             }
@@ -2390,7 +2392,8 @@ class App {
         // キャラクター使用率を計算
         const characterUsage = {};
         matches.forEach(match => {
-            const character = match.playerCharacter || match.character || 'Unknown';
+            // agent プロパティも認識するように修正
+            const character = match.agent || match.playerCharacter || match.character || 'Unknown';
             if (!characterUsage[character]) {
                 characterUsage[character] = 0;
             }
@@ -2630,10 +2633,11 @@ class App {
         const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
         
         // 重複を排除してマージ
         const matchesMap = new Map();
-        [...valorantGallery, ...sf6Gallery, ...recentMatches].forEach(match => {
+        [...valorantGallery, ...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
             if (match.id) {
                 matchesMap.set(match.id, match);
             }
@@ -2946,10 +2950,11 @@ class App {
         // 両方のストレージからデータを取得してマージ
         const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
         const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
         
         // 重複を排除してマージ
         const matchesMap = new Map();
-        [...sf6Gallery, ...recentMatches].forEach(match => {
+        [...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
             if (match.id) {
                 matchesMap.set(match.id, match);
             }
@@ -2964,13 +2969,17 @@ class App {
             return;
         }
         
-        container.innerHTML = matches.map(match => `
+        container.innerHTML = matches.map(match => {
+            // agent プロパティも認識するように修正
+            const character = match.agent || match.character || 'Unknown';
+            return `
             <div class="match-item ${match.result.toLowerCase()}">
                 <span class="match-result">${match.result}</span>
-                <span class="match-character">キャラ: ${match.character}</span>
-                <span class="match-rounds">ラウンド: ${match.rounds}</span>
+                <span class="match-character">キャラ: ${character}</span>
+                <span class="match-rounds">ラウンド: ${match.rounds || match.score || 'N/A'}</span>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
     
     loadAiRecommendations() {
