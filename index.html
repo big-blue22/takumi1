@@ -142,14 +142,25 @@
 
                 <!-- Performance Charts -->
                 <div class="charts-grid">
+                    <!-- Win Rate Trend Chart -->
                     <div class="card chart-card">
                         <div class="chart-header">
-                            <h3>勝率トレンド</h3>
+                            <h3>📈 勝率の推移</h3>
                             <button class="btn-text" id="show-winrate-detail-btn" title="詳細を表示">
                                 📊 詳しく見る
                             </button>
                         </div>
                         <canvas id="performance-chart"></canvas>
+                    </div>
+
+                    <!-- Challenge Points Card -->
+                    <div class="card challenge-points-card">
+                        <div class="chart-header">
+                            <h3>🎯 改善ポイント</h3>
+                        </div>
+                        <div id="challenge-points-content" class="challenge-points-content">
+                            <p class="no-data-message">📝 記録しよう！</p>
+                        </div>
                     </div>
                 </div>
 

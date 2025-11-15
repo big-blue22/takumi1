@@ -2157,142 +2157,33 @@ class App {
             return;
         }
 
-        // 1. 直近10試合ごとの勝率推移を計算
+        // 直近10試合ごとの勝率推移を計算
         const batchSize = 10;
         const batches = [];
         for (let i = 0; i < matches.length; i += batchSize) {
             const batch = matches.slice(i, i + batchSize);
             const wins = batch.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
             const winRate = (wins / batch.length * 100).toFixed(1);
-            // 最初のバッチは「直近10試合」、それ以降は試合範囲を表示
-            const label = i === 0 ? '直近10試合' : `試合${i + 1}-${Math.min(i + batchSize, matches.length)}`;
+            // より読みやすいラベル形式
+            const label = i === 0 ? '直近10試合' : `${i + 1}～${Math.min(i + batchSize, matches.length)}試合目`;
             batches.push({
                 label: label,
                 winRate: parseFloat(winRate)
             });
         }
 
-        // 2. ステージごとの累計勝率を計算
-        const stageStats = {};
-        matches.forEach(match => {
-            const stage = match.map || 'Unknown';
-            if (!stageStats[stage]) {
-                stageStats[stage] = { wins: 0, total: 0 };
-            }
-            stageStats[stage].total++;
-            if ((match.result || '').toUpperCase() === 'WIN') {
-                stageStats[stage].wins++;
-            }
-        });
-
-        // 最も勝率が低いステージを抽出
-        let lowestStageWinRate = null;
-        
-        if (Object.keys(stageStats).length > 0) {
-            const stageWinRateData = Object.entries(stageStats)
-                .map(([stage, stats]) => ({
-                    stage,
-                    winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
-                    total: stats.total
-                }));
-            
-            // 最低勝率を特定
-            const minWinRate = Math.min(...stageWinRateData.map(d => d.winRate));
-            
-            // 最低勝率のステージを抽出
-            const lowestWinRateStages = stageWinRateData.filter(d => d.winRate === minWinRate);
-            
-            // 試合数が最も多いステージを選択
-            lowestStageWinRate = lowestWinRateStages.sort((a, b) => b.total - a.total)[0];
-        }
-
-        // 3. エージェントごとの累計勝率を計算
-        const agentStats = {};
-        matches.forEach(match => {
-            const agent = match.agent || 'Unknown';
-            if (!agentStats[agent]) {
-                agentStats[agent] = { wins: 0, total: 0 };
-            }
-            agentStats[agent].total++;
-            if ((match.result || '').toUpperCase() === 'WIN') {
-                agentStats[agent].wins++;
-            }
-        });
-
-        // 最も勝率が低いエージェントを抽出
-        let lowestAgentWinRate = null;
-        
-        if (Object.keys(agentStats).length > 0) {
-            const agentWinRateData = Object.entries(agentStats)
-                .map(([agent, stats]) => ({
-                    agent,
-                    winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
-                    total: stats.total
-                }));
-            
-            // 最低勝率を特定
-            const minWinRate = Math.min(...agentWinRateData.map(d => d.winRate));
-            
-            // 最低勝率のエージェントを抽出
-            const lowestWinRateAgents = agentWinRateData.filter(d => d.winRate === minWinRate);
-            
-            // 試合数が最も多いエージェントを選択
-            lowestAgentWinRate = lowestWinRateAgents.sort((a, b) => b.total - a.total)[0];
-        }
-
-        // データラベルと値を構築
-        const additionalLabels = [];
-        const additionalData = [];
-        const additionalColors = [];
-        const additionalBorderColors = [];
-
-        if (lowestStageWinRate) {
-            additionalLabels.push(lowestStageWinRate.stage);
-            additionalData.push(lowestStageWinRate.winRate);
-            additionalColors.push('rgba(255, 99, 71, 0.6)');
-            additionalBorderColors.push('rgba(255, 99, 71, 1)');
-        } else {
-            additionalLabels.push('📝 記録しよう！');
-            additionalData.push(0);
-            additionalColors.push('rgba(128, 128, 128, 0.3)');
-            additionalBorderColors.push('rgba(128, 128, 128, 0.5)');
-        }
-
-        if (lowestAgentWinRate) {
-            additionalLabels.push(lowestAgentWinRate.agent);
-            additionalData.push(lowestAgentWinRate.winRate);
-            additionalColors.push('rgba(255, 165, 0, 0.6)');
-            additionalBorderColors.push('rgba(255, 165, 0, 1)');
-        } else {
-            additionalLabels.push('📝 記録しよう！');
-            additionalData.push(0);
-            additionalColors.push('rgba(128, 128, 128, 0.3)');
-            additionalBorderColors.push('rgba(128, 128, 128, 0.5)');
-        }
-
-        // グラフの描画
+        // グラフの描画 - 勝率推移のみに集中
         this.winRateTrendChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: [
-                    ...batches.map(b => b.label),
-                    ...additionalLabels
-                ],
+                labels: batches.map(b => b.label),
                 datasets: [{
-                    label: '勝率 (%)',
-                    data: [
-                        ...batches.map(b => b.winRate),
-                        ...additionalData
-                    ],
-                    backgroundColor: [
-                        ...batches.map(() => 'rgba(54, 162, 235, 0.6)'),
-                        ...additionalColors
-                    ],
-                    borderColor: [
-                        ...batches.map(() => 'rgba(54, 162, 235, 1)'),
-                        ...additionalBorderColors
-                    ],
-                    borderWidth: 2
+                    label: '勝率',
+                    data: batches.map(b => b.winRate),
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    borderRadius: 6
                 }]
             },
             options: {
@@ -2301,24 +2192,29 @@ class App {
                 aspectRatio: 1.5,
                 layout: {
                     padding: {
-                        bottom: 20
+                        top: 10,
+                        bottom: 20,
+                        left: 10,
+                        right: 10
                     }
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            },
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
                     },
                     title: {
-                        display: true,
-                        text: '直近10試合の勝率 & 最も勝率が低いステージ & 最も勝率が低いエージェント',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
-                        font: {
-                            size: 14,
-                            weight: '600'
-                        },
-                        padding: {
-                            bottom: 15
-                        }
+                        display: false
                     },
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -2331,23 +2227,7 @@ class App {
                             size: 13
                         },
                         callbacks: {
-                            title: function(context) {
-                                const label = context[0].label;
-                                if (label === '直近10試合') {
-                                    // 「直近10試合」はそのまま表示
-                                    return label;
-                                } else if (label.startsWith('#')) {
-                                    return '試合' + label.substring(1);
-                                } else if (label === '📝 記録しよう！') {
-                                    return '対戦データなし';
-                                }
-                                return label;
-                            },
                             label: function(context) {
-                                const label = context.label;
-                                if (label === '📝 記録しよう！') {
-                                    return '対戦データを記録してください';
-                                }
                                 return `勝率: ${context.parsed.y}%`;
                             }
                         }
@@ -2361,44 +2241,166 @@ class App {
                             callback: function(value) {
                                 return value + '%';
                             },
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa'
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa',
+                            font: {
+                                size: 12
+                            }
                         },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        title: {
+                            display: true,
+                            text: '勝率 (%)',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
                         }
                     },
                     x: {
                         ticks: {
                             color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa',
-                            maxRotation: 90,
-                            minRotation: 45,
+                            maxRotation: 0,
+                            minRotation: 0,
                             autoSkip: false,
                             font: {
                                 size: 11
-                            },
-                            callback: function(value, index, values) {
-                                const label = this.getLabelForValue(value);
-                                // ラベルを短縮表示
-                                if (label === '直近10試合') {
-                                    // 「直近10試合」はそのまま表示
-                                    return label;
-                                } else if (label.startsWith('試合')) {
-                                    // 「試合11-20」を「#11-20」に短縮
-                                    return label.replace('試合', '#');
-                                } else if (label.startsWith('vs ')) {
-                                    // 「vs Luke」を「Luke」に短縮
-                                    return label.replace('vs ', '');
-                                }
-                                return label;
                             }
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: 'rgba(255, 255, 255, 0.05)'
                         }
                     }
                 }
             }
         });
+
+        // 改善ポイントを別で表示
+        this.renderChallengePoints(matches);
+    }
+
+    // 改善ポイント（課題）の表示
+    renderChallengePoints(matches) {
+        const container = document.getElementById('challenge-points-content');
+        if (!container) return;
+
+        if (matches.length === 0) {
+            container.innerHTML = '<p class="no-data-message">📝 記録しよう！</p>';
+            return;
+        }
+
+        // ステージごとの累計勝率を計算
+        const stageStats = {};
+        matches.forEach(match => {
+            const stage = match.map || 'Unknown';
+            if (!stageStats[stage]) {
+                stageStats[stage] = { wins: 0, total: 0 };
+            }
+            stageStats[stage].total++;
+            if ((match.result || '').toUpperCase() === 'WIN') {
+                stageStats[stage].wins++;
+            }
+        });
+
+        // エージェント/キャラクターごとの累計勝率を計算
+        const agentStats = {};
+        matches.forEach(match => {
+            const agent = match.agent || match.character || 'Unknown';
+            if (!agentStats[agent]) {
+                agentStats[agent] = { wins: 0, total: 0 };
+            }
+            agentStats[agent].total++;
+            if ((match.result || '').toUpperCase() === 'WIN') {
+                agentStats[agent].wins++;
+            }
+        });
+
+        // 最も勝率が低いステージを抽出（試合数が3以上のもの）
+        let lowestStageWinRate = null;
+        if (Object.keys(stageStats).length > 0) {
+            const stageWinRateData = Object.entries(stageStats)
+                .filter(([_, stats]) => stats.total >= 3) // 最低3試合以上
+                .map(([stage, stats]) => ({
+                    stage,
+                    winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
+                    wins: stats.wins,
+                    total: stats.total
+                }));
+            
+            if (stageWinRateData.length > 0) {
+                const minWinRate = Math.min(...stageWinRateData.map(d => d.winRate));
+                const lowestWinRateStages = stageWinRateData.filter(d => d.winRate === minWinRate);
+                lowestStageWinRate = lowestWinRateStages.sort((a, b) => b.total - a.total)[0];
+            }
+        }
+
+        // 最も勝率が低いエージェントを抽出（試合数が3以上のもの）
+        let lowestAgentWinRate = null;
+        if (Object.keys(agentStats).length > 0) {
+            const agentWinRateData = Object.entries(agentStats)
+                .filter(([_, stats]) => stats.total >= 3) // 最低3試合以上
+                .map(([agent, stats]) => ({
+                    agent,
+                    winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
+                    wins: stats.wins,
+                    total: stats.total
+                }));
+            
+            if (agentWinRateData.length > 0) {
+                const minWinRate = Math.min(...agentWinRateData.map(d => d.winRate));
+                const lowestWinRateAgents = agentWinRateData.filter(d => d.winRate === minWinRate);
+                lowestAgentWinRate = lowestWinRateAgents.sort((a, b) => b.total - a.total)[0];
+            }
+        }
+
+        // HTMLを生成
+        let html = '';
+
+        if (lowestStageWinRate) {
+            html += `
+                <div class="challenge-item">
+                    <div class="challenge-icon">🗺️</div>
+                    <div class="challenge-info">
+                        <div class="challenge-label">苦手なマップ</div>
+                        <div class="challenge-name">${lowestStageWinRate.stage}</div>
+                        <div class="challenge-stats">${lowestStageWinRate.wins}勝 ${lowestStageWinRate.total - lowestStageWinRate.wins}敗 (${lowestStageWinRate.total}試合)</div>
+                    </div>
+                    <div class="challenge-winrate">
+                        <div class="winrate-bar">
+                            <div class="winrate-fill" style="width: ${lowestStageWinRate.winRate}%"></div>
+                        </div>
+                        <div class="winrate-text">${lowestStageWinRate.winRate}%</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (lowestAgentWinRate) {
+            html += `
+                <div class="challenge-item">
+                    <div class="challenge-icon">🎮</div>
+                    <div class="challenge-info">
+                        <div class="challenge-label">苦手なキャラ/エージェント</div>
+                        <div class="challenge-name">${lowestAgentWinRate.agent}</div>
+                        <div class="challenge-stats">${lowestAgentWinRate.wins}勝 ${lowestAgentWinRate.total - lowestAgentWinRate.wins}敗 (${lowestAgentWinRate.total}試合)</div>
+                    </div>
+                    <div class="challenge-winrate">
+                        <div class="winrate-bar">
+                            <div class="winrate-fill" style="width: ${lowestAgentWinRate.winRate}%"></div>
+                        </div>
+                        <div class="winrate-text">${lowestAgentWinRate.winRate}%</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (!html) {
+            html = '<p class="no-data-message">十分なデータがありません<br><small>各項目3試合以上で表示されます</small></p>';
+        }
+
+        container.innerHTML = html;
     }
 
     // キャラクター使用率グラフの描画
