@@ -1508,7 +1508,7 @@ class App {
             const finalBtn = document.getElementById('generate-tags-btn');
             if (finalBtn) {
                 finalBtn.disabled = false;
-                finalBtn.textContent = '🤖 AIでタグ生成';
+                finalBtn.textContent = '🤖 クラウド エージェントに委任';
             }
         }
     }
