@@ -2172,50 +2172,103 @@ class App {
             });
         }
 
-        // 2. 対戦キャラクターごとの累計勝率を計算
-        const opponentStats = {};
+        // 2. ステージごとの累計勝率を計算
+        const stageStats = {};
         matches.forEach(match => {
-            const opponent = match.opponentCharacter || 'Unknown';
-            if (!opponentStats[opponent]) {
-                opponentStats[opponent] = { wins: 0, total: 0 };
+            const stage = match.map || 'Unknown';
+            if (!stageStats[stage]) {
+                stageStats[stage] = { wins: 0, total: 0 };
             }
-            opponentStats[opponent].total++;
+            stageStats[stage].total++;
             if ((match.result || '').toUpperCase() === 'WIN') {
-                opponentStats[opponent].wins++;
+                stageStats[stage].wins++;
             }
         });
 
-        // 最も勝率が低いキャラクターを抽出（対戦回数が多い方を優先）
-        let opponentWinRates = [];
+        // 最も勝率が低いステージを抽出
+        let lowestStageWinRate = null;
         
-        if (Object.keys(opponentStats).length > 0) {
-            const winRateData = Object.entries(opponentStats)
-                .map(([opponent, stats]) => ({
-                    opponent,
+        if (Object.keys(stageStats).length > 0) {
+            const stageWinRateData = Object.entries(stageStats)
+                .map(([stage, stats]) => ({
+                    stage,
                     winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
                     total: stats.total
                 }));
             
             // 最低勝率を特定
-            const minWinRate = Math.min(...winRateData.map(d => d.winRate));
+            const minWinRate = Math.min(...stageWinRateData.map(d => d.winRate));
             
-            // 最低勝率のキャラクターを抽出
-            const lowestWinRateChars = winRateData.filter(d => d.winRate === minWinRate);
+            // 最低勝率のステージを抽出
+            const lowestWinRateStages = stageWinRateData.filter(d => d.winRate === minWinRate);
             
-            // 対戦回数が最も多いキャラクターを選択
-            const selectedChar = lowestWinRateChars.sort((a, b) => b.total - a.total)[0];
-            
-            opponentWinRates = [selectedChar];
+            // 試合数が最も多いステージを選択
+            lowestStageWinRate = lowestWinRateStages.sort((a, b) => b.total - a.total)[0];
         }
 
-        // 対戦データがない場合のダミーラベル
-        const opponentLabels = opponentWinRates.length > 0 
-            ? opponentWinRates.map(o => `vs ${o.opponent}`)
-            : ['📝 記録しよう！'];
+        // 3. エージェントごとの累計勝率を計算
+        const agentStats = {};
+        matches.forEach(match => {
+            const agent = match.agent || 'Unknown';
+            if (!agentStats[agent]) {
+                agentStats[agent] = { wins: 0, total: 0 };
+            }
+            agentStats[agent].total++;
+            if ((match.result || '').toUpperCase() === 'WIN') {
+                agentStats[agent].wins++;
+            }
+        });
+
+        // 最も勝率が低いエージェントを抽出
+        let lowestAgentWinRate = null;
         
-        const opponentData = opponentWinRates.length > 0
-            ? opponentWinRates.map(o => parseFloat(o.winRate))
-            : [0];
+        if (Object.keys(agentStats).length > 0) {
+            const agentWinRateData = Object.entries(agentStats)
+                .map(([agent, stats]) => ({
+                    agent,
+                    winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
+                    total: stats.total
+                }));
+            
+            // 最低勝率を特定
+            const minWinRate = Math.min(...agentWinRateData.map(d => d.winRate));
+            
+            // 最低勝率のエージェントを抽出
+            const lowestWinRateAgents = agentWinRateData.filter(d => d.winRate === minWinRate);
+            
+            // 試合数が最も多いエージェントを選択
+            lowestAgentWinRate = lowestWinRateAgents.sort((a, b) => b.total - a.total)[0];
+        }
+
+        // データラベルと値を構築
+        const additionalLabels = [];
+        const additionalData = [];
+        const additionalColors = [];
+        const additionalBorderColors = [];
+
+        if (lowestStageWinRate) {
+            additionalLabels.push(lowestStageWinRate.stage);
+            additionalData.push(lowestStageWinRate.winRate);
+            additionalColors.push('rgba(255, 99, 71, 0.6)');
+            additionalBorderColors.push('rgba(255, 99, 71, 1)');
+        } else {
+            additionalLabels.push('📝 記録しよう！');
+            additionalData.push(0);
+            additionalColors.push('rgba(128, 128, 128, 0.3)');
+            additionalBorderColors.push('rgba(128, 128, 128, 0.5)');
+        }
+
+        if (lowestAgentWinRate) {
+            additionalLabels.push(lowestAgentWinRate.agent);
+            additionalData.push(lowestAgentWinRate.winRate);
+            additionalColors.push('rgba(255, 165, 0, 0.6)');
+            additionalBorderColors.push('rgba(255, 165, 0, 1)');
+        } else {
+            additionalLabels.push('📝 記録しよう！');
+            additionalData.push(0);
+            additionalColors.push('rgba(128, 128, 128, 0.3)');
+            additionalBorderColors.push('rgba(128, 128, 128, 0.5)');
+        }
 
         // グラフの描画
         this.winRateTrendChart = new Chart(ctx, {
@@ -2223,25 +2276,21 @@ class App {
             data: {
                 labels: [
                     ...batches.map(b => b.label),
-                    ...opponentLabels
+                    ...additionalLabels
                 ],
                 datasets: [{
                     label: '勝率 (%)',
                     data: [
                         ...batches.map(b => b.winRate),
-                        ...opponentData
+                        ...additionalData
                     ],
                     backgroundColor: [
                         ...batches.map(() => 'rgba(54, 162, 235, 0.6)'),
-                        ...opponentWinRates.length > 0 
-                            ? opponentWinRates.map(() => 'rgba(255, 99, 71, 0.6)') 
-                            : ['rgba(128, 128, 128, 0.3)']
+                        ...additionalColors
                     ],
                     borderColor: [
                         ...batches.map(() => 'rgba(54, 162, 235, 1)'),
-                        ...opponentWinRates.length > 0 
-                            ? opponentWinRates.map(() => 'rgba(255, 99, 71, 1)') 
-                            : ['rgba(128, 128, 128, 0.5)']
+                        ...additionalBorderColors
                     ],
                     borderWidth: 2
                 }]
@@ -2261,7 +2310,7 @@ class App {
                     },
                     title: {
                         display: true,
-                        text: '直近10試合の勝率 & 最も勝率が低い対戦キャラクター',
+                        text: '直近10試合の勝率 & 最も勝率が低いステージ & 最も勝率が低いエージェント',
                         color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#fff',
                         font: {
                             size: 14,
@@ -2549,56 +2598,248 @@ class App {
             `;
         }
 
-        // 最新試合のスコアを取得
-        const latestMatch = matches[0];
-        const teamScore = latestMatch.teamScore || 0;
-        const enemyScore = latestMatch.enemyScore || 0;
-        const kills = latestMatch.kills || 0;
-        const deaths = latestMatch.deaths || 0;
-        const assists = latestMatch.assists || 0;
-        
+        // ステージ別統計を計算
+        const stageStats = {};
+        matches.forEach(match => {
+            const stage = match.map || 'Unknown';
+            if (!stageStats[stage]) {
+                stageStats[stage] = { wins: 0, losses: 0, total: 0 };
+            }
+            stageStats[stage].total++;
+            if ((match.result || '').toUpperCase() === 'WIN') {
+                stageStats[stage].wins++;
+            } else {
+                stageStats[stage].losses++;
+            }
+        });
+
+        // エージェント別統計を計算
+        const agentStats = {};
+        matches.forEach(match => {
+            const agent = match.agent || 'Unknown';
+            if (!agentStats[agent]) {
+                agentStats[agent] = { wins: 0, losses: 0, total: 0 };
+            }
+            agentStats[agent].total++;
+            if ((match.result || '').toUpperCase() === 'WIN') {
+                agentStats[agent].wins++;
+            } else {
+                agentStats[agent].losses++;
+            }
+        });
+
+        // 対戦キャラクター別統計を計算（既存機能維持）
+        const opponentStats = {};
+        matches.forEach(match => {
+            const opponent = match.opponentCharacter || 'Unknown';
+            if (!opponentStats[opponent]) {
+                opponentStats[opponent] = { wins: 0, losses: 0, total: 0 };
+            }
+            opponentStats[opponent].total++;
+            if ((match.result || '').toUpperCase() === 'WIN') {
+                opponentStats[opponent].wins++;
+            } else {
+                opponentStats[opponent].losses++;
+            }
+        });
+
+        // ステージ別データ配列を生成
+        const stageData = Object.entries(stageStats).map(([stage, stats]) => ({
+            stage,
+            winRate: ((stats.wins / stats.total) * 100).toFixed(1),
+            total: stats.total,
+            wins: stats.wins,
+            losses: stats.losses
+        }));
+
+        // エージェント別データ配列を生成
+        const agentData = Object.entries(agentStats).map(([agent, stats]) => ({
+            agent,
+            winRate: ((stats.wins / stats.total) * 100).toFixed(1),
+            total: stats.total,
+            wins: stats.wins,
+            losses: stats.losses
+        }));
+
+        // 対戦キャラクター別データ配列を生成
+        const opponentData = Object.entries(opponentStats).map(([opponent, stats]) => ({
+            opponent,
+            winRate: ((stats.wins / stats.total) * 100).toFixed(1),
+            total: stats.total,
+            wins: stats.wins,
+            losses: stats.losses
+        }));
+
         return `
-            <div class="rpg-stats-section">
-                <div class="rpg-stat-row" style="text-align: center; margin-bottom: 24px;">
-                    <div class="rpg-stat-label">試合結果スコア</div>
-                    <div style="font-size: 40px; font-weight: bold; color: #00ff00; margin: 16px 0;">
-                        ${teamScore} - ${enemyScore}
-                    </div>
-                    <div class="rpg-stat-label" style="font-size: 14px; color: #888; margin-top: 8px;">
-                        自チーム ${teamScore > enemyScore ? '🏆 勝利' : teamScore < enemyScore ? '❌ 敗北' : '⚖️ 引分'}
-                    </div>
+            <div class="rpg-stats-section" style="max-height: 600px; overflow-y: auto;">
+                <!-- ステージ別勝率テーブル -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #ffff00; margin-bottom: 15px; font-size: 18px;">🗺️ ステージ別勝率</h3>
+                    <table class="stats-table" id="stage-stats-table" style="width: 100%; border-collapse: collapse; background: rgba(0, 0, 0, 0.3);">
+                        <thead>
+                            <tr style="background: rgba(255, 255, 255, 0.1); border-bottom: 2px solid #ffff00;">
+                                <th style="padding: 10px; text-align: left; cursor: pointer; user-select: none;" data-sort="stage">
+                                    ステージ名 <span class="sort-indicator">▼</span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="winRate">
+                                    勝率(%) <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="total">
+                                    試合数 <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="wins">
+                                    勝利数 <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="losses">
+                                    敗北数 <span class="sort-indicator"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="stage-stats-tbody">
+                            ${stageData.map(data => `
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <td style="padding: 10px; color: #fff;">${data.stage}</td>
+                                    <td style="padding: 10px; text-align: center; color: #00ff00; font-weight: bold;">${data.winRate}%</td>
+                                    <td style="padding: 10px; text-align: center; color: #fff;">${data.total}</td>
+                                    <td style="padding: 10px; text-align: center; color: #00ff00;">${data.wins}</td>
+                                    <td style="padding: 10px; text-align: center; color: #ff0000;">${data.losses}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
-                
-                <div class="rpg-kda-section">
-                    <div class="rpg-kda-title">KDA (キル/デス/アシスト)</div>
-                    <div class="rpg-kda-values">
-                        <span style="color: #00ff00;">${kills}</span>
-                        <span class="rpg-kda-separator">/</span>
-                        <span style="color: #ff0000;">${deaths}</span>
-                        <span class="rpg-kda-separator">/</span>
-                        <span style="color: #ffff00;">${assists}</span>
-                    </div>
+
+                <!-- エージェント別勝率テーブル -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #ffff00; margin-bottom: 15px; font-size: 18px;">🎭 エージェント別勝率</h3>
+                    <table class="stats-table" id="agent-stats-table" style="width: 100%; border-collapse: collapse; background: rgba(0, 0, 0, 0.3);">
+                        <thead>
+                            <tr style="background: rgba(255, 255, 255, 0.1); border-bottom: 2px solid #ffff00;">
+                                <th style="padding: 10px; text-align: left; cursor: pointer; user-select: none;" data-sort="agent">
+                                    エージェント名 <span class="sort-indicator">▼</span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="winRate">
+                                    勝率(%) <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="total">
+                                    試合数 <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="wins">
+                                    勝利数 <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="losses">
+                                    敗北数 <span class="sort-indicator"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="agent-stats-tbody">
+                            ${agentData.map(data => `
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <td style="padding: 10px; color: #fff;">${data.agent}</td>
+                                    <td style="padding: 10px; text-align: center; color: #00ff00; font-weight: bold;">${data.winRate}%</td>
+                                    <td style="padding: 10px; text-align: center; color: #fff;">${data.total}</td>
+                                    <td style="padding: 10px; text-align: center; color: #00ff00;">${data.wins}</td>
+                                    <td style="padding: 10px; text-align: center; color: #ff0000;">${data.losses}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
-                
-                <div class="rpg-stats-grid" style="margin-top: 24px;">
-                    <div class="rpg-stat-item">
-                        <span class="rpg-stat-label">ACS (平均戦闘)</span>
-                        <span class="rpg-stat-value">${latestMatch.acs || 0}</span>
-                    </div>
-                    <div class="rpg-stat-item">
-                        <span class="rpg-stat-label">ADR (ダメージ)</span>
-                        <span class="rpg-stat-value">${latestMatch.adr || 0}</span>
-                    </div>
-                    <div class="rpg-stat-item">
-                        <span class="rpg-stat-label">HS% (ヘッドショット)</span>
-                        <span class="rpg-stat-value">${latestMatch.hsPercent || 0}%</span>
-                    </div>
-                    <div class="rpg-stat-item">
-                        <span class="rpg-stat-label">マップ</span>
-                        <span class="rpg-stat-value" style="font-size: 18px;">${latestMatch.map || '不明'}</span>
-                    </div>
+
+                <!-- 対戦キャラクター別勝率テーブル（既存機能維持） -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #ffff00; margin-bottom: 15px; font-size: 18px;">⚔️ 対戦キャラクター別勝率</h3>
+                    <table class="stats-table" id="opponent-stats-table" style="width: 100%; border-collapse: collapse; background: rgba(0, 0, 0, 0.3);">
+                        <thead>
+                            <tr style="background: rgba(255, 255, 255, 0.1); border-bottom: 2px solid #ffff00;">
+                                <th style="padding: 10px; text-align: left; cursor: pointer; user-select: none;" data-sort="opponent">
+                                    キャラクター名 <span class="sort-indicator">▼</span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="winRate">
+                                    勝率(%) <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="total">
+                                    試合数 <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="wins">
+                                    勝利数 <span class="sort-indicator"></span>
+                                </th>
+                                <th style="padding: 10px; text-align: center; cursor: pointer; user-select: none;" data-sort="losses">
+                                    敗北数 <span class="sort-indicator"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="opponent-stats-tbody">
+                            ${opponentData.map(data => `
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <td style="padding: 10px; color: #fff;">${data.opponent}</td>
+                                    <td style="padding: 10px; text-align: center; color: #00ff00; font-weight: bold;">${data.winRate}%</td>
+                                    <td style="padding: 10px; text-align: center; color: #fff;">${data.total}</td>
+                                    <td style="padding: 10px; text-align: center; color: #00ff00;">${data.wins}</td>
+                                    <td style="padding: 10px; text-align: center; color: #ff0000;">${data.losses}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
             </div>
+            <script>
+                // テーブルソート機能を追加
+                (function() {
+                    const tables = ['stage-stats-table', 'agent-stats-table', 'opponent-stats-table'];
+                    
+                    tables.forEach(tableId => {
+                        const table = document.getElementById(tableId);
+                        if (!table) return;
+                        
+                        const headers = table.querySelectorAll('thead th[data-sort]');
+                        const tbody = table.querySelector('tbody');
+                        
+                        let currentSort = { column: null, ascending: true };
+                        
+                        headers.forEach(header => {
+                            header.addEventListener('click', function() {
+                                const sortBy = this.getAttribute('data-sort');
+                                const isAscending = currentSort.column === sortBy ? !currentSort.ascending : true;
+                                
+                                currentSort = { column: sortBy, ascending: isAscending };
+                                
+                                // すべてのインジケーターをリセット
+                                headers.forEach(h => {
+                                    h.querySelector('.sort-indicator').textContent = '';
+                                });
+                                
+                                // 現在のソートインジケーターを設定
+                                this.querySelector('.sort-indicator').textContent = isAscending ? '▲' : '▼';
+                                
+                                // 行を配列に変換
+                                const rows = Array.from(tbody.querySelectorAll('tr'));
+                                
+                                // ソート
+                                rows.sort((a, b) => {
+                                    let aVal, bVal;
+                                    const cellIndex = Array.from(headers).indexOf(this);
+                                    
+                                    if (sortBy === 'winRate' || sortBy === 'total' || sortBy === 'wins' || sortBy === 'losses') {
+                                        aVal = parseFloat(a.children[cellIndex].textContent) || 0;
+                                        bVal = parseFloat(b.children[cellIndex].textContent) || 0;
+                                    } else {
+                                        aVal = a.children[cellIndex].textContent.toLowerCase();
+                                        bVal = b.children[cellIndex].textContent.toLowerCase();
+                                    }
+                                    
+                                    if (aVal < bVal) return isAscending ? -1 : 1;
+                                    if (aVal > bVal) return isAscending ? 1 : -1;
+                                    return 0;
+                                });
+                                
+                                // 再描画
+                                rows.forEach(row => tbody.appendChild(row));
+                            });
+                        });
+                    });
+                })();
+            </script>
         `;
     }
     
