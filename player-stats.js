@@ -123,20 +123,38 @@ class PlayerStatsManager {
         const container = document.getElementById('recent-matches');
         if (!container) return;
         
-        const matches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        // 新旧両方のキーからデータを取得してマージ
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        
+        // 重複を排除してマージ
+        const matchesMap = new Map();
+        [...valorantGallery, ...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
+            if (match.id) {
+                matchesMap.set(match.id, match);
+            }
+        });
+        
+        const matches = Array.from(matchesMap.values());
         
         if (matches.length === 0) {
             container.innerHTML = '<p class="no-data">試合記録がまだありません</p>';
             return;
         }
         
-        container.innerHTML = matches.map(match => `
+        container.innerHTML = matches.map(match => {
+            // agent プロパティも認識するように修正
+            const character = match.agent || match.character || 'Unknown';
+            return `
             <div class="match-item ${match.result.toLowerCase()}">
                 <span class="match-result">${match.result}</span>
-                <span class="match-character">キャラ: ${match.character || 'Unknown'}</span>
-                <span class="match-rounds">ラウンド: ${match.rounds || '0-0'}</span>
+                <span class="match-character">キャラ: ${character}</span>
+                <span class="match-rounds">ラウンド: ${match.rounds || match.score || '0-0'}</span>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 }
 
