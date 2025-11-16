@@ -2259,7 +2259,7 @@ class App {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: 100,
+                        suggestedMax: 105,
                         ticks: {
                             callback: function(value) {
                                 return value + '%';
@@ -2267,7 +2267,8 @@ class App {
                             color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#aaa',
                             font: {
                                 size: 12
-                            }
+                            },
+                            stepSize: 20
                         },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)'
