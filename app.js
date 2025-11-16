@@ -11,6 +11,14 @@ class App {
         this.lastSuccessfulAPICall = Date.now();
         this.consecutiveErrors = 0;
         
+        // パフォーマンス最適化: マッチデータのキャッシュ
+        this.cachedMatchData = null;
+        this.lastDataLoadTime = 0;
+        this.DATA_CACHE_TTL = 5000; // 5秒間キャッシュを保持
+        
+        // チャート更新のデバウンス用タイマー
+        this.chartUpdateTimer = null;
+        
         // サービスの初期化
         this.initializeServices();
         
@@ -132,8 +140,8 @@ class App {
     // テーマ変更時にグラフを再描画
     refreshChartsForTheme() {
         if (this.currentPage === 'dashboard') {
-            this.renderWinRateTrendChart();
-            this.renderCharacterUsageChart();
+            // デバウンスを使用してパフォーマンス向上
+            this.scheduleChartUpdate();
         }
     }
     
@@ -2039,9 +2047,9 @@ class App {
                 if (gamesPlayedEl) gamesPlayedEl.textContent = `${totalMatches}`;
             }
 
-            // グラフを更新
-            this.renderWinRateTrendChart();
-            this.renderCharacterUsageChart();
+            // キャッシュを無効化して、グラフを更新（デバウンス版を使用）
+            this.cachedMatchData = null;
+            this.scheduleChartUpdate();
         } catch (e) {
             console.warn('Failed to store match and refresh stats:', e);
         }
@@ -2112,6 +2120,53 @@ class App {
         }
     }
     
+    // パフォーマンス最適化: マッチデータを読み込んでキャッシュ
+    loadMatchDataWithCache(forceReload = false) {
+        const now = Date.now();
+        
+        // キャッシュが有効で強制リロードでない場合はキャッシュを返す
+        if (!forceReload && this.cachedMatchData && (now - this.lastDataLoadTime) < this.DATA_CACHE_TTL) {
+            return this.cachedMatchData;
+        }
+        
+        // localStorageから全データを読み込み
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        
+        // 重複を排除してマージ
+        const matchesMap = new Map();
+        [...valorantGallery, ...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
+            if (match.id) {
+                matchesMap.set(match.id, match);
+            }
+        });
+        
+        const matches = Array.from(matchesMap.values());
+        
+        // キャッシュを更新
+        this.cachedMatchData = matches;
+        this.lastDataLoadTime = now;
+        
+        return matches;
+    }
+    
+    // チャート更新をデバウンス（連続呼び出しを制限）
+    scheduleChartUpdate() {
+        // 既存のタイマーをクリア
+        if (this.chartUpdateTimer) {
+            clearTimeout(this.chartUpdateTimer);
+        }
+        
+        // 新しいタイマーを設定（300ms後に実行）
+        this.chartUpdateTimer = setTimeout(() => {
+            this.renderWinRateTrendChart();
+            this.renderCharacterUsageChart();
+            this.chartUpdateTimer = null;
+        }, 300);
+    }
+    
     // チャート初期化
     initCharts() {
         // ダッシュボードページに遷移した時にグラフを描画
@@ -2131,22 +2186,11 @@ class App {
             this.winRateTrendChart.destroy();
         }
 
-        // 新旧両方のキーからデータを取得してマージ（sf6_gallery と valorant_gallery の互換性）
-        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
-        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        // パフォーマンス最適化: キャッシュからデータを取得
+        const allMatches = this.loadMatchDataWithCache();
         
-        // 重複を排除してマージ
-        const matchesMap = new Map();
-        [...valorantGallery, ...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
-            if (match.id) {
-                matchesMap.set(match.id, match);
-            }
-        });
-        
-        const matches = Array.from(matchesMap.values())
-            .sort((a, b) => (b.id || 0) - (a.id || 0)); // 新しい順
+        // 新しい順にソート
+        const matches = allMatches.sort((a, b) => (b.id || 0) - (a.id || 0));
 
         if (matches.length === 0) {
             // データがない場合は空のグラフを表示
@@ -2442,21 +2486,8 @@ class App {
             this.characterUsageChart.destroy();
         }
 
-        // 新旧両方のキーからデータを取得してマージ（sf6_gallery と valorant_gallery の互換性）
-        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
-        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
-        
-        // 重複を排除してマージ
-        const matchesMap = new Map();
-        [...valorantGallery, ...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
-            if (match.id) {
-                matchesMap.set(match.id, match);
-            }
-        });
-        
-        const matches = Array.from(matchesMap.values());
+        // パフォーマンス最適化: キャッシュからデータを取得
+        const matches = this.loadMatchDataWithCache();
 
         if (matches.length === 0) {
             // データがない場合は空のグラフを表示
@@ -2874,19 +2905,8 @@ class App {
     
     // 試合データを取得するヘルパーメソッド
     getMatchesData() {
-        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
-        const galleryMatches = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
-        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        
-        const matchesMap = new Map();
-        [...valorantMatches, ...galleryMatches, ...recentMatches].forEach(match => {
-            if (match.id) {
-                matchesMap.set(match.id, match);
-            }
-        });
-        
-        return Array.from(matchesMap.values())
-            .sort((a, b) => (b.id || 0) - (a.id || 0));
+        // パフォーマンス最適化: キャッシュを使用
+        return this.loadMatchDataWithCache().sort((a, b) => (b.id || 0) - (a.id || 0));
     }
 
     // 勝率詳細モーダルを閉じる
@@ -2899,21 +2919,8 @@ class App {
 
     // 勝率詳細データを読み込む
     loadWinRateDetailData() {
-        // 新旧両方のキーからデータを取得してマージ（sf6_gallery と valorant_gallery の互換性）
-        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
-        const sf6Gallery = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
-        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
-        
-        // 重複を排除してマージ
-        const matchesMap = new Map();
-        [...valorantGallery, ...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
-            if (match.id) {
-                matchesMap.set(match.id, match);
-            }
-        });
-        
-        const matches = Array.from(matchesMap.values());
+        // パフォーマンス最適化: キャッシュからデータを取得
+        const matches = this.loadMatchDataWithCache();
 
         if (matches.length === 0) {
             document.getElementById('opponent-stats-list').innerHTML = '<p class="no-data">試合データがありません</p>';
@@ -3130,9 +3137,8 @@ class App {
         // ダッシュボード目標を読み込み
         this.loadDashboardGoals();
 
-        // グラフを描画
-        this.renderWinRateTrendChart();
-        this.renderCharacterUsageChart();
+        // グラフを描画（デバウンスを使用してパフォーマンス向上）
+        this.scheduleChartUpdate();
     }
     
     loadAnalysis() {
@@ -3217,20 +3223,8 @@ class App {
         const container = document.getElementById('recent-matches');
         if (!container) return;
         
-        // 両方のストレージからデータを取得してマージ
-        const sf6Gallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
-        const recentMatches = JSON.parse(localStorage.getItem('recentMatches') || '[]');
-        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
-        
-        // 重複を排除してマージ
-        const matchesMap = new Map();
-        [...sf6Gallery, ...recentMatches, ...valorantMatches].forEach(match => {
-            if (match.id) {
-                matchesMap.set(match.id, match);
-            }
-        });
-        
-        const matches = Array.from(matchesMap.values())
+        // パフォーマンス最適化: キャッシュからデータを取得
+        const matches = this.loadMatchDataWithCache()
             .sort((a, b) => (b.id || 0) - (a.id || 0)) // 新しい順
             .slice(0, 10); // 最新10件のみ表示
         
@@ -7232,6 +7226,9 @@ class App {
         localStorage.setItem('recentMatches', JSON.stringify(filteredRecent));
 
         this.showToast(`${count}試合のデータを削除しました`, 'success');
+
+        // キャッシュを無効化
+        this.cachedMatchData = null;
 
         // 選択をクリア
         this.selectedMatches.clear();
