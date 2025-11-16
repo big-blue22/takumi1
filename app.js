@@ -2157,33 +2157,56 @@ class App {
             return;
         }
 
-        // 直近10試合ごとの勝率推移を計算
+        // 直近10試合ごとの勝率推移を計算（最大50試合 = 5区間）
         const batchSize = 10;
+        const maxBatches = 5; // 最大5区間（50試合分）
         const batches = [];
-        for (let i = 0; i < matches.length; i += batchSize) {
+        const matchesToProcess = Math.min(matches.length, batchSize * maxBatches);
+        
+        for (let i = 0; i < matchesToProcess; i += batchSize) {
             const batch = matches.slice(i, i + batchSize);
             const wins = batch.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
             const winRate = (wins / batch.length * 100).toFixed(1);
+            
             // より読みやすいラベル形式
-            const label = i === 0 ? '直近10試合' : `${i + 1}～${Math.min(i + batchSize, matches.length)}試合目`;
+            let label;
+            if (i === 0) {
+                label = '直近10試合';
+            } else {
+                const startMatch = i + 1;
+                const endMatch = i + 10;
+                label = `${startMatch}-${endMatch}試合前`;
+            }
+            
             batches.push({
                 label: label,
                 winRate: parseFloat(winRate)
             });
         }
+        
+        // データを古い順にするため反転（グラフで左から右への推移を表現）
+        batches.reverse();
 
-        // グラフの描画 - 勝率推移のみに集中
+        // グラフの描画 - 勝率推移を折れ線グラフで表示
         this.winRateTrendChart = new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: batches.map(b => b.label),
                 datasets: [{
                     label: '勝率',
                     data: batches.map(b => b.winRate),
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    borderRadius: 6
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointHoverBorderColor: '#fff'
                 }]
             },
             options: {
