@@ -19,6 +19,11 @@ class App {
         // チャート更新のデバウンス用タイマー
         this.chartUpdateTimer = null;
         
+        // パフォーマンス最適化: 重複初期化を防ぐフラグ
+        this.isMainAppInitialized = false;
+        this.isEventListenersSetup = false;
+        this.isThemeInitialized = false;
+        
         // サービスの初期化
         this.initializeServices();
         
@@ -122,6 +127,11 @@ class App {
     
     // テーマ管理
     initTheme() {
+        // 既に初期化済みの場合はスキップ（重複イベントリスナーを防ぐ）
+        if (this.isThemeInitialized) {
+            return;
+        }
+        
         this.applyTheme(this.currentTheme);
         
         const themeBtn = document.getElementById('theme-toggle-btn');
@@ -135,6 +145,8 @@ class App {
                 this.refreshChartsForTheme();
             });
         }
+        
+        this.isThemeInitialized = true;
     }
     
     // テーマ変更時にグラフを再描画
@@ -306,6 +318,14 @@ class App {
 
     // メインアプリを初期化(API接続成功時)
     async initializeMainApp() {
+        // 既に初期化済みの場合はスキップ（重複初期化を防ぐ）
+        if (this.isMainAppInitialized) {
+            console.log('メインアプリは既に初期化済みです。スキップします。');
+            return;
+        }
+        
+        console.log('メインアプリを初期化中...');
+        
         // 統一APIマネージャーからGeminiServiceへのAPIキー同期を確保
         if (window.unifiedApiManager && window.unifiedApiManager.isConfigured()) {
             window.unifiedApiManager.updateLegacyAPIKeys();
@@ -342,6 +362,10 @@ class App {
         setTimeout(() => {
             this.showLoginModal();
         }, 100);
+        
+        // 初期化完了フラグを設定
+        this.isMainAppInitialized = true;
+        console.log('メインアプリの初期化が完了しました。');
     }
 
     // API設定チェックと初期化（従来のメソッド、互換性のため残す）
@@ -796,6 +820,14 @@ class App {
     
     // イベントリスナー設定
     setupEventListeners() {
+        // 既に設定済みの場合はスキップ（重複イベントリスナーを防ぐ）
+        if (this.isEventListenersSetup) {
+            console.log('イベントリスナーは既に設定済みです。スキップします。');
+            return;
+        }
+        
+        console.log('イベントリスナーを設定中...');
+        
         // ログイン/登録タブ切り替え
         const tabBtns = document.querySelectorAll('.tab-btn');
         tabBtns.forEach(btn => {
@@ -974,6 +1006,10 @@ class App {
                 this.showWinRateDetailModal();
             });
         }
+        
+        // イベントリスナー設定完了フラグを設定
+        this.isEventListenersSetup = true;
+        console.log('イベントリスナーの設定が完了しました。');
     }
     
     // タブ切り替え
