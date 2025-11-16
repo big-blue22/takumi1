@@ -1734,8 +1734,8 @@ class App {
 
         // 数値入力をリセット
         const resetValues = {
-            'team-score': 13,
-            'enemy-score': 10,
+            'team-score': 0,
+            'enemy-score': 0,
             'kills': 0,
             'deaths': 0,
             'assists': 0,
