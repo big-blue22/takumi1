@@ -2317,11 +2317,14 @@ class App {
             }
         });
 
-        // 最も勝率が低いステージを抽出（試合数が3以上のもの）
+        // 総試合数が3以上あれば、各項目は1試合以上で表示可能にする
+        const minMatchesPerCategory = matches.length >= 3 ? 1 : 3;
+        
+        // 最も勝率が低いステージを抽出
         let lowestStageWinRate = null;
         if (Object.keys(stageStats).length > 0) {
             const stageWinRateData = Object.entries(stageStats)
-                .filter(([_, stats]) => stats.total >= 3) // 最低3試合以上
+                .filter(([_, stats]) => stats.total >= minMatchesPerCategory)
                 .map(([stage, stats]) => ({
                     stage,
                     winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
@@ -2336,11 +2339,11 @@ class App {
             }
         }
 
-        // 最も勝率が低いエージェントを抽出（試合数が3以上のもの）
+        // 最も勝率が低いエージェントを抽出
         let lowestAgentWinRate = null;
         if (Object.keys(agentStats).length > 0) {
             const agentWinRateData = Object.entries(agentStats)
-                .filter(([_, stats]) => stats.total >= 3) // 最低3試合以上
+                .filter(([_, stats]) => stats.total >= minMatchesPerCategory)
                 .map(([agent, stats]) => ({
                     agent,
                     winRate: parseFloat((stats.wins / stats.total * 100).toFixed(1)),
