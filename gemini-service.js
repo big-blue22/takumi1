@@ -8,7 +8,7 @@ class GeminiService {
             'https://generativelanguage.googleapis.com/v1'
         ];
     this.baseUrl = this.baseUrls[0]; // デフォルト
-    this.chatModel = 'gemini-1.5-flash'; // 指定モデル：Gemini 1.5 Flash
+    this.chatModel = 'gemini-1.5-flash-latest'; // 指定モデル：Gemini 1.5 Flash
         this.chatHistory = [];
         this.retryDelay = 1000; // 初期リトライ間隔（指数バックオフの基準）
         this.maxRetries = 3; // 503エラー用の最大リトライ回数
@@ -36,7 +36,7 @@ class GeminiService {
         };
         
         // フォールバック制御フラグ
-        this.enableModelFallback = false;   // モデル変更はデフォルト無効（常に gemini-1.5-flash を使用）
+        this.enableModelFallback = false;   // モデル変更はデフォルト無効（常に gemini-1.5-flash-latest を使用）
         this.enableVersionFallback = true;  // v1beta→v1 などエンドポイントのバージョン切替は既定で許可
         
         // サーバー状態監視
