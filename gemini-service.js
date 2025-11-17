@@ -8,7 +8,7 @@ class GeminiService {
             'https://generativelanguage.googleapis.com/v1'
         ];
     this.baseUrl = this.baseUrls[0]; // デフォルト
-    this.chatModel = 'gemini-1.5-flash'; // 指定モデル：Gemini 1.5 Flash
+    this.chatModel = 'gemini-2.5-flash-latest'; // 指定モデル：Gemini 2.5 Flash
         this.chatHistory = [];
         this.retryDelay = 1000; // 初期リトライ間隔（指数バックオフの基準）
         this.maxRetries = 3; // 503エラー用の最大リトライ回数
@@ -16,7 +16,7 @@ class GeminiService {
         // 統一APIマネージャとの連携
         this.initializeWithUnifiedAPI();
         
-        // Gemini 1.5 Flash用の最適化されたパラメータ
+        // Gemini 2.5 Flash用の最適化されたパラメータ
         this.chatParams = {
             temperature: 0.7,
             maxOutputTokens: 8192, // より大きなトークン数に緩和
@@ -36,7 +36,7 @@ class GeminiService {
         };
         
         // フォールバック制御フラグ
-        this.enableModelFallback = false;   // モデル変更はデフォルト無効（常に gemini-1.5-flash を使用）
+        this.enableModelFallback = false;   // モデル変更はデフォルト無効（常に gemini-2.5-flash-latest を使用）
         this.enableVersionFallback = true;  // v1beta→v1 などエンドポイントのバージョン切替は既定で許可
         
         // サーバー状態監視
@@ -155,13 +155,13 @@ class GeminiService {
         return isValid;
     }
     
-    // APIキーの形式検証 (Gemini 1.5 Flash対応)
+    // APIキーの形式検証 (Gemini 2.5 Flash対応)
     validateApiKeyFormat() {
         if (!this.apiKey) return false;
         
         // Gemini APIキーの基本的な形式チェック (2024年以降の形式にも対応)
         const isValidFormat = this.apiKey.startsWith('AIza') && this.apiKey.length >= 35 && this.apiKey.length <= 45;
-        console.log('🔍 Gemini 1.5 Flash用APIキー形式チェック:', {
+        console.log('🔍 Gemini 2.5 Flash用APIキー形式チェック:', {
             startsWithAIza: this.apiKey.startsWith('AIza'),
             length: this.apiKey.length,
             lengthInRange: this.apiKey.length >= 35 && this.apiKey.length <= 45,
@@ -188,49 +188,77 @@ class GeminiService {
             throw new Error('APIキーが設定されていません');
         }
 
-        try {
-            console.log('🔄 Gemini 1.5 Flash API接続テスト中...');
-            console.log('🔑 APIキー:', this.apiKey.substring(0, 10) + '...');
-            console.log('🎯 使用モデル:', this.chatModel, '(Gemini 1.5 Flash)');
-            
-            // 最もシンプルなリクエストでテスト
-            const simpleRequestBody = {
-                contents: [{
-                    parts: [{ text: 'Hello from Gemini 1.5 Flash' }]
-                }]
-            };
-            
-            const url = `${this.baseUrl}/models/${this.chatModel}:generateContent?key=${this.apiKey}`;
-            console.log('📍 テストURL:', url);
-            
-            const response = await this.makeAPIRequest(url, simpleRequestBody);
-            const data = await response.json();
-            
-            console.log('✅ Gemini API接続テスト成功:', data);
-            return { 
-                success: true, 
-                message: '接続に成功しました',
-                model: this.chatModel,
-                usage: data.usageMetadata || {}
-            };
-        } catch (error) {
-            console.error('❌ Gemini API接続テスト失敗:', error);
-            
-            let userFriendlyMessage = '接続テストに失敗しました';
-            if (error.message.includes('API エンドポイントが見つかりません')) {
-                userFriendlyMessage = 'APIモデルまたはエンドポイントに問題があります';
-            } else if (error.message.includes('APIキーが無効') || error.message.includes('401') || error.message.includes('403')) {
-                userFriendlyMessage = 'APIキーが無効か、権限がありません';
-            } else if (error.message.includes('レート制限') || error.message.includes('429')) {
-                userFriendlyMessage = 'APIの利用制限に達しています';
-            } else if (error.message.includes('ネットワーク接続')) {
-                userFriendlyMessage = 'インターネット接続を確認してください';
-            } else if (error.message.includes('503')) {
-                userFriendlyMessage = 'Gemini APIサービスに問題があります';
+        // 試すべきモデル名のリスト（優先順）
+        const modelNamesToTry = [
+            'gemini-2.5-flash-latest',
+            'gemini-2.5-flash',
+            'gemini-1.5-flash-latest',
+            'gemini-1.5-flash',
+            'gemini-pro'
+        ];
+
+        let lastError = null;
+
+        for (const modelName of modelNamesToTry) {
+            try {
+                console.log('🔄 Gemini API接続テスト中...');
+                console.log('🔑 APIキー:', this.apiKey.substring(0, 10) + '...');
+                console.log('🎯 試行モデル:', modelName);
+                
+                // 最もシンプルなリクエストでテスト
+                const simpleRequestBody = {
+                    contents: [{
+                        parts: [{ text: 'Hello' }]
+                    }]
+                };
+                
+                const url = `${this.baseUrl}/models/${modelName}:generateContent?key=${this.apiKey}`;
+                console.log('📍 テストURL:', url.replace(/key=[^&]+/, 'key=***'));
+                
+                const response = await this.makeAPIRequest(url, simpleRequestBody);
+                const data = await response.json();
+                
+                // 成功した場合、このモデル名を保存
+                this.chatModel = modelName;
+                console.log('✅ Gemini API接続テスト成功! 使用モデル:', modelName);
+                return { 
+                    success: true, 
+                    message: '接続に成功しました',
+                    model: this.chatModel,
+                    usage: data.usageMetadata || {}
+                };
+            } catch (error) {
+                console.warn(`⚠️ モデル ${modelName} での接続失敗:`, error.message);
+                lastError = error;
+                
+                // 404エラーの場合は次のモデルを試す
+                if (error.message.includes('API エンドポイントが見つかりません') || 
+                    error.message.includes('404')) {
+                    continue;
+                }
+                
+                // 404以外のエラー（認証エラーなど）の場合は即座に失敗
+                break;
             }
-            
-            throw new Error(`${userFriendlyMessage}: ${error.message}`);
         }
+
+        // すべてのモデルで失敗した場合
+        console.error('❌ すべてのモデルでGemini API接続テスト失敗');
+        
+        let userFriendlyMessage = '接続テストに失敗しました';
+        if (lastError.message.includes('API エンドポイントが見つかりません') || lastError.message.includes('404')) {
+            userFriendlyMessage = 'APIモデルが見つかりません。Google Cloud ConsoleでGemini APIが有効になっているか確認してください';
+        } else if (lastError.message.includes('APIキーが無効') || lastError.message.includes('401') || lastError.message.includes('403')) {
+            userFriendlyMessage = 'APIキーが無効か、権限がありません';
+        } else if (lastError.message.includes('レート制限') || lastError.message.includes('429')) {
+            userFriendlyMessage = 'APIの利用制限に達しています';
+        } else if (lastError.message.includes('ネットワーク接続')) {
+            userFriendlyMessage = 'インターネット接続を確認してください';
+        } else if (lastError.message.includes('503')) {
+            userFriendlyMessage = 'Gemini APIサービスに問題があります';
+        }
+        
+        throw new Error(`${userFriendlyMessage}: ${lastError.message}`);
     }
 
     // サーバー状態チェック（リクエスト前に呼び出し）- 診断モード用に無効化
@@ -304,11 +332,11 @@ class GeminiService {
         }
     }
 
-    // Gemini 1.5 Flash用の高度なシステムプロンプトを生成
+    // Gemini 2.5 Flash用の高度なシステムプロンプトを生成
     generateSystemPrompt(context) {
         const { game, stats, goals } = context;
         
-        return `あなたは Gemini 1.5 Flash を活用した最新のeSportsパフォーマンスコーチです。高度な分析能力と迅速な応答を特徴とし、以下の情報を基に専門的なアドバイスを提供してください：
+        return `あなたは Gemini 2.5 Flash を活用した最新のeSportsパフォーマンスコーチです。高度な分析能力と迅速な応答を特徴とし、以下の情報を基に専門的なアドバイスを提供してください：
 
 【プレイヤー情報】
 - ゲーム: ${game.name} (${game.category})
@@ -321,12 +349,12 @@ class GeminiService {
 【設定目標】
 ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join('\n') : '- まだ目標が設定されていません'}
 
-【対話方針 (VALORANT専門 - Gemini 1.5 Flash Enhanced)】
+【対話方針 (VALORANT専門 - Gemini 2.5 Flash Enhanced)】
 1. ${game.name}の最新メタとトレンド(エージェント構成、マップ戦略)を考慮した具体的アドバイス
 2. エージェント別の立ち回り、アビリティ使用タイミング、マップコントロールに関する実践的な提案
 3. プレイヤーの現在レベルに適した段階的スキルアップ計画(エイム練習、ポジショニング、チーム連携)
 4. メンタル面も含む総合的なパフォーマンス向上支援
-5. 迅速で的確な回答（Gemini 1.5 Flashの高速処理能力を活用）
+5. 迅速で的確な回答（Gemini 2.5 Flashの高速処理能力を活用）
 
 回答は具体的で実践しやすく、プレイヤーのモチベーション向上にも配慮してください。
 2. プレイヤーの現在のスキルレベルに適した内容にする
