@@ -1479,6 +1479,13 @@ class App {
 
             if (analysisSource.value === 'file') {
                 analysisMode = 'file';
+                
+                // ファイルが1件もアップロードされていない場合のバリデーション
+                const allFiles = this.getLocalDataSources();
+                if (allFiles.length === 0) {
+                    throw new Error('アップロードされたファイルがありません。設定ページからファイルをアップロードしてください。');
+                }
+                
                 const selectedCheckboxes = document.querySelectorAll('input[name="source-file"]:checked');
 
                 if (selectedCheckboxes.length === 0) {
@@ -3185,9 +3192,10 @@ class App {
 
         const files = this.getLocalDataSources();
 
-        if (files.length > 0) {
-            fileRadio.disabled = false;
+        // ファイルラジオボタンは常に有効
+        fileRadio.disabled = false;
 
+        if (files.length > 0) {
             // "Select All" checkbox
             const selectAllHtml = `
                 <div class="checkbox-item">
@@ -3216,20 +3224,35 @@ class App {
             });
 
         } else {
-            fileRadio.disabled = true;
-            fileListContainer.innerHTML = '<p>アップロードされたファイルはありません</p>';
+            // ファイルがない場合はリッチな案内UIを表示
+            fileListContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 2px dashed rgba(255, 193, 7, 0.3);">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
+                    <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">アップロードされたファイルがありません</p>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">分析に使用するファイルを設定ページからアップロードしてください</p>
+                    <button class="btn btn-primary" onclick="app.showPage('settings')" style="padding: 0.75rem 2rem; font-size: 1rem;">
+                        ⚙️ 設定ページへ移動
+                    </button>
+                </div>
+            `;
         }
 
         // Add event listeners for radio buttons
         sourceRadios.forEach(radio => {
             radio.addEventListener('change', () => {
-                if (radio.value === 'file' && !fileRadio.disabled) {
+                if (radio.value === 'file') {
                     fileSelectorContainer.style.display = 'block';
                 } else {
                     fileSelectorContainer.style.display = 'none';
                 }
             });
         });
+
+        // 初期表示時：デフォルトで「アップロードしたファイル」が選択されている場合、コンテナを表示
+        const selectedRadio = document.querySelector('input[name="analysis-source"]:checked');
+        if (selectedRadio && selectedRadio.value === 'file') {
+            fileSelectorContainer.style.display = 'block';
+        }
     }
     
     loadGoals() {
