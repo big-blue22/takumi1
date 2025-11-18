@@ -474,3 +474,124 @@
         flex-direction: column;
     }
 }
+
+/* ========================================
+   Selection Mode - Selected Card Styling
+   ======================================== */
+
+/* カードが選択されたときの強調表示 */
+.gallery-grid.selection-mode .valorant-match-card:has(input:checked) {
+    border: 3px solid var(--color-accent) !important;
+    background: linear-gradient(145deg, 
+        rgba(233, 69, 96, 0.15), 
+        rgba(22, 33, 62, 0.95)
+    ) !important;
+    box-shadow: 
+        0 0 0 4px rgba(233, 69, 96, 0.4),
+        0 12px 32px rgba(233, 69, 96, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.03) translateY(-2px) !important;
+    animation: selectedPulse 2s ease-in-out infinite;
+    position: relative;
+}
+
+/* 選択カードの左ボーダーのオーバーライド */
+.gallery-grid.selection-mode .valorant-match-card.win:has(input:checked),
+.gallery-grid.selection-mode .valorant-match-card.loss:has(input:checked),
+.gallery-grid.selection-mode .valorant-match-card.draw:has(input:checked) {
+    border-left: 3px solid var(--color-accent) !important;
+}
+
+/* 選択カードのグロー効果 */
+.gallery-grid.selection-mode .valorant-match-card:has(input:checked)::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 14px;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(233, 69, 96, 0.3),
+        transparent,
+        rgba(233, 69, 96, 0.3),
+        transparent
+    );
+    background-size: 400% 400%;
+    animation: borderGlow 3s ease-in-out infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* ライトモード - 選択カード */
+[data-theme="light"] .gallery-grid.selection-mode .valorant-match-card:has(input:checked) {
+    border: 3px solid var(--color-primary) !important;
+    background: linear-gradient(145deg, 
+        rgba(59, 130, 246, 0.12), 
+        rgba(255, 255, 255, 0.98)
+    ) !important;
+    box-shadow: 
+        0 0 0 4px rgba(59, 130, 246, 0.3),
+        0 12px 32px rgba(59, 130, 246, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+[data-theme="light"] .gallery-grid.selection-mode .valorant-match-card.win:has(input:checked),
+[data-theme="light"] .gallery-grid.selection-mode .valorant-match-card.loss:has(input:checked),
+[data-theme="light"] .gallery-grid.selection-mode .valorant-match-card.draw:has(input:checked) {
+    border-left: 3px solid var(--color-primary) !important;
+}
+
+[data-theme="light"] .gallery-grid.selection-mode .valorant-match-card:has(input:checked)::before {
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(59, 130, 246, 0.25),
+        transparent,
+        rgba(59, 130, 246, 0.25),
+        transparent
+    );
+}
+
+/* 選択カードのパルスアニメーション */
+@keyframes selectedPulse {
+    0%, 100% {
+        box-shadow: 
+            0 0 0 4px rgba(233, 69, 96, 0.4),
+            0 12px 32px rgba(233, 69, 96, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        box-shadow: 
+            0 0 0 6px rgba(233, 69, 96, 0.6),
+            0 16px 40px rgba(233, 69, 96, 0.7),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+}
+
+/* ボーダーのグローアニメーション */
+@keyframes borderGlow {
+    0%, 100% {
+        background-position: 0% 50%;
+        opacity: 0.8;
+    }
+    50% {
+        background-position: 100% 50%;
+        opacity: 1;
+    }
+}
+
+/* 選択カードのホバー時 */
+.gallery-grid.selection-mode .valorant-match-card:has(input:checked):hover {
+    transform: scale(1.04) translateY(-3px) !important;
+    box-shadow: 
+        0 0 0 5px rgba(233, 69, 96, 0.5),
+        0 16px 40px rgba(233, 69, 96, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+[data-theme="light"] .gallery-grid.selection-mode .valorant-match-card:has(input:checked):hover {
+    box-shadow: 
+        0 0 0 5px rgba(59, 130, 246, 0.4),
+        0 16px 40px rgba(59, 130, 246, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
