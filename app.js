@@ -340,7 +340,12 @@ class App {
         // ゲーム選択とダッシュボード機能の初期化
         this.initGameSelection();
         this.initializeSkillLevel();
-        this.initDailyCoaching();
+        // 日替わりコーチングは非同期で遅延初期化（503エラーの連鎖を防ぐため）
+        setTimeout(() => {
+            this.initDailyCoaching().catch(err => {
+                console.warn('日替わりコーチングの初期化に失敗しました（サーバー混雑の可能性）:', err.message);
+            });
+        }, 2000); // 2秒遅延
         this.initDashboardGoals();
 
         // その他のナビゲーション機能
@@ -4264,7 +4269,7 @@ class App {
     }
 
     // 日替わりコーチング機能の初期化
-    initDailyCoaching() {
+    async initDailyCoaching() {
         // CoachingServiceを初期化
         if (typeof CoachingService !== 'undefined') {
             this.coachingService = new CoachingService();
@@ -4273,8 +4278,8 @@ class App {
             return;
         }
 
-        // 日替わりコーチングを表示
-        this.loadDailyCoaching();
+        // 日替わりコーチングを表示（非同期）
+        await this.loadDailyCoaching();
 
         // 進捗統計を更新
         this.updateCoachingProgress();

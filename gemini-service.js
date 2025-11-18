@@ -10,8 +10,8 @@ class GeminiService {
     this.baseUrl = this.baseUrls[0]; // デフォルト
     this.chatModel = 'gemini-2.5-flash'; // 指定モデル：Gemini 2.5 Flash
         this.chatHistory = [];
-        this.retryDelay = 1000; // 初期リトライ間隔（指数バックオフの基準）
-        this.maxRetries = 3; // 503エラー用の最大リトライ回数
+        this.retryDelay = 2000; // 初期リトライ間隔（指数バックオフの基準）: 2秒
+        this.maxRetries = 5; // 503エラー用の最大リトライ回数
         
         // 統一APIマネージャとの連携
         this.initializeWithUnifiedAPI();
@@ -433,19 +433,36 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                     requestBodySample: JSON.stringify(requestBody).substring(0, 200) + '...'
                 });
                 
+                // サーバー過負荷状態を記録
+                this.serverStatus.isAvailable = false;
+                this.serverStatus.lastError = new Date();
+                this.serverStatus.overloadDetectedAt = Date.now();
+                
                 // 最大リトライ回数をチェック
                 if (retryCount < this.maxRetries) {
-                    // 指数バックオフ: 1秒 -> 2秒 -> 4秒
-                    const waitSeconds = this.retryDelay * Math.pow(2, retryCount) / 1000;
-                    const waitMs = waitSeconds * 1000;
+                    // 改善された指数バックオフ: 2秒 -> 4秒 -> 8秒 -> 16秒 -> 32秒
+                    const waitMs = this.retryDelay * Math.pow(2, retryCount);
+                    const waitSeconds = (waitMs / 1000).toFixed(1);
                     
-                    console.log(`⏳ 503エラー: ${retryCount + 1}回目のリトライを${waitSeconds}秒後に実行します...`);
+                    console.log(`⏳ 503エラー（サーバー過負荷）: ${retryCount + 1}/${this.maxRetries}回目のリトライを${waitSeconds}秒後に実行します...`);
+                    
+                    // ユーザーに通知（初回のみ）
+                    if (retryCount === 0 && window.app) {
+                        try {
+                            window.app.showToast(`AIサーバーが混雑しています。自動的に再試行します...`, 'warning');
+                        } catch (e) {}
+                    }
+                    
                     await this.delay(waitMs);
                     return await this.makeAPIRequest(url, requestBody, retryCount + 1);
                 }
                 
                 // 最大リトライ回数に達した場合、エラーをスロー
+                this.serverStatus.nextRetryAfter = Date.now() + 60000; // 1分後に再試行可能
+                
                 const detailMessage = errorData?.error?.message || 'Service Unavailable';
+                console.warn(`⚠️ 最大リトライ回数(${this.maxRetries})に達しました。次回の試行は1分後に可能です。`);
+                
                 if (detailMessage.includes('quota') || detailMessage.includes('exceeded')) {
                     throw new Error(`APIクォータまたは制限に達しています。しばらく待ってから再試行してください。`);
                 } else if (detailMessage.includes('billing') || detailMessage.includes('payment')) {
@@ -453,9 +470,9 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 } else if (detailMessage.includes('region') || detailMessage.includes('location')) {
                     throw new Error(`地域制限またはアクセス制限があります。お住まいの地域での利用可能性を確認してください。`);
                 } else if (detailMessage.includes('overloaded') || detailMessage.includes('Overloaded')) {
-                    throw new Error(`Gemini AIサービスが一時的に過負荷状態です。数分後に再試行してください。`);
+                    throw new Error(`Gemini AIサービスが混雑しています（${this.maxRetries}回試行済み）。1分後に再度お試しください。`);
                 } else {
-                    throw new Error(`Gemini AIサービスが一時的に利用できません (503)。しばらく待ってから再試行してください。`);
+                    throw new Error(`Gemini AIサービスが一時的に利用できません (503)。${this.maxRetries}回の再試行後も接続できませんでした。1分後に再度お試しください。`);
                 }
             }
 
