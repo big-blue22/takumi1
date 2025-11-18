@@ -8,7 +8,7 @@ class GeminiService {
             'https://generativelanguage.googleapis.com/v1'
         ];
     this.baseUrl = this.baseUrls[0]; // デフォルト
-    this.chatModel = 'gemini-2.5-flash-latest'; // 指定モデル：Gemini 2.5 Flash
+    this.chatModel = 'gemini-2.5-flash'; // 指定モデル：Gemini 2.5 Flash
         this.chatHistory = [];
         this.retryDelay = 1000; // 初期リトライ間隔（指数バックオフの基準）
         this.maxRetries = 3; // 503エラー用の最大リトライ回数
@@ -190,7 +190,6 @@ class GeminiService {
 
         // 試すべきモデル名のリスト（優先順）
         const modelNamesToTry = [
-            'gemini-2.5-flash-latest',
             'gemini-2.5-flash',
             'gemini-1.5-flash-latest',
             'gemini-1.5-flash',
@@ -199,46 +198,54 @@ class GeminiService {
 
         let lastError = null;
 
+        // 各モデルについて、複数のAPIバージョンを試す
         for (const modelName of modelNamesToTry) {
-            try {
-                console.log('🔄 Gemini API接続テスト中...');
-                console.log('🔑 APIキー:', this.apiKey.substring(0, 10) + '...');
-                console.log('🎯 試行モデル:', modelName);
-                
-                // 最もシンプルなリクエストでテスト
-                const simpleRequestBody = {
-                    contents: [{
-                        parts: [{ text: 'Hello' }]
-                    }]
-                };
-                
-                const url = `${this.baseUrl}/models/${modelName}:generateContent?key=${this.apiKey}`;
-                console.log('📍 テストURL:', url.replace(/key=[^&]+/, 'key=***'));
-                
-                const response = await this.makeAPIRequest(url, simpleRequestBody);
-                const data = await response.json();
-                
-                // 成功した場合、このモデル名を保存
-                this.chatModel = modelName;
-                console.log('✅ Gemini API接続テスト成功! 使用モデル:', modelName);
-                return { 
-                    success: true, 
-                    message: '接続に成功しました',
-                    model: this.chatModel,
-                    usage: data.usageMetadata || {}
-                };
-            } catch (error) {
-                console.warn(`⚠️ モデル ${modelName} での接続失敗:`, error.message);
-                lastError = error;
-                
-                // 404エラーの場合は次のモデルを試す
-                if (error.message.includes('API エンドポイントが見つかりません') || 
-                    error.message.includes('404')) {
-                    continue;
+            for (const baseUrl of this.baseUrls) {
+                try {
+                    console.log('🔄 Gemini API接続テスト中...');
+                    console.log('🔑 APIキー:', this.apiKey.substring(0, 10) + '...');
+                    console.log('🎯 試行モデル:', modelName);
+                    console.log('🌐 試行エンドポイント:', baseUrl);
+                    
+                    // 最もシンプルなリクエストでテスト
+                    const simpleRequestBody = {
+                        contents: [{
+                            parts: [{ text: 'Hello' }]
+                        }]
+                    };
+                    
+                    const url = `${baseUrl}/models/${modelName}:generateContent?key=${this.apiKey}`;
+                    console.log('📍 テストURL:', url.replace(/key=[^&]+/, 'key=***'));
+                    
+                    const response = await this.makeAPIRequest(url, simpleRequestBody);
+                    const data = await response.json();
+                    
+                    // 成功した場合、このモデル名とベースURLを保存
+                    this.chatModel = modelName;
+                    this.baseUrl = baseUrl;
+                    console.log('✅ Gemini API接続テスト成功!');
+                    console.log('使用モデル:', modelName);
+                    console.log('使用エンドポイント:', baseUrl);
+                    return { 
+                        success: true, 
+                        message: '接続に成功しました',
+                        model: this.chatModel,
+                        endpoint: this.baseUrl,
+                        usage: data.usageMetadata || {}
+                    };
+                } catch (error) {
+                    console.warn(`⚠️ モデル ${modelName} (${baseUrl}) での接続失敗:`, error.message);
+                    lastError = error;
+                    
+                    // 404エラーの場合は次の組み合わせを試す
+                    if (error.message.includes('API エンドポイントが見つかりません') || 
+                        error.message.includes('404')) {
+                        continue;
+                    }
+                    
+                    // 404以外のエラー（認証エラーなど）の場合は次のbaseUrlを試す
+                    // ただし、すべてのbaseUrlで失敗した場合は次のモデルへ
                 }
-                
-                // 404以外のエラー（認証エラーなど）の場合は即座に失敗
-                break;
             }
         }
 
