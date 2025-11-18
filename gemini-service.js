@@ -237,6 +237,21 @@ class GeminiService {
                     console.warn(`⚠️ モデル ${modelName} (${baseUrl}) での接続失敗:`, error.message);
                     lastError = error;
                     
+                    // 503エラーの場合は、このモデル/エンドポイントを有効として設定し、成功扱い
+                    // （実際のリクエスト時にリトライ機能が動作するため）
+                    if (error.message.includes('503') || error.message.includes('過負荷')) {
+                        console.log('⚠️ 503エラーですが、リトライ機能があるため接続設定を保存します');
+                        this.chatModel = modelName;
+                        this.baseUrl = baseUrl;
+                        return { 
+                            success: true, 
+                            message: '接続可能です（一時的な過負荷を検出）',
+                            model: this.chatModel,
+                            endpoint: this.baseUrl,
+                            warning: 'サーバーが一時的に過負荷ですが、リトライ機能により利用可能です'
+                        };
+                    }
+                    
                     // 404エラーの場合は次の組み合わせを試す
                     if (error.message.includes('API エンドポイントが見つかりません') || 
                         error.message.includes('404')) {
@@ -261,8 +276,6 @@ class GeminiService {
             userFriendlyMessage = 'APIの利用制限に達しています';
         } else if (lastError.message.includes('ネットワーク接続')) {
             userFriendlyMessage = 'インターネット接続を確認してください';
-        } else if (lastError.message.includes('503')) {
-            userFriendlyMessage = 'Gemini APIサービスに問題があります';
         }
         
         throw new Error(`${userFriendlyMessage}: ${lastError.message}`);
