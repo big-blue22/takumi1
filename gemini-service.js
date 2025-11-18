@@ -26,8 +26,8 @@ class GeminiService {
 
     // グラウンディング設定（正しいAPI構造で再有効化）
         this.groundingConfig = {
-            enableWebSearch: true, // Web検索を再有効化
-            enableDynamicRetrieval: true, // 動的な情報取得を有効化
+            enableWebSearch: false, // Web検索を一時的に無効化（gemini-2.5-flash互換性のため）
+            enableDynamicRetrieval: false, // 動的な情報取得を無効化
             searchQueries: {
                 valorant: 'VALORANT',
                 tactics: 'VALORANT tactics strategies',
