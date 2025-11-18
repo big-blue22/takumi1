@@ -7119,6 +7119,28 @@ class App {
                 }, 0);
             });
 
+            // カード全体のクリックイベントを追加（選択モード時のみ）
+            const cardClickHandler = (e) => {
+                // 削除ボタンのクリックは無視
+                if (e.target.closest('.delete-match-btn')) {
+                    return;
+                }
+                
+                e.stopPropagation();
+                
+                // チェックボックスの状態をトグル
+                input.checked = !input.checked;
+                
+                // 状態変更を処理
+                setTimeout(() => {
+                    this.handleCheckboxChange(matchId, index, e.shiftKey);
+                }, 0);
+            };
+            
+            // 既存のクリックハンドラーを削除してから新しいハンドラーを追加
+            card.removeEventListener('click', cardClickHandler);
+            card.addEventListener('click', cardClickHandler);
+
             card.insertBefore(checkbox, card.firstChild);
             card.style.cursor = 'pointer';
         });
