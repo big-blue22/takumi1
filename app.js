@@ -6645,8 +6645,10 @@ class App {
     // ==========================================
 
     loadGalleryMatches(filters = {}) {
-        // VALORANTマッチデータを取得
-        const matches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        // VALORANTマッチデータを取得（valorant_galleryとvalorant_matchesの両方を統合）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        const matches = [...valorantGallery, ...valorantMatches];
         const galleryGrid = document.getElementById('gallery-grid');
         
         if (!galleryGrid) return;
@@ -6734,7 +6736,7 @@ class App {
         const score = match.score || '0-0';
 
         return `
-            <div class="valorant-match-card ${resultClass}" data-match-id="${match.id}">
+            <div class="valorant-match-card ${resultClass}" data-match-id="${String(match.id)}">
                 <div class="match-card-header">
                     <div class="map-name">${mapName}</div>
                     <div class="match-score ${resultClass}">${score}</div>
@@ -6774,7 +6776,7 @@ class App {
 
                 <div class="match-card-footer">
                     <span class="match-date">${match.date || '日付不明'}</span>
-                    <button class="delete-match-btn" onclick="app.deleteMatch(${match.id}); event.stopPropagation();">
+                    <button class="delete-match-btn" onclick="app.deleteMatch('${String(match.id)}'); event.stopPropagation();">
                         削除
                     </button>
                 </div>
@@ -6785,8 +6787,10 @@ class App {
 
 
     showMatchDetail(matchId) {
-        // VALORANTマッチデータを取得
-        const matches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        // VALORANTマッチデータを取得（両方のソースを統合）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        const matches = [...valorantGallery, ...valorantMatches];
         
         // IDは文字列として比較
         const match = matches.find(m => String(m.id) === String(matchId));
@@ -6922,17 +6926,36 @@ class App {
             return;
         }
 
-        // VALORANTマッチデータを取得して削除
-        const matches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        // 両方のストレージから削除
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
         
-        // IDを文字列として比較
-        const filteredMatches = matches.filter(m => String(m.id) !== String(matchId));
+        // IDを文字列として正規化して比較
+        const normalizedId = String(matchId);
+        console.log('削除対象ID:', normalizedId);
+        
+        const filteredGallery = valorantGallery.filter(m => String(m.id) !== normalizedId);
+        const filteredMatches = valorantMatches.filter(m => String(m.id) !== normalizedId);
 
+        console.log('削除前/後:', {
+            gallery: { before: valorantGallery.length, after: filteredGallery.length },
+            matches: { before: valorantMatches.length, after: filteredMatches.length }
+        });
+
+        localStorage.setItem('valorant_gallery', JSON.stringify(filteredGallery));
         localStorage.setItem('valorant_matches', JSON.stringify(filteredMatches));
+
+        // キャッシュを無効化
+        this.cachedMatchData = null;
 
         this.showToast('試合データを削除しました', 'success');
         this.closeMatchDetailModal();
         this.loadGalleryMatches();
+
+        // ダッシュボード統計も更新
+        if (this.currentPage === 'dashboard') {
+            this.loadDashboard();
+        }
 
         // 統計も更新
         if (this.playerStatsManager) {
@@ -6941,8 +6964,10 @@ class App {
     }
 
     loadOpponentFilter() {
-        // VALORANTではエージェントでフィルタリング
-        const matches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        // VALORANTではエージェントでフィルタリング（両方のソースを統合）
+        const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
+        const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+        const matches = [...valorantGallery, ...valorantMatches];
         const agents = [...new Set(matches.map(m => m.agent).filter(Boolean))];
 
         const select = document.getElementById('filter-opponent');
