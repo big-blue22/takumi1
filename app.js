@@ -7092,7 +7092,7 @@ class App {
 
     // カードにチェックボックスを追加
     addCheckboxesToCards() {
-        const cards = document.querySelectorAll('.match-card');
+        const cards = document.querySelectorAll('.valorant-match-card');
         cards.forEach((card, index) => {
             // 既存のチェックボックスがあれば削除
             const existingCheckbox = card.querySelector('.match-checkbox');
@@ -7126,7 +7126,7 @@ class App {
 
     // チェックボックス変更ハンドラー
     handleCheckboxChange(matchId, currentIndex, shiftKey) {
-        const checkbox = document.querySelector(`.match-card[data-match-id="${matchId}"] input`);
+        const checkbox = document.querySelector(`.valorant-match-card[data-match-id="${matchId}"] input`);
         
         if (!checkbox) {
             console.error('チェックボックスが見つかりません:', matchId);
@@ -7179,7 +7179,7 @@ class App {
             range: end - start + 1
         });
 
-        const cards = document.querySelectorAll('.match-card');
+        const cards = document.querySelectorAll('.valorant-match-card');
         let selectedCount = 0;
         
         for (let i = start; i <= end; i++) {
@@ -7205,7 +7205,7 @@ class App {
 
     // すべて選択
     selectAllMatches() {
-        const cards = document.querySelectorAll('.match-card');
+        const cards = document.querySelectorAll('.valorant-match-card');
         cards.forEach(card => {
             const input = card.querySelector('input');
             const matchId = String(card.dataset.matchId); // 文字列として正規化
@@ -7222,7 +7222,7 @@ class App {
 
     // すべて選択解除
     deselectAllMatches() {
-        const cards = document.querySelectorAll('.match-card');
+        const cards = document.querySelectorAll('.valorant-match-card');
         cards.forEach(card => {
             const input = card.querySelector('input');
             if (input) {
