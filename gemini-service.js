@@ -4,8 +4,8 @@ class GeminiService {
         this.apiKey = '';
         // 複数のAPIバージョンを試す
         this.baseUrls = [
-            'https://generativelanguage.googleapis.com/v1beta',
-            'https://generativelanguage.googleapis.com/v1'
+            'https://generativelanguage.googleapis.com/v1',
+            'https://generativelanguage.googleapis.com/v1beta'
         ];
     this.baseUrl = this.baseUrls[0]; // デフォルト
     this.chatModel = 'gemini-2.5-flash'; // 指定モデル：Gemini 2.5 Flash
@@ -438,13 +438,8 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 this.serverStatus.lastError = new Date();
                 this.serverStatus.overloadDetectedAt = Date.now();
 
-                // 自動フォールバック: 503エラーが続く場合、安定版モデル(gemini-1.5-flash)へ切り替えてリトライ
-                if (this.enableModelFallback && url.includes('gemini-2.5-flash')) {
-                    console.warn('⚠️ gemini-2.5-flash が一時的に利用できないため、gemini-1.5-flash に自動フォールバックします');
-                    const newUrl = url.replace('gemini-2.5-flash', 'gemini-1.5-flash');
-                    // フォールバック時は即座にリトライ（待機なし）
-                    return await this.makeAPIRequest(newUrl, requestBody, retryCount + 1);
-                }
+                // 503エラーはサーバー側の一時的な問題なので、同じモデルでリトライ
+                // モデルを変更せず、待機時間を設けてリトライする
                 
                 // 最大リトライ回数をチェック
                 if (retryCount < this.maxRetries) {
