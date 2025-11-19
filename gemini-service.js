@@ -391,18 +391,6 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         // ローディング開始（初回のみ表示）
         try { window.app?.showLoading(retryCount === 0 ? 'AIに問い合わせ中...' : '再試行中...'); } catch {}
 
-        // URLからAPIキーを削除してヘッダーに移動する準備
-        let cleanUrl = url;
-        try {
-            const urlObj = new URL(url);
-            if (urlObj.searchParams.has('key')) {
-                urlObj.searchParams.delete('key');
-                cleanUrl = urlObj.toString();
-            }
-        } catch {
-            cleanUrl = url.replace(/key=[^&]+&?/, '').replace(/\?$/, '');
-        }
-
         const maskUrl = (u) => {
             try {
                 const obj = new URL(u);
@@ -412,7 +400,7 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         };
 
         console.log(`🔍 API Request Details:`, {
-            url: maskUrl(url), // ログ用には元のURL（マスク済み）を表示
+            url: maskUrl(url),
             method: 'POST',
             hasApiKey: !!this.apiKey,
             apiKeyLength: this.apiKey?.length,
@@ -421,11 +409,10 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         });
         
         try {
-            const response = await fetch(cleanUrl, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': this.apiKey // APIキーをヘッダーで送信
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(requestBody)
             });
