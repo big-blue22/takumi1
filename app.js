@@ -5621,13 +5621,6 @@ class App {
             return;
         }
 
-        // ファイルサイズチェック（6000文字 ≈ 12KB程度）
-        const maxFileSize = 50 * 1024; // 50KB（約25,000文字）
-        if (file.size > maxFileSize) {
-            this.showToast(`ファイルサイズが大きすぎます。最大50KB（約25,000文字）までです。現在: ${Math.round(file.size / 1024)}KB`, 'warning');
-            return;
-        }
-
         uploadBtn.disabled = true;
         uploadBtn.textContent = '処理中...';
 
