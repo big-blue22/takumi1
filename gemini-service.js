@@ -36,7 +36,7 @@ class GeminiService {
         };
         
         // フォールバック制御フラグ
-        this.enableModelFallback = false;   // モデル変更はデフォルト無効（常に gemini-2.5-flash-latest を使用）
+        this.enableModelFallback = true;   // モデル変更を許可（エラー時に自動的に安定版へ切り替え）
         this.enableVersionFallback = true;  // v1beta→v1 などエンドポイントのバージョン切替は既定で許可
         
         // サーバー状態監視
@@ -391,6 +391,18 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         // ローディング開始（初回のみ表示）
         try { window.app?.showLoading(retryCount === 0 ? 'AIに問い合わせ中...' : '再試行中...'); } catch {}
 
+        // URLからAPIキーを削除してヘッダーに移動する準備
+        let cleanUrl = url;
+        try {
+            const urlObj = new URL(url);
+            if (urlObj.searchParams.has('key')) {
+                urlObj.searchParams.delete('key');
+                cleanUrl = urlObj.toString();
+            }
+        } catch {
+            cleanUrl = url.replace(/key=[^&]+&?/, '').replace(/\?$/, '');
+        }
+
         const maskUrl = (u) => {
             try {
                 const obj = new URL(u);
@@ -400,7 +412,7 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         };
 
         console.log(`🔍 API Request Details:`, {
-            url: maskUrl(url),
+            url: maskUrl(url), // ログ用には元のURL（マスク済み）を表示
             method: 'POST',
             hasApiKey: !!this.apiKey,
             apiKeyLength: this.apiKey?.length,
@@ -409,10 +421,11 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
         });
         
         try {
-            const response = await fetch(url, {
+            const response = await fetch(cleanUrl, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': this.apiKey // APIキーをヘッダーで送信
                 },
                 body: JSON.stringify(requestBody)
             });
@@ -437,6 +450,14 @@ ${goals.length > 0 ? goals.map(g => `- ${g.title} (期限: ${g.deadline})`).join
                 this.serverStatus.isAvailable = false;
                 this.serverStatus.lastError = new Date();
                 this.serverStatus.overloadDetectedAt = Date.now();
+
+                // 自動フォールバック: 503エラーが続く場合、安定版モデル(gemini-1.5-flash)へ切り替えてリトライ
+                if (this.enableModelFallback && url.includes('gemini-2.5-flash')) {
+                    console.warn('⚠️ gemini-2.5-flash が一時的に利用できないため、gemini-1.5-flash に自動フォールバックします');
+                    const newUrl = url.replace('gemini-2.5-flash', 'gemini-1.5-flash');
+                    // フォールバック時は即座にリトライ（待機なし）
+                    return await this.makeAPIRequest(newUrl, requestBody, retryCount + 1);
+                }
                 
                 // 最大リトライ回数をチェック
                 if (retryCount < this.maxRetries) {
