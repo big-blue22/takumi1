@@ -119,7 +119,7 @@ class GameManager {
         this.selectedGame = this.getAllGames().find(g => g.id === savedId);
       }
     }
-    return this.selectedGame || this.games.moba.games[0]; // デフォルトはLoL
+    return this.selectedGame || this.games.fps.games[0]; // デフォルトはVALORANT
   }
 
   getGameSpecificPrompt(gameId) {
