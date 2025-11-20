@@ -300,16 +300,17 @@ class GeminiService {
     // ゲームコンテキスト情報を取得
     getGameContext() {
         try {
-            // アプリからゲーム情報を取得
-            const currentGame = window.app?.gameManager?.getCurrentGame?.() || {
-                name: 'League of Legends',
-                category: 'MOBA'
+            // アプリケーションはVALORANT専用のため、ゲーム情報を固定
+            const currentGame = {
+                name: 'VALORANT',
+                category: 'FPS'
             };
 
             // プレイヤー統計を取得
             const playerStats = {
                 winRate: document.getElementById('win-rate')?.textContent || '0%',
-                driveRushSuccess: document.getElementById('drive-rush-success')?.textContent || '0.0',
+                // VALORANT用に統計フィールドを調整（将来的にUI側のIDも合わせるべきだが、まずはフォールバック値として）
+                driveRushSuccess: document.getElementById('drive-rush-success')?.textContent || '0.0', // ヘッドショット率などに相当するプレースホルダー
                 antiAirAccuracy: document.getElementById('anti-air-accuracy')?.textContent || '0.0%',
                 rank: document.getElementById('player-rank')?.textContent || 'Unranked',
                 gamesPlayed: document.getElementById('games-played')?.textContent || '0'
@@ -326,8 +327,8 @@ class GeminiService {
         } catch (error) {
             console.warn('Failed to get game context:', error);
             return {
-                game: { name: 'League of Legends', category: 'MOBA' },
-                stats: { winRate: '0%', driveRushSuccess: '0.0', antiAirAccuracy: '0.0%', rank: 'Unranked', gamesPlayed: '0' },
+                game: { name: 'VALORANT', category: 'FPS' },
+                stats: { winRate: '0%', rank: 'Unranked', gamesPlayed: '0' },
                 goals: []
             };
         }

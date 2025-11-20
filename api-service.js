@@ -280,7 +280,7 @@ class AICoachingService {
 以下のeSportsプレイヤーのデータを詳細に分析し、改善点を提案してください：
 
 プレイヤー情報:
-- ゲーム: ${gameContext?.name || data.game || 'League of Legends'}
+- ゲーム: VALORANT
 - ランク: ${data.rank || 'Unknown'}
 - メインロール: ${data.stats?.mainRole || 'Unknown'}
 ${gameSpecificInfo}
@@ -305,7 +305,7 @@ ${data.recentMatches ? data.recentMatches.map(match =>
 }`,
 
       strategyAdvice: `
-${data.game || 'League of Legends'}の${data.rank || 'ランク不明'}プレイヤーに対して、
+VALORANTの${data.rank || 'ランク不明'}プレイヤーに対して、
 ${data.situation}の状況での最適な戦略をアドバイスしてください。
 
 プレイヤーのメインロール: ${data.stats?.mainRole || '不明'}
