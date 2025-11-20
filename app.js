@@ -6223,7 +6223,7 @@ class App {
             this.addGoal(goalData);
 
             // フォームをリセット
-            document.getElementById('goal-form').reset();
+            document.getElementById('modal-goal-form').reset();
 
             // モーダルを閉じる
             this.closeCoachingPlanModal();
