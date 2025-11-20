@@ -5782,7 +5782,7 @@ class App {
         const reloadKbBtn = document.getElementById('reload-kb-btn');
         if (reloadKbBtn) {
             reloadKbBtn.addEventListener('click', () => {
-                this.reloadSF6KnowledgeBase();
+                this.reloadValorantKnowledgeBase();
             });
         }
 
@@ -5850,8 +5850,8 @@ class App {
         // 目標情報を表示
         this.displayGoalSummary(goalData);
 
-        // SF6知識ベースの状態を更新
-        this.updateSF6KnowledgeStatus();
+        // Valorant知識ベースの状態を更新
+        this.updateValorantKnowledgeStatus();
 
         // モーダルを表示
         const modal = document.getElementById('coaching-plan-modal');
@@ -5861,8 +5861,8 @@ class App {
         }
     }
 
-    // SF6知識ベースの状態を更新
-    updateSF6KnowledgeStatus() {
+    // Valorant知識ベースの状態を更新
+    updateValorantKnowledgeStatus() {
         try {
             // LocalStorageからデータソースファイルを取得
             const datasourceKeys = Object.keys(localStorage).filter(key => key.startsWith('datasource-'));
@@ -5888,7 +5888,7 @@ class App {
                 if (dataSize) dataSize.textContent = totalSize.toLocaleString();
                 if (kbDetails) kbDetails.classList.remove('hidden');
                 
-                console.log(`📚 SF6知識ベース: ${datasourceKeys.length}ファイル、${totalSize}文字`);
+                console.log(`📚 Valorant知識ベース: ${datasourceKeys.length}ファイル、${totalSize}文字`);
             } else {
                 // データがない場合
                 if (statusText) statusText.textContent = '未設定';
@@ -5897,15 +5897,15 @@ class App {
                 if (dataSize) dataSize.textContent = '0';
                 if (kbDetails) kbDetails.classList.remove('hidden');
                 
-                console.log('📚 SF6知識ベース: データなし');
+                console.log('📚 Valorant知識ベース: データなし');
             }
         } catch (error) {
             console.error('知識ベース状態更新エラー:', error);
         }
     }
 
-    // SF6知識ベースを再読み込み
-    async reloadSF6KnowledgeBase() {
+    // Valorant知識ベースを再読み込み
+    async reloadValorantKnowledgeBase() {
         try {
             const reloadBtn = document.getElementById('reload-kb-btn');
             if (reloadBtn) {
@@ -5916,13 +5916,13 @@ class App {
             
             // コーチングプランサービスの知識ベースを再読み込み
             if (this.coachingPlanService) {
-                await this.coachingPlanService.loadSF6KnowledgeBase();
+                await this.coachingPlanService.loadValorantKnowledgeBase();
             }
             
             // 状態表示を更新
-            this.updateSF6KnowledgeStatus();
+            this.updateValorantKnowledgeStatus();
             
-            this.showToast('📚 SF6知識ベースを更新しました', 'success');
+            this.showToast('📚 Valorant知識ベースを更新しました', 'success');
             
             setTimeout(() => {
                 if (reloadBtn) {
