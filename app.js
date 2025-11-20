@@ -6074,7 +6074,13 @@ class App {
         const buttons = document.getElementById('generation-buttons');
 
         if (status) {
-            status.style.display = show ? 'block' : 'none';
+            if (show) {
+                status.classList.remove('hidden');
+                status.style.display = 'block';
+            } else {
+                status.classList.add('hidden');
+                status.style.display = 'none';
+            }
         }
         if (buttons) {
             buttons.style.display = show ? 'none' : 'flex';
