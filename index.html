@@ -702,11 +702,20 @@
 
                                 <div class="plan-generation">
                                     <div class="generation-status hidden" id="generation-status">
-                                        <div class="loading-spinner"></div>
-                                        <p>AIがあなた専用のコーチングプランを作成中...</p>
+                                        <div class="valorant-loader">
+                                            <div class="loader-ring outer"></div>
+                                            <div class="loader-ring inner"></div>
+                                            <div class="loader-icon">V</div>
+                                        </div>
+                                        <div class="loading-text glitch" data-text="コーチングプランを構築中...">コーチングプランを構築中...</div>
+                                        <div class="loading-steps-container">
+                                            <ul id="loading-steps-list">
+                                                <!-- Steps will be injected here -->
+                                            </ul>
+                                        </div>
                                     </div>
 
-                                    <div class="generation-buttons">
+                                    <div class="generation-buttons" id="generation-buttons">
                                         <button id="generate-plan-btn" class="btn-primary">🤖 AIでプラン生成</button>
                                         <button id="manual-plan-btn" class="btn-secondary">✏️ 手動でプラン作成</button>
                                     </div>
