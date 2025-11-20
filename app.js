@@ -5770,6 +5770,10 @@ class App {
 
     // コーチングプランモーダルの初期化
     initCoachingPlanModal() {
+        if (this.isCoachingPlanModalInitialized) {
+            return;
+        }
+
         // モーダルクローズ
         const closeModal = document.getElementById('close-plan-modal');
         if (closeModal) {
@@ -5841,6 +5845,8 @@ class App {
                 this.cancelPlanEdit();
             });
         }
+
+        this.isCoachingPlanModalInitialized = true;
     }
 
     // コーチングプランモーダルを開く
@@ -6204,6 +6210,16 @@ class App {
     async approvePlan() {
         if (!this.currentPlan || !this.currentGoalData) return;
 
+        // 連打防止
+        if (this.isApprovingPlan) return;
+        this.isApprovingPlan = true;
+
+        const approveBtn = document.getElementById('approve-plan-btn');
+        if (approveBtn) {
+            approveBtn.disabled = true;
+            approveBtn.textContent = '処理中...';
+        }
+
         try {
             // 目標を作成（プラン情報付き）
             const goalData = {
@@ -6232,6 +6248,15 @@ class App {
         } catch (error) {
             console.error('Failed to approve plan:', error);
             this.showToast('プランの承認に失敗しました', 'error');
+
+        } finally {
+            this.isApprovingPlan = false;
+
+            // ボタンを元に戻す
+            if (approveBtn) {
+                approveBtn.disabled = false;
+                approveBtn.textContent = '✅ このプランで開始';
+            }
         }
     }
 
