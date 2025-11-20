@@ -2746,6 +2746,7 @@ body {
   margin-bottom: var(--spacing-sm);
 }
 
+/* Shared List Styles for Objectives and Milestones */
 .objectives-list,
 .milestones-list {
   list-style: none;
@@ -2758,20 +2759,25 @@ body {
   padding: var(--spacing-xs) 0;
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
-  position: relative;
-  padding-left: var(--spacing-md);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.objectives-list li:last-child,
+.milestones-list li:last-child {
+  border-bottom: none;
 }
 
 .objectives-list li::before {
   content: "🎯";
-  position: absolute;
-  left: 0;
+  flex-shrink: 0;
 }
 
 .milestones-list li::before {
   content: "✓";
-  position: absolute;
-  left: 0;
+  flex-shrink: 0;
 }
 
 
@@ -4434,21 +4440,7 @@ input, select, textarea {
     color: var(--text-primary);
 }
 
-.objectives-list {
-    list-style: none;
-    padding: 0;
-}
-
-.objectives-list li {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-secondary);
-}
-
-.objectives-list li::before {
-    content: "🎯 ";
-    margin-right: 0.5rem;
-}
+/* .objectives-list styles moved to Week Cards section */
 
 
 .plan-filters {
@@ -6280,35 +6272,7 @@ input[type="date"]:focus {
   font-weight: 600;
 }
 
-.objectives-list,
-.milestones-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.objectives-list li,
-.milestones-list li {
-  padding: var(--spacing-xs) 0;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  border-bottom: 1px solid var(--glass-border);
-}
-
-.objectives-list li:last-child,
-.milestones-list li:last-child {
-  border-bottom: none;
-}
-
-.objectives-list li::before {
-  content: "🎯 ";
-  margin-right: var(--spacing-xs);
-}
-
-.milestones-list li::before {
-  content: "✁E";
-  margin-right: var(--spacing-xs);
-}
+/* .objectives-list and .milestones-list styles moved to Week Cards section */
 
 /* Weeks Timeline Section */
 .weeks-timeline {
