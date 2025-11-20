@@ -3383,7 +3383,37 @@ class App {
     }
 
 
-    deleteGoal(goalId) {
+    async deleteGoal(goalId) {
+        // 確認ダイアログを表示
+        const result = await Swal.fire({
+            title: '目標を削除しますか？',
+            html: '本当にこの目標を削除しますか？<br>削除する場合は <b>削除</b> と入力してください。',
+            icon: 'warning',
+            input: 'text',
+            inputAttributes: {
+                autocapitalize: 'off'
+            },
+            showCancelButton: true,
+            confirmButtonText: '削除する',
+            cancelButtonText: 'キャンセル',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            reverseButtons: true,
+            background: getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim(),
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+            preConfirm: (inputValue) => {
+                if (inputValue !== '削除') {
+                    Swal.showValidationMessage('キーワードが一致しません。「削除」と入力してください。');
+                    return false;
+                }
+                return true;
+            }
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
         try {
             const goals = JSON.parse(localStorage.getItem('goals') || '[]');
             const filteredGoals = goals.filter(goal => goal.id !== goalId);
@@ -3398,7 +3428,15 @@ class App {
                 this.loadDashboardGoals();
             }
 
-            this.showToast('目標を削除しました', 'success');
+            await Swal.fire({
+                title: '削除しました',
+                text: '目標を削除しました。',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false,
+                background: getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim(),
+                color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim()
+            });
         } catch (error) {
             console.error('Failed to delete goal:', error);
             this.showToast('目標の削除に失敗しました', 'error');
