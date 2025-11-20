@@ -1,10 +1,10 @@
-// coaching-plan-service.js - コーチングプラン管理サービス（SF6最適化版）
+// coaching-plan-service.js - コーチングプラン管理サービス（Valorant最適化版）
 class CoachingPlanService {
     constructor() {
         this.geminiService = null;
-        this.sf6KnowledgeBase = null;
+        this.valorantKnowledgeBase = null;
         this.initializeGeminiService();
-        this.loadSF6KnowledgeBase();
+        this.loadValorantKnowledgeBase();
     }
 
     // Gemini APIサービスを初期化
@@ -19,14 +19,14 @@ class CoachingPlanService {
         }
     }
 
-    // SF6知識ベースをロード
-    async loadSF6KnowledgeBase() {
+    // Valorant知識ベースをロード
+    async loadValorantKnowledgeBase() {
         try {
             // LocalStorageから保存されているデータソースファイルを取得
             const datasourceKeys = Object.keys(localStorage).filter(key => key.startsWith('datasource-'));
             
             if (datasourceKeys.length > 0) {
-                console.log(`📚 SF6知識ベース: ${datasourceKeys.length}ファイル検出`);
+                console.log(`📚 Valorant知識ベース: ${datasourceKeys.length}ファイル検出`);
                 
                 // 全ファイルの内容を結合
                 let knowledgeBase = '';
@@ -42,19 +42,19 @@ class CoachingPlanService {
                     knowledgeBase = knowledgeBase.substring(0, 12000);
                 }
                 
-                this.sf6KnowledgeBase = knowledgeBase;
-                console.log(`✅ SF6知識ベース読み込み完了: ${knowledgeBase.length}文字`);
+                this.valorantKnowledgeBase = knowledgeBase;
+                console.log(`✅ Valorant知識ベース読み込み完了: ${knowledgeBase.length}文字`);
             } else {
-                console.log('📚 SF6知識ベース: データソースファイルなし');
-                this.sf6KnowledgeBase = null;
+                console.log('📚 Valorant知識ベース: データソースファイルなし');
+                this.valorantKnowledgeBase = null;
             }
         } catch (error) {
-            console.error('SF6知識ベース読み込みエラー:', error);
-            this.sf6KnowledgeBase = null;
+            console.error('Valorant知識ベース読み込みエラー:', error);
+            this.valorantKnowledgeBase = null;
         }
     }
 
-    // 目標に基づいてコーチングプランを自動生成（SF6最適化版）
+    // 目標に基づいてコーチングプランを自動生成（Valorant最適化版）
     async generateCoachingPlan(goal) {
         const { title, deadline, description, gameGenre, skillLevel } = goal;
 
@@ -64,7 +64,7 @@ class CoachingPlanService {
 
         try {
             // 知識ベースを再読み込み（最新のデータソースを反映）
-            await this.loadSF6KnowledgeBase();
+            await this.loadValorantKnowledgeBase();
             
             const planData = this.calculatePlanStructure(deadline);
 
@@ -72,8 +72,8 @@ class CoachingPlanService {
                 throw new Error('Gemini APIサービスが利用できません。APIキーを設定してください。');
             }
 
-            console.log('🎮 SF6コーチングプラン生成開始');
-            console.log(`📊 知識ベース: ${this.sf6KnowledgeBase ? '有効' : '無効'}`);
+            console.log('🎮 Valorantコーチングプラン生成開始');
+            console.log(`📊 知識ベース: ${this.valorantKnowledgeBase ? '有効' : '無効'}`);
             console.log(`🎯 目標: ${title}`);
             console.log(`📅 期間: ${planData.totalWeeks}週間`);
 
@@ -129,15 +129,15 @@ class CoachingPlanService {
         };
     }
 
-    // AIでコーチングプランを生成（SF6最適化版・グラウンディング対応）
+    // AIでコーチングプランを生成（Valorant最適化版・グラウンディング対応）
     async generatePlanWithAI(goal, planStructure) {
         const prompt = this.buildPlanGenerationPrompt(goal, planStructure);
 
         try {
-            console.log('🤖 Generating SF6 coaching plan with Gemini API...');
+            console.log('🤖 Generating Valorant coaching plan with Gemini API...');
             
             // データソース情報の有無を確認
-            const hasKnowledgeBase = this.sf6KnowledgeBase && this.sf6KnowledgeBase.length > 0;
+            const hasKnowledgeBase = this.valorantKnowledgeBase && this.valorantKnowledgeBase.length > 0;
             console.log(`📚 知識ベース: ${hasKnowledgeBase ? '有効' : '無効'}`);
             
             // グラウンディングを使用してAPI呼び出し
@@ -190,8 +190,8 @@ class CoachingPlanService {
     async generatePlanWithGrounding(prompt, goal) {
         const { character } = goal;
         
-        // SF6固有の検索クエリを生成
-        const searchQueries = this.generateSF6SearchQueries(goal);
+        // Valorant固有の検索クエリを生成
+        const searchQueries = this.generateValorantSearchQueries(goal);
         
         // リクエストボディを構築
         const requestBody = {
@@ -207,8 +207,8 @@ class CoachingPlanService {
         };
 
         // 知識ベースがある場合はコンテキストに追加
-        if (this.sf6KnowledgeBase) {
-            const contextPrompt = `## ストリートファイター6 参考資料\n${this.sf6KnowledgeBase}\n\n${prompt}`;
+        if (this.valorantKnowledgeBase) {
+            const contextPrompt = `## Valorant 参考資料\n${this.valorantKnowledgeBase}\n\n${prompt}`;
             requestBody.contents[0].parts[0].text = contextPrompt;
             console.log('📚 知識ベースをコンテキストに追加');
         }
@@ -266,18 +266,20 @@ ${searchQueries.map(q => `- ${q}`).join('\n')}`;
         };
     }
 
-    // SF6固有の検索クエリを生成
-    generateSF6SearchQueries(goal) {
+    // Valorant固有の検索クエリを生成
+    generateValorantSearchQueries(goal) {
         const { title, character, description, skillLevel } = goal;
         const queries = [];
         
         // 基本検索クエリ
-        queries.push('ストリートファイター6 最新メタ 2025');
+        queries.push('Valorant meta 2025');
+        queries.push('Valorant patch notes latest');
         
-        // キャラクター固有の検索
+        // エージェント固有の検索 (characterフィールドをagentとして扱う)
         if (character && character !== 'all') {
-            queries.push(`ストリートファイター6 ${character} 攻略 2025`);
-            queries.push(`SF6 ${character} コンボ 最新`);
+            queries.push(`Valorant ${character} guide 2025`);
+            queries.push(`Valorant ${character} lineups`);
+            queries.push(`Valorant ${character} pro play`);
         }
         
         // スキルレベル別の検索
@@ -288,81 +290,93 @@ ${searchQueries.map(q => `- ${q}`).join('\n')}`;
                 'advanced': '上級者'
             };
             const levelJp = levelMap[skillLevel] || '中級者';
-            queries.push(`ストリートファイター6 ${levelJp} 上達法`);
+            queries.push(`Valorant ${levelJp} 上達法`);
+            queries.push(`Valorant ${skillLevel} guide`);
         }
         
         // 目標タイトルからキーワード抽出
         if (title) {
             // ランク関連
-            if (title.match(/ダイヤ|プラチナ|ゴールド|シルバー|ブロンズ|マスター|レジェンド/)) {
-                queries.push('ストリートファイター6 ランクマッチ 攻略');
+            if (title.match(/Iron|Bronze|Silver|Gold|Platinum|Diamond|Ascendant|Immortal|Radiant|アイアン|ブロンズ|シルバー|ゴールド|プラチナ|ダイヤ|アセンダント|イモータル|レディアント/i)) {
+                queries.push('Valorant ranked tips');
+                queries.push('Valorant climbing rank guide');
             }
-            // キャラクター名が含まれている場合
-            const characters = ['リュウ', 'ケン', 'キャミィ', '春麗', 'ガイル', 'ザンギエフ', 'ブランカ', 'ダルシム', 'Eホンダ', 'ジュリ', 'ジェイミー', 'マノン', 'ディージェイ', 'マリーザ', 'JP', 'キンバリー', 'リリー', 'ラシード'];
-            characters.forEach(char => {
-                if (title.includes(char)) {
-                    queries.push(`SF6 ${char} メタ 対策`);
+
+            // マップ関連
+            const maps = ['Ascent', 'Bind', 'Haven', 'Split', 'Icebox', 'Breeze', 'Fracture', 'Pearl', 'Lotus', 'Sunset', 'Abyss'];
+            maps.forEach(map => {
+                if (title.toLowerCase().includes(map.toLowerCase())) {
+                    queries.push(`Valorant ${map} strategy`);
                 }
+            });
+
+            // 役割関連
+            const roles = ['Duelist', 'Initiator', 'Controller', 'Sentinel', 'デュエリスト', 'イニシエーター', 'コントローラー', 'センチネル'];
+            roles.forEach(role => {
+                 if (title.toLowerCase().includes(role.toLowerCase())) {
+                    queries.push(`Valorant ${role} tips`);
+                 }
             });
         }
         
         return queries;
     }
 
-    // AI用プロンプトを構築（SF6最適化版）
+    // AI用プロンプトを構築（Valorant最適化版）
     buildPlanGenerationPrompt(goal, planStructure) {
         const { title, character, description, skillLevel, gameGenre } = goal;
         
-        // キャラクター情報
-        const characterInfo = character && character !== 'all' ? `使用キャラクター: ${character}` : '全キャラクター対応';
+        // エージェント情報
+        const agentInfo = character && character !== 'all' ? `使用エージェント: ${character}` : '全エージェント対応';
         
         // スキルレベル情報
         const skillLevelMap = {
-            'beginner': '初心者（基本操作を習得中）',
-            'intermediate': '中級者（基本を理解し応用を学習中）',
-            'advanced': '上級者（高度な戦術を実践中）'
+            'beginner': '初心者（基本操作、ストッピング、プリエイムを習得中）',
+            'intermediate': '中級者（スキル合わせ、マップ名称、エコノミーを理解）',
+            'advanced': '上級者（高度な戦術、マクロ理解、IGLなどを実践中）'
         };
         const skillInfo = skillLevelMap[skillLevel] || '中級者';
         
         // ユーザープロフィールから統計情報を取得
         const userStats = this.getUserStatistics();
 
-        return `# ストリートファイター6 コーチングプラン生成
+        return `# Valorant コーチングプラン生成
 
 ## 目標情報
 - **目標**: ${title}
 - **期間**: ${planStructure.totalWeeks}週間（${planStructure.totalDays}日間）
-- **キャラクター**: ${characterInfo}
+- **エージェント**: ${agentInfo}
 - **スキルレベル**: ${skillInfo}
 ${description ? `- **詳細**: ${description}` : ''}
 
-## プレイヤー統計
+## プレイヤー統計 (Valorant)
 - 総試合数: ${userStats.totalMatches}試合
 - 総合勝率: ${userStats.overallWinRate}%
-- よく使うキャラ: ${userStats.topCharacters.join(', ') || 'データなし'}
-- 苦手な相手: ${userStats.weakAgainst.join(', ') || 'データなし'}
+- K/D: ${userStats.avgKD}
+- HS%: ${userStats.avgHS}%
+- よく使うエージェント: ${userStats.topAgents.join(', ') || 'データなし'}
+- 苦手なマップ: ${userStats.weakMaps.join(', ') || 'データなし'}
 
 ## 指示
-ストリートファイター6の最新メタ、キャラクター特性、フレームデータを考慮した実践的な${planStructure.totalWeeks}週間のコーチングプランを作成してください。
+Valorantの最新メタ、エージェント構成、マップ戦略を考慮した実践的な${planStructure.totalWeeks}週間のコーチングプランを作成してください。
+**絶対に** 格闘ゲームやMOBAの用語（ドライブシステム、波動拳、ミニオン、ジャングルなど）を含めないでください。
 
 ### 各週の構成
-1. **focus**: その週のメインテーマ（SF6の実践的なスキルに特化）
+1. **focus**: その週のメインテーマ（Valorantの実践的なスキルに特化）
 2. **objectives**: 達成すべき具体的な目標（2-3個、測定可能なもの）
 3. **milestones**: 達成の判断基準（具体的な数値や状況）
 
-### SF6固有の考慮事項
-- ドライブシステム（パリィ、ラッシュ、インパクト、リバーサル）の習得
-- モダン/クラシック操作の特性
-- キャラクター固有のコンボルート
-- 対戦キャラクター別の対策
-- フレーム有利・不利の理解
-- 起き攻め・受け身狩りのセットプレイ
-- 最新パッチでの変更点
+### Valorant固有の考慮事項
+- **メカニクス**: ストッピング（Counter-strafing）、クロスヘアプレースメント、リコイルコントロール、プリエイム
+- **戦術**: エコノミー管理（Buy/Save/Eco）、トレードキル、エリアコントロール、エントリー、リテイク
+- **ユーティリティ**: 定点（Lineups）、スキルの合わせ、フラッシュのタイミング、スモークの位置
+- **コミュニケーション**: 報告（Callouts）、IGL、メンタル管理
+- **マップ**: 各マップ固有の攻め方・守り方
 
 ### プランの難易度調整
-- 第1週: 基礎固め（${skillInfo}向けの基本スキル）
-- 中盤週: 実践応用（ランクマッチでの活用）
-- 最終週: 目標達成（${title}の完遂）
+- 第1週: 基礎・メカニクス強化（${skillInfo}向けのエイム・移動）
+- 中盤週: 戦術・立ち回り（ランクマッチでのマップ理解・判断力）
+- 最終週: 目標達成・仕上げ（${title}の完遂、メンタル）
 
 ## 出力形式
 **必ずJSON形式のみで回答してください**：
@@ -372,94 +386,128 @@ ${description ? `- **詳細**: ${description}` : ''}
   "weeks": [
     {
       "weekNumber": 1,
-      "focus": "ドライブシステムの基礎とパリィ練習",
+      "focus": "クロスヘアプレースメントとストッピングの徹底",
       "objectives": [
-        "トレーニングモードでパリィを20回連続成功",
-        "ランクマッチでドライブラッシュを5回以上使用",
-        "ドライブゲージの管理を意識して10試合"
+        "デスマッチでヘッドショットのみを狙い3回プレイ",
+        "ランクマッチでプリエイムを意識してクリアリング",
+        "射撃場（ハード）で15体以上キル"
       ],
       "milestones": [
-        "パリィ成功率60%以上",
-        "ドライブラッシュからコンボ完走3回",
-        "ゲージ切れ0回で5試合完了"
+        "デスマッチの順位が上位50%以内",
+        "ランクマッチでのヘッドショット率15%以上",
+        "射撃場スコア安定化"
       ]
     }
   ]
 }
 \`\`\`
 
-${planStructure.totalWeeks}週分のプランを生成してください。各週は上記の例のように、SF6の実践的で測定可能な内容にしてください。`;
+${planStructure.totalWeeks}週分のプランを生成してください。各週は上記の例のように、Valorantの実践的で測定可能な内容にしてください。`;
     }
 
-    // ユーザー統計情報を取得
+    // ユーザー統計情報を取得（Valorant用）
     getUserStatistics() {
         try {
-            const galleryData = JSON.parse(localStorage.getItem('sf6_gallery') || '[]');
+            // Valorantのマッチデータを取得
+            const valorantMatches = JSON.parse(localStorage.getItem('valorant_matches') || '[]');
+            const valorantGallery = JSON.parse(localStorage.getItem('valorant_gallery') || '[]');
             
-            if (galleryData.length === 0) {
+            // 重複を除去して結合（簡易的なIDチェック）
+            const allMatches = [...valorantMatches];
+            valorantGallery.forEach(m => {
+                if (!allMatches.some(existing => existing.id === m.id)) {
+                    allMatches.push(m);
+                }
+            });
+
+            if (allMatches.length === 0) {
                 return {
                     totalMatches: 0,
                     overallWinRate: 0,
-                    topCharacters: [],
-                    weakAgainst: []
+                    avgKD: '0.00',
+                    avgHS: '0',
+                    topAgents: [],
+                    weakMaps: []
                 };
             }
 
             // 総試合数と勝率
-            const totalMatches = galleryData.length;
-            const wins = galleryData.filter(m => m.result === 'WIN').length;
+            const totalMatches = allMatches.length;
+            const wins = allMatches.filter(m => (m.result || '').toUpperCase() === 'WIN').length;
             const overallWinRate = ((wins / totalMatches) * 100).toFixed(1);
 
-            // よく使うキャラクター（上位3つ）
-            const characterCount = {};
-            galleryData.forEach(match => {
-                const char = match.playerCharacter || match.character;
-                if (char) {
-                    characterCount[char] = (characterCount[char] || 0) + 1;
+            // 平均K/D
+            let totalKills = 0;
+            let totalDeaths = 0;
+            let totalHS = 0;
+            let hsCount = 0;
+
+            allMatches.forEach(m => {
+                totalKills += parseInt(m.kills || 0);
+                totalDeaths += parseInt(m.deaths || 0);
+                if (m.hsPercent) {
+                    totalHS += parseFloat(m.hsPercent);
+                    hsCount++;
                 }
             });
-            const topCharacters = Object.entries(characterCount)
+
+            const avgKD = totalDeaths > 0 ? (totalKills / totalDeaths).toFixed(2) : totalKills.toFixed(2);
+            const avgHS = hsCount > 0 ? (totalHS / hsCount).toFixed(1) : '0';
+
+            // よく使うエージェント（上位3つ）
+            const agentCount = {};
+            allMatches.forEach(match => {
+                const agent = match.agent || match.character; // 互換性のためcharacterもチェック
+                if (agent && agent !== 'Unknown') {
+                    agentCount[agent] = (agentCount[agent] || 0) + 1;
+                }
+            });
+            const topAgents = Object.entries(agentCount)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 3)
-                .map(([char]) => char);
+                .map(([agent]) => agent);
 
-            // 苦手な相手（勝率が低い相手キャラ上位3つ）
-            const opponentStats = {};
-            galleryData.forEach(match => {
-                const opp = match.opponentCharacter || match.opponent;
-                if (opp && opp !== 'Unknown') {
-                    if (!opponentStats[opp]) {
-                        opponentStats[opp] = { wins: 0, total: 0 };
+            // 苦手なマップ（勝率が低いマップ上位3つ）
+            const mapStats = {};
+            allMatches.forEach(match => {
+                const map = match.map;
+                if (map && map !== 'Unknown') {
+                    if (!mapStats[map]) {
+                        mapStats[map] = { wins: 0, total: 0 };
                     }
-                    opponentStats[opp].total++;
-                    if (match.result === 'WIN') {
-                        opponentStats[opp].wins++;
+                    mapStats[map].total++;
+                    if ((match.result || '').toUpperCase() === 'WIN') {
+                        mapStats[map].wins++;
                     }
                 }
             });
-            const weakAgainst = Object.entries(opponentStats)
-                .filter(([_, stats]) => stats.total >= 3) // 3試合以上のデータがある相手のみ
-                .map(([char, stats]) => ({
-                    char,
+            const weakMaps = Object.entries(mapStats)
+                .filter(([_, stats]) => stats.total >= 3) // 3試合以上のデータがあるマップのみ
+                .map(([map, stats]) => ({
+                    map,
                     winRate: (stats.wins / stats.total) * 100
                 }))
                 .sort((a, b) => a.winRate - b.winRate)
                 .slice(0, 3)
-                .map(item => item.char);
+                .map(item => item.map);
 
             return {
                 totalMatches,
                 overallWinRate,
-                topCharacters,
-                weakAgainst
+                avgKD,
+                avgHS,
+                topAgents,
+                weakMaps
             };
         } catch (error) {
             console.error('統計情報の取得エラー:', error);
             return {
                 totalMatches: 0,
                 overallWinRate: 0,
-                topCharacters: [],
-                weakAgainst: []
+                avgKD: '0.00',
+                avgHS: '0',
+                topAgents: [],
+                weakMaps: []
             };
         }
     }
