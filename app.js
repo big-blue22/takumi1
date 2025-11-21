@@ -6430,7 +6430,6 @@ class App {
                     <h3 class="plan-title">${plan.goalTitle}</h3>
                     <div class="plan-header-actions">
                         <span class="plan-status ${plan.status}">${this.getStatusLabel(plan.status)}</span>
-                        <button class="btn-icon-delete" onclick="app.deletePlan('${plan.id}'); event.stopPropagation();" title="削除">🗑️</button>
                     </div>
                 </div>
 
