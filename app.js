@@ -5872,14 +5872,6 @@ class App {
             });
         }
 
-        // プラン編集ボタン
-        const editBtn = document.getElementById('edit-plan-btn');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => {
-                this.editPlan();
-            });
-        }
-
         // プラン承認ボタン
         const approveBtn = document.getElementById('approve-plan-btn');
         if (approveBtn) {
@@ -6462,9 +6454,6 @@ class App {
                         `<button class="btn-success btn-sm" onclick="app.resumePlan('${plan.id}')">再開</button>` :
                         ''
                     }
-                    ${plan.status !== 'completed' ?
-                        `<button class="btn-secondary btn-sm" onclick="app.editPlan('${plan.id}')">編集</button>` : ''
-                    }
                     <button class="btn-danger btn-sm" onclick="app.deletePlan('${plan.id}')">削除</button>
                 </div>
             </div>
@@ -6652,14 +6641,12 @@ class App {
 
     // プラン詳細アクションボタンの状態更新
     updatePlanDetailActions(plan) {
-        const editBtn = document.getElementById('detail-edit-plan-btn');
         const pauseBtn = document.getElementById('detail-pause-plan-btn');
         const resumeBtn = document.getElementById('detail-resume-plan-btn');
         const completeBtn = document.getElementById('detail-complete-plan-btn');
         const deleteBtn = document.getElementById('detail-delete-plan-btn');
 
         // ボタンの表示/非表示を制御
-        if (editBtn) editBtn.style.display = plan.status === 'completed' ? 'none' : 'inline-block';
         if (pauseBtn) pauseBtn.style.display = plan.status === 'active' ? 'inline-block' : 'none';
         if (resumeBtn) resumeBtn.style.display = plan.status === 'paused' ? 'inline-block' : 'none';
         if (completeBtn) completeBtn.style.display = plan.status === 'completed' ? 'none' : 'inline-block';
@@ -7084,12 +7071,7 @@ class App {
         `;
 
         // 編集・削除ボタンにイベントを設定
-        const editBtn = document.getElementById('edit-match-btn');
         const deleteBtn = document.getElementById('delete-match-btn');
-
-        if (editBtn) {
-            editBtn.onclick = () => this.editMatch(matchId);
-        }
 
         if (deleteBtn) {
             deleteBtn.onclick = () => this.deleteMatch(matchId);
