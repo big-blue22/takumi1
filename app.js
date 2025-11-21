@@ -6400,7 +6400,10 @@ class App {
             <div class="plan-card" data-plan-id="${plan.id}">
                 <div class="plan-card-header">
                     <h3 class="plan-title">${plan.goalTitle}</h3>
-                    <span class="plan-status ${plan.status}">${this.getStatusLabel(plan.status)}</span>
+                    <div class="plan-header-actions">
+                        <span class="plan-status ${plan.status}">${this.getStatusLabel(plan.status)}</span>
+                        <button class="btn-icon-delete" onclick="app.deletePlan('${plan.id}'); event.stopPropagation();" title="削除">🗑️</button>
+                    </div>
                 </div>
 
                 <div class="plan-info">
@@ -6435,6 +6438,7 @@ class App {
                     ${plan.status !== 'completed' ?
                         `<button class="btn-secondary btn-sm" onclick="app.editPlan('${plan.id}')">編集</button>` : ''
                     }
+                    <button class="btn-danger btn-sm" onclick="app.deletePlan('${plan.id}')">削除</button>
                 </div>
             </div>
         `;
@@ -6625,12 +6629,14 @@ class App {
         const pauseBtn = document.getElementById('detail-pause-plan-btn');
         const resumeBtn = document.getElementById('detail-resume-plan-btn');
         const completeBtn = document.getElementById('detail-complete-plan-btn');
+        const deleteBtn = document.getElementById('detail-delete-plan-btn');
 
         // ボタンの表示/非表示を制御
         if (editBtn) editBtn.style.display = plan.status === 'completed' ? 'none' : 'inline-block';
         if (pauseBtn) pauseBtn.style.display = plan.status === 'active' ? 'inline-block' : 'none';
         if (resumeBtn) resumeBtn.style.display = plan.status === 'paused' ? 'inline-block' : 'none';
         if (completeBtn) completeBtn.style.display = plan.status === 'completed' ? 'none' : 'inline-block';
+        if (deleteBtn) deleteBtn.style.display = 'inline-block'; // 常に表示
     }
 
     // 詳細モーダルからプラン編集
@@ -6680,6 +6686,13 @@ class App {
         }
     }
 
+    // 詳細モーダルからプラン削除
+    deletePlanFromDetail() {
+        if (this.currentDetailPlanId) {
+            this.deletePlan(this.currentDetailPlanId);
+        }
+    }
+
     // プランを一時停止
     pausePlan(planId) {
         if (this.coachingPlanService.updatePlanStatus(planId, 'paused')) {
@@ -6700,6 +6713,93 @@ class App {
     editPlan(planId) {
         // プラン編集機能（今後実装）
         this.showToast('プラン編集機能は今後実装予定です', 'info');
+    }
+
+    // プランを削除
+    async deletePlan(planId) {
+        // 確認ダイアログを表示
+        const result = await Swal.fire({
+            title: 'プランを削除しますか？',
+            html: '本当にこのコーチングプランを削除しますか？<br>削除する場合は <b>削除</b> と入力してください。<br><small>※関連する目標は削除されませんが、プランとのリンクは解除されます。</small>',
+            icon: 'warning',
+            input: 'text',
+            inputAttributes: {
+                autocapitalize: 'off'
+            },
+            showCancelButton: true,
+            confirmButtonText: '削除する',
+            cancelButtonText: 'キャンセル',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            reverseButtons: true,
+            background: getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim(),
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+            preConfirm: (inputValue) => {
+                if (inputValue !== '削除') {
+                    Swal.showValidationMessage('キーワードが一致しません。「削除」と入力してください。');
+                    return false;
+                }
+                return true;
+            }
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        try {
+            // プランを削除
+            if (this.coachingPlanService.deletePlan(planId)) {
+                // 関連する目標のリンクを解除
+                this.unlinkGoalFromPlan(planId);
+
+                this.showToast('コーチングプランを削除しました', 'success');
+                this.loadCoachingPlans();
+
+                // 詳細モーダルから削除した場合はモーダルを閉じる
+                if (this.currentDetailPlanId === planId) {
+                    this.closePlanDetailModal();
+                }
+            } else {
+                this.showToast('プランの削除に失敗しました', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to delete plan:', error);
+            this.showToast('エラーが発生しました', 'error');
+        }
+    }
+
+    // 目標からプランへのリンクを解除
+    unlinkGoalFromPlan(planId) {
+        try {
+            const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+            let updated = false;
+
+            const newGoals = goals.map(goal => {
+                if (goal.planId === planId) {
+                    updated = true;
+                    return {
+                        ...goal,
+                        hasCoachingPlan: false,
+                        planId: null
+                    };
+                }
+                return goal;
+            });
+
+            if (updated) {
+                localStorage.setItem('goals', JSON.stringify(newGoals));
+
+                // 目標リストが表示されている場合は更新
+                if (this.currentPage === 'dashboard') {
+                    this.loadDashboardGoals();
+                } else if (this.currentPage === 'goals') {
+                    this.loadGoalsList();
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to unlink goal from plan:', error);
+        }
     }
 
     // ==========================================

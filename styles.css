@@ -1553,7 +1553,7 @@ body {
   width: 90%;
   box-shadow: var(--shadow-large);
   position: relative;
-  z-index: 1001;
+  z-index: 10002;
 }
 
 /* Light theme modal */
@@ -9547,3 +9547,47 @@ input[type="date"]:focus {
 }
 
 
+
+/* Plan Header Actions */
+.plan-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* Icon Delete Button */
+.btn-icon-delete {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    line-height: 1;
+}
+
+.btn-icon-delete:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+    transform: scale(1.1);
+}
+
+/* Modal Header Actions */
+.modal-header-actions {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* Adjust Modal Close Button position when inside header actions */
+.modal-header-actions .modal-close {
+    position: static; /* Reset absolute positioning */
+}

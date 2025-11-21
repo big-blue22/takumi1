@@ -1266,7 +1266,10 @@
         <div class="modal-content plan-detail-content">
             <div class="modal-header">
                 <h2 id="plan-detail-title">プラン詳細</h2>
-                <button class="modal-close" onclick="app.closePlanDetailModal()">✕</button>
+                <div class="modal-header-actions">
+                    <button class="btn-icon-delete" onclick="app.deletePlanFromDetail()" title="削除">🗑️</button>
+                    <button class="modal-close" onclick="app.closePlanDetailModal()">✕</button>
+                </div>
             </div>
 
             <div class="plan-detail-body">
@@ -1322,6 +1325,7 @@
                     <button class="btn-warning" id="detail-pause-plan-btn" onclick="app.pausePlanFromDetail()">一時停止</button>
                     <button class="btn-success" id="detail-resume-plan-btn" onclick="app.resumePlanFromDetail()">再開</button>
                     <button class="btn-primary" id="detail-complete-plan-btn" onclick="app.completePlanFromDetail()">完了</button>
+                    <button class="btn-danger" id="detail-delete-plan-btn" onclick="app.deletePlanFromDetail()">削除</button>
                 </div>
             </div>
         </div>
