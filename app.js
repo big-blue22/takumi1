@@ -3332,7 +3332,24 @@ class App {
         }
 
         container.innerHTML = goals.map(goal => {
-            const calculatedProgress = this.calculateProgressByDays(goal);
+            // 進捗の計算と表示テキストの決定
+            let progress;
+            let progressText;
+
+            if (goal.hasCoachingPlan && goal.planId && this.coachingPlanService) {
+                const plan = this.coachingPlanService.getPlan(goal.planId);
+                if (plan) {
+                    progress = this.calculatePlanProgress(plan);
+                    progressText = `${progress}% (プラン進捗)`;
+                } else {
+                    progress = this.calculateProgressByDays(goal);
+                    progressText = `${progress}% (日数ベース)`;
+                }
+            } else {
+                progress = this.calculateProgressByDays(goal);
+                progressText = `${progress}% (日数ベース)`;
+            }
+
             return `
             <div class="goal-item">
                 <div class="goal-header">
@@ -3342,9 +3359,9 @@ class App {
                 <p class="goal-description">${goal.description}</p>
                 <div class="goal-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${calculatedProgress}%"></div>
+                        <div class="progress-fill" style="width: ${progress}%"></div>
                     </div>
-                    <span class="progress-text">${calculatedProgress}% (日数ベース)</span>
+                    <span class="progress-text">${progressText}</span>
                 </div>
                 <div class="goal-actions">
                     <button class="btn-danger btn-sm" onclick="app.deleteGoal(${goal.id})">削除</button>
@@ -5485,8 +5502,19 @@ class App {
     }
     
     renderGoalItem(goal) {
-        // 日数ベースで進捗を計算
-        const progress = this.calculateProgressByDays(goal);
+        // プランがある場合はプランの進捗を使用、なければ日数ベース
+        let progress;
+        if (goal.hasCoachingPlan && goal.planId && this.coachingPlanService) {
+            const plan = this.coachingPlanService.getPlan(goal.planId);
+            if (plan) {
+                progress = this.calculatePlanProgress(plan);
+            } else {
+                progress = this.calculateProgressByDays(goal);
+            }
+        } else {
+            progress = this.calculateProgressByDays(goal);
+        }
+
         const deadline = new Date(goal.deadline).toLocaleDateString('ja-JP');
         const isUrgent = this.isDeadlineUrgent(goal.deadline);
         const urgentClass = isUrgent ? 'urgent' : '';
