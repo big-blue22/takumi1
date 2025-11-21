@@ -6457,9 +6457,9 @@ class App {
                 <div class="plan-actions">
                     <button class="btn-primary btn-sm" onclick="app.viewPlanDetails('${plan.id}')">詳細表示</button>
                     ${plan.status === 'active' ?
-                        `<button class="btn-secondary btn-sm" onclick="app.pausePlan('${plan.id}')">一時停止</button>` :
+                        `<button class="btn-warning btn-sm" onclick="app.pausePlan('${plan.id}')">一時停止</button>` :
                         plan.status === 'paused' ?
-                        `<button class="btn-accent btn-sm" onclick="app.resumePlan('${plan.id}')">再開</button>` :
+                        `<button class="btn-success btn-sm" onclick="app.resumePlan('${plan.id}')">再開</button>` :
                         ''
                     }
                     ${plan.status !== 'completed' ?
